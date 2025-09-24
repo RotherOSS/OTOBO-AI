@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<otobo_package version="1.0">
+    <Name>OTOBO-AI</Name>
+    <Version>11.0.0</Version>
+    <Framework>11.0.x</Framework>
+    <Vendor>Rother OSS GmbH</Vendor>
+    <URL>https://rother-oss.com/</URL>
+    <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
+    <Description Lang="en">..</Description>
+    <Filelist>
+        <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAI.xml" />
+        <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Import.pm" />
+        <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/GetAnswer.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/GetAnswer.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/IngestMany.pm" />
+        <File Permission="660" Location="var/packagesetup/OTOBOAI.pm" />
+    </Filelist>
+    <CodeInstall Type="post"><![CDATA[
+
+        # create the package name
+        my $CodeModule = 'var::packagesetup::OTOBOAI';
+
+        $Kernel::OM->Get($CodeModule)->CodeInstall();
+    ]]></CodeInstall>
+    <CodeUninstall Type="pre"><![CDATA[
+
+        # create the package name
+        my $CodeModule = 'var::packagesetup::OTOBOAI';
+
+        $Kernel::OM->Get($CodeModule)->CodeUninstall();
+    ]]></CodeUninstall>
+</otobo_package>
