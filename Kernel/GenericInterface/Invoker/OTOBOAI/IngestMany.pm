@@ -91,6 +91,9 @@ In other cases one or more different web service calls will be performed and the
 sub PrepareRequest {
     my ( $Self, %Param ) = @_;
 
+use Data::Dumper;
+print STDERR Dumper(\%Param);
+
     # check needed I
     for my $Needed (qw/Content Type/) {
         if ( !$Param{Data}{$Needed} ) {

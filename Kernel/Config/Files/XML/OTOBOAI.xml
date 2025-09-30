@@ -55,4 +55,21 @@
             </Hash>
         </Value>
     </Setting>
+# Rother AI
+    <Setting Name="DynamicFields::Driver###TextAreaAI" Required="0" Valid="1">
+        <Description Translatable="1">DynamicField backend registration.</Description>
+        <Navigation>Core::DynamicFields::DriverRegistration</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="DisplayName" Translatable="1">Textarea AI</Item>
+                <Item Key="Module">Kernel::System::DynamicField::Driver::TextAreaAI</Item>
+                <Item Key="ConfigDialog">AdminDynamicFieldText</Item>
+                <Item Key="ObjectTypes">
+                    <Array>
+                    </Array>
+                </Item>
+            </Hash>
+        </Value>
+    </Setting>
+# EO AI    
 </otobo_config>
