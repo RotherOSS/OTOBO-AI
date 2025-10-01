@@ -13,8 +13,10 @@
         <File Permission="660" Location="Kernel/System/DynamicField/Driver/TextAreaAI.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Import.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/GetAnswer.pm" />
+        <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Purge.pm" />
         <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/GetAnswer.pm" />
         <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/IngestMany.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/Purge.pm" />
         <File Permission="660" Location="var/packagesetup/OTOBOAI.pm" />
     </Filelist>
     <CodeInstall Type="post"><![CDATA[

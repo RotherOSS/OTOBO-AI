@@ -72,6 +72,12 @@ sub new {
             ],
             Type => 'OTOBOAI::GetAnswer',
         },
+        Purge => {
+            Description => 'Purge the otobo-ai vector store.',
+            Events      => [
+            ],
+            Type => 'OTOBOAI::Purge',
+        },
     };
 
     $Self->{InvokerControllerMapping} = {
@@ -82,6 +88,10 @@ sub new {
         GetAnswer => {
             Command    => 'POST',
             Controller => '/otobo-ai/tfd_rag1/invoke',
+        },
+        GetAnswer => {
+            Command    => 'DELETE',
+            Controller => '/otobo-ai/embedding/purge',
         },
     };
 

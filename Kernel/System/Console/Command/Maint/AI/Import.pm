@@ -122,8 +122,12 @@ sub MigrateTickets {
     my $BatchSize = 100;
     my @TicketIDs;
 
-    # TODO: search params via SysConfig
+    # TODO: search params via SysConfig                                    OTOBOAI::Ticket::SearchRestrictions
     if ( my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') ) { 
+
+use Data::Dumper;
+print STDERR Dumper($SearchRestrictions);
+
         @TicketIDs = $TicketObject->TicketSearch(
             Result     => 'ARRAY',
             Limit      => 100_000_000,
@@ -132,7 +136,7 @@ sub MigrateTickets {
             %{$SearchRestrictions},
         );
     } else {
-
+print STDERR "nope\n";
         @TicketIDs = $TicketObject->TicketSearch(
             Result     => 'ARRAY',
             Limit      => 100_000_000,
@@ -140,6 +144,9 @@ sub MigrateTickets {
             Permission => 'ro',
         );
     }
+
+return;
+
     # TODO: Drop existing ticket vectors (prio 2)
 
     my $Count     = 0;

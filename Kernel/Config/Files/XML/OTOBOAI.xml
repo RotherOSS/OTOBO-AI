@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
-    <Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="0">
+    <Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
         <Navigation></Navigation>
         <Value>
@@ -10,13 +10,7 @@
                         <Item>Raw</Item>
                     </Array>
                 </Item>
-            </Hash>
-            <Hash>
-                <Item Key="UseSubQueues">
-                    <Array>
-                        <Item>1</Item>
-                    </Array>
-                </Item>
+                <Item Key="UseSubQueues"></Item>
             </Hash>
         </Value>
     </Setting>
@@ -51,6 +45,17 @@
             <Hash>
                 <Item Key="Name">GetAnswer</Item>
                 <Item Key="Controller">GetAnswer</Item>
+                <Item Key="ConfigDialog">AdminGenericInterfaceInvokerDefault</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="GenericInterface::Invoker::Module###OTOBOAI::Purge" Required="0" Valid="1">
+        <Description Translatable="1">GenericInterface module registration for the invoker layer.</Description>
+        <Navigation>GenericInterface::Invoker::ModuleRegistration</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Name">Purge</Item>
+                <Item Key="Controller">Purge</Item>
                 <Item Key="ConfigDialog">AdminGenericInterfaceInvokerDefault</Item>
             </Hash>
         </Value>
