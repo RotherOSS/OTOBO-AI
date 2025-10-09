@@ -38,20 +38,20 @@ use Kernel::System::VariableCheck qw(:all);
 our @ObjectDependencies = (
     'Kernel::Config',
     'Kernel::System::DB',
-     'Kernel::System::Cache',
+    'Kernel::System::Cache',
     'Kernel::System::DynamicFieldValue',
     'Kernel::System::Log',
     'Kernel::System::Main',
-    'Kernel::System::Roboto',
+    'Kernel::System::AIAnswer',
 );
 
 =head1 NAME
 
-Kernel::System::DynamicField::Driver::BaseText - base module of Text and TextArea dynamic fields
+Kernel::System::DynamicField::Driver::BaseTextAI - base module of AI driven Text and TextArea dynamic fields
 
 =head1 DESCRIPTION
 
-Text common functions.
+Text common functions AI powered.
 
 =head1 PUBLIC INTERFACE
 
@@ -73,8 +73,8 @@ sub new {
 
     # create cache prefix
     $Self->{CachePrefix} = 'AIAnswer';
-    $Self->{CacheType} = 'AIAnswer';
-    $Self->{CacheTTL}  = 60 * 60 * 24 * 20; 
+    $Self->{CacheType}   = 'AIAnswer';
+    $Self->{CacheTTL}    = 60 * 60 * 24 * 20;
 
     # Text dynamic fields are stored in the database table attribute dynamic_field_value.value_text
     $Self->{ValueKey}       = 'ValueText';
@@ -144,11 +144,6 @@ sub new {
 sub ValueGet {
     my ( $Self, %Param ) = @_;
 
-use Data::Dumper;    
-
-print STDERR "###############################################################\n";
-print STDERR Dumper($Self->{CacheType},$Self->{CachePrefix}, $Param{ObjectID});
-print STDERR "###############################################################\n";
     # read cache
     my $Cache = $Kernel::OM->Get('Kernel::System::Cache')->Get(
         Type => $Self->{CacheType},
@@ -156,9 +151,9 @@ print STDERR "###############################################################\n"
     );
     return $Cache if $Cache;
 
-    my $RobotoObject = $Kernel::OM->Get('Kernel::System::Roboto');
+    my $AIAnswerObject = $Kernel::OM->Get('Kernel::System::AIAnswer');
 
-    $RobotoObject->GetAnswerAsync(
+    $AIAnswerObject->GetAnswerAsync(
         ObjectID => $Param{ObjectID},
     );
 
@@ -170,7 +165,7 @@ print STDERR "###############################################################\n"
         TTL   => $Self->{CacheTTL},
         Key   => $Self->{CachePrefix} . $Param{ObjectID},
         Value => $Answer,
-    );    
+    );
     return $Answer;
 }
 
@@ -663,9 +658,8 @@ sub SearchFieldRender {
     my ( $Self, %Param ) = @_;
 
     # take config from field config
-    my $FieldConfig = $Param{DynamicFieldConfig}->{Config};
-    my $FieldName   = 'Search_DynamicField_' . $Param{DynamicFieldConfig}->{Name};
-    my $FieldLabel  = $Param{DynamicFieldConfig}->{Label};
+    my $FieldName  = 'Search_DynamicField_' . $Param{DynamicFieldConfig}->{Name};
+    my $FieldLabel = $Param{DynamicFieldConfig}->{Label};
 
     # set the field value
     my $Value = ( defined $Param{DefaultValue} ? $Param{DefaultValue} : '' );

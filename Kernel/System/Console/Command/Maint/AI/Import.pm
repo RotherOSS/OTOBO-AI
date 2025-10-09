@@ -19,6 +19,11 @@ package Kernel::System::Console::Command::Maint::AI::Import;
 use strict;
 use warnings;
 
+use Path::Class qw(file);
+use File::Find  qw(find);
+use LWP::UserAgent;
+use HTTP::Request::Common qw{ POST };
+
 use Kernel::System::VariableCheck qw(:all);
 
 use parent qw(Kernel::System::Console::BaseCommand);
@@ -34,13 +39,9 @@ our @ObjectDependencies = (
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
     'Kernel::System::Package',
-);
-
-# Inform the CodePolicy about the soft dependencies that are intentionally not in @ObjectDependencies.
-# Soft dependencies are modules that used by this object, but who don't affect the state of this object.
-# There is no need to discard this module when one of the soft dependencies is discarded.
-our @SoftObjectDependencies = (
+    'Kernel::GenericInterface::Requester',
     'Kernel::System::FAQ',
+    'Kernel::System::HTMLUtils',
 );
 
 sub Configure {
@@ -50,10 +51,19 @@ sub Configure {
     $Self->AddOption(
         Name        => 'target',
         Description =>
-            "Specify which objects will be migrated. t: Tickets; f: FAQ articles; If not specified only 't'ickets will be handled.",
+            "Specify which objects will be migrated. t: Tickets; f: FAQ articles; If not specified all sources will be handled.",
         Required   => 0,
         HasValue   => 1,
-        ValueRegex => qr/^[tuci]+$/smx,
+        ValueRegex => qr/^[tfd]+$/smx,
+    );
+    $Self->AddOption(
+        Name        => 'reimport',
+        Description =>
+            "Do a re-import, which means the AI vectorstore and fulltext postgres Dbs will be purged.",
+        Required => 0,
+        HasValue => 0,
+
+        #        ValueRegex => qr/^[tfd]+$/smx,
     );
 
     return;
@@ -62,7 +72,13 @@ sub Configure {
 sub PreRun {
     my ( $Self, %Param ) = @_;
 
-    # check whether elastic search web service is enabled and if not, activate it
+    return;
+}
+
+sub Run {
+    my ( $Self, %Param ) = @_;
+
+    # check whether the AI web service is enabled and if not, activate it
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
     my $AIWebservice = $WebserviceObject->WebserviceGet(
@@ -93,13 +109,13 @@ sub PreRun {
         }
     }
 
-    return;
-}
+    my $ReImport = $Self->GetOption('reimport');
 
-sub Run {
-    my ( $Self, %Param ) = @_;
+    if ($ReImport) {
+        $Self->Purge();
+    }
 
-    my $Targets = $Self->GetOption('target') || 't';
+    my $Targets = $Self->GetOption('target') || "tdf";
 
     if ( $Targets =~ /t/ ) {
         $Self->MigrateTickets();
@@ -107,6 +123,10 @@ sub Run {
 
     if ( $Targets =~ /f/ ) {
         $Self->MigrateFAQs();
+    }
+
+    if ( $Targets =~ /d/ ) {
+        $Self->MigrateDocs();
     }
 
     return $Self->ExitCodeOk();
@@ -122,32 +142,16 @@ sub MigrateTickets {
     my $BatchSize = 100;
     my @TicketIDs;
 
-    # TODO: search params via SysConfig                                    OTOBOAI::Ticket::SearchRestrictions
-    if ( my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') ) { 
+    my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
+    my $TicketRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::Chunks')             // {};
 
-use Data::Dumper;
-print STDERR Dumper($SearchRestrictions);
-
-        @TicketIDs = $TicketObject->TicketSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-            %{$SearchRestrictions},
-        );
-    } else {
-print STDERR "nope\n";
-        @TicketIDs = $TicketObject->TicketSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-        );
-    }
-
-return;
-
-    # TODO: Drop existing ticket vectors (prio 2)
+    @TicketIDs = $TicketObject->TicketSearch(
+        Result     => 'ARRAY',
+        Limit      => 100_000_000,
+        UserID     => 1,
+        Permission => 'ro',
+        %{$SearchRestrictions},
+    );
 
     my $Count     = 0;
     my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#TicketIDs / 10 ) ) )[1];
@@ -165,23 +169,19 @@ return;
         if ( $Until > $#TicketIDs ) {
             $Until = $#TicketIDs;
         }
-        my @Batch = @TicketIDs[$Count .. $Until];
+        my @Batch = @TicketIDs[ $Count .. $Until ];
 
         my @ImportTicketsQA;
         my @ImportTicketsAgentArticles;
 
         TICKETID:
-        for my $TicketID ( @Batch ) {
+        for my $TicketID (@Batch) {
 
             my @Articles = $ArticleObject->ArticleList(
                 TicketID => $TicketID,
             );
 
             next TICKETID if !@Articles;
-
-#            # SelectionRule: channel restrictions
-#            my %Channels    = map { $_->{ChannelID} => $_->{ChannelName} } ( $CommunicationChannelObject->ChannelList() );
-#            return $Stop if $Articles[0]{CommunicationChannelID} ne $ChannelLookup{Email};
 
             my %SenderLookup = map { $_ => $ArticleObject->ArticleSenderTypeLookup( SenderType => $_ ) } qw/agent customer/;
 
@@ -192,13 +192,19 @@ return;
             my @AnswerArticles;
 
             ARTICLE:
-            for my $Article ( @Articles ) {
+            for my $Article (@Articles) {
+
                 # SelectionRule: skip tickets where the customer sent info twice without any agent interference
                 next TICKETID if $Article->{SenderTypeID} eq $SenderLookup{customer} && !@AnswerArticles;
 
                 # SelectionRule: skip articles if they are not written by an agent or are not customer visible
-                next ARTICLE if $Article->{SenderTypeID} ne $SenderLookup{agent};
-                next ARTICLE if $Article->{IsVisibleForCustomer} ne 1;
+                if ( $TicketRestrictions->{OnlyAgentArticles} ) {
+                    next ARTICLE if $Article->{SenderTypeID} ne $SenderLookup{agent};
+                }
+
+                if ( $TicketRestrictions->{OnlyVisibleForCustomer} ) {
+                    next ARTICLE if $Article->{IsVisibleForCustomer} ne 1;
+                }
 
                 push @AnswerArticles, $Article;
             }
@@ -265,7 +271,8 @@ return;
         }
 
         my $Result;
-        if ( @ImportTicketsQA ) {
+        if (@ImportTicketsQA) {
+
             # Ingest Q/A articles
             $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
@@ -278,7 +285,8 @@ return;
             );
         }
 
-        if ( @ImportTicketsAgentArticles ) {
+        if (@ImportTicketsAgentArticles) {
+
             # Ingest agent articles
             $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
@@ -292,7 +300,8 @@ return;
         }
 
         # TODO: Could be beautified for batches
-        for ( @Batch ) {
+        for (@Batch) {
+
             # show progress and potentially sleep
             if ( ++$Count % $Percent10 == 0 ) {
                 my $Percent = int( $Count / ( $#TicketIDs / 100 ) );
@@ -312,20 +321,17 @@ return;
     #    $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occured!</yellow>\n");
     #}
     #else {
-        $Self->Print("<green>Ticket transfer complete. Transferred $Count tickets.</green>\n");
+    $Self->Print("<green>Ticket transfer complete. Transferred $Count tickets.</green>\n");
+
     #}
 
     return 1;
 }
 
-sub MigrateFAQ {
+sub MigrateFAQs {
     my ( $Self, %Param ) = @_;
 
-    # TODO: Not implemented
-    $Self->Print("<yellow>not implemented.</yellow>\n");
-    return;
-
-    # check whether ITSMConfigurationManagment is installed
+    # check whether FAQ package is installed
     my $PackageObject = $Kernel::OM->Get('Kernel::System::Package');
     my $IsInstalled   = $PackageObject->PackageIsInstalled(
         Name => 'FAQ',
@@ -336,32 +342,23 @@ sub MigrateFAQ {
         return 1;
     }
 
-    my $FAQObject           = $Kernel::OM->Get('Kernel::System::FAQ');
-    my $GenericInterfaceObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
+    # prepare the import
+    my $FAQObject       = $Kernel::OM->Get('Kernel::System::FAQ');
+    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
+    my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
 
-    my @FAQIDs;
+    # determine search restrictions for FAQSearch
+    my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') // {};
 
-    # TODO: search params via SysConfig
-    if ( my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') ) { 
-        @FAQIDs = $FAQObject->FAQSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-            %{$SearchRestrictions},
-        );
-    } else {
+    my @FAQIDs = $FAQObject->FAQSearch(
+        Result     => 'ARRAY',
+        Limit      => 100_000_000,
+        UserID     => 1,
+        Permission => 'ro',
+        %{$SearchRestrictions},
+    );
 
-        @FAQIDs = $FAQObject->FAQSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-        );
-    }
-
-    # TODO: Drop existing ticket vectors (prio 2)
-
+    # iterate over the faqs
     my $Count     = 0;
     my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#FAQIDs / 10 ) ) )[1];
     my $Percent1  = ( sort { $a <=> $b } ( 1,  int( $#FAQIDs / 100 ) ) )[1];
@@ -373,20 +370,56 @@ sub MigrateFAQ {
     }
 
     my $Errors = 0;
+    my @FAQData;
+
     FAQID:
     for my $FAQID (@FAQIDs) {
 
         $Count++;
 
-        # TODO: import faq article
-        my $Result = Run(
-            WebserviceID => $Self->{WebserviceID},
-            Invoker      => 'FAQImport',
-            Asynchronous => 0,
-            Data         => {
-                FAQID => $FAQID,
-            }
+        my %FAQ = $FAQObject->FAQGet(
+            ItemID        => $FAQID,
+            ItemFields    => 1,        # Optional, default 0. To include the item field content for this
+                                       # FAQ item on the return structure.
+            DynamicFields => 0,        # Optional, default 0. To include the dynamic fields for this
+                                       # FAQ item on the return structure.
+            UserID        => 1,
         );
+
+        # scrub HTML
+        my $Question = $HTMLUtilsObject->ToAscii( String => $FAQ{Title} )
+            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field1} )
+            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field2} );
+
+        my $Answer = $HTMLUtilsObject->ToAscii( String => $FAQ{Field3} );
+
+        # prepare data item for invoker
+        push @FAQData, [
+            {
+                type => 'question',
+                text => $Question,
+            },
+            {
+                type => 'answer',
+                text => $Answer,
+            }
+        ];
+
+        # bacthes of 10 FAQs
+        if ( $Count % 10 == 0 ) {
+
+            # ingest
+            $RequesterObject->Run(
+                WebserviceID => $Self->{WebserviceID},
+                Invoker      => 'IngestMany',
+                Asynchronous => 0,
+                Data         => {
+                    Type    => 'faqs',
+                    Content => \@FAQData,
+                },
+            );
+            @FAQData = ();
+        }
 
         # show progress and potentially sleep
         if ( $Count % $Percent10 == 0 ) {
@@ -401,15 +434,183 @@ sub MigrateFAQ {
         }
     }
 
+    # ingest leftovers
+    if ( scalar @FAQData ) {
+
+        $RequesterObject->Run(
+            WebserviceID => $Self->{WebserviceID},
+            Invoker      => 'IngestMany',
+            Asynchronous => 0,
+            Data         => {
+                Type    => 'faqs',
+                Content => \@FAQData,
+            },
+        );
+    }
+
     if ($Errors) {
         $Self->Print("<yellow>FAQ transfer complete. $Errors error(s) occured!</yellow>\n");
     }
     else {
-        $Self->Print("<green>FAQ transfer complete. Transferred $Count config items.</green>\n");
+        $Self->Print("<green>FAQ transfer complete. Transferred $Count FAQ items.</green>\n");
     }
 
     return 1;
 }
 
-1;
+sub MigrateDocs {
+    my ( $Self, %Param ) = @_;
 
+    # prepare the import
+    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
+    my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
+
+    # determine search restrictions for document search
+    my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
+
+    my $DocumentPaths = $Self->_DocumentSearch(
+        %$SearchRestrictions,
+    );
+
+    my @Content;
+    my $Count = 0;
+    my $Errors;
+
+    DOCUMENT:
+    foreach my $DocumentPath (@$DocumentPaths) {
+
+        $Count++;
+
+        # slurp content of file
+        my $FileContent = file($DocumentPath)->slurp();
+
+        # PDF files always start with the same magic bytes
+        if ( $FileContent =~ /^%PDF-/ ) {
+
+            # it's a PDF!
+            my $UA = LWP::UserAgent->new();
+
+            my $Request = POST(
+                'http://pdf2txt:5050/',
+                'Content-Type' => 'application/pdf',
+                Content        => $FileContent
+            );
+
+            my $Response = $UA->request($Request);
+            if ( !$Response->is_success ) {
+                next DOCUMENT;
+            }
+
+            $FileContent = $Response->decoded_content;
+        }
+        else {
+
+            # scrub HTML, if any
+            $FileContent = $HTMLUtilsObject->ToAscii( String => $FileContent );
+        }
+
+        push @Content, [
+            {
+
+                type => 'text',
+                text => $FileContent,
+            }
+        ];
+
+        # ingest in batches of 10
+        if ( $Count % 10 ) {
+
+            # ingest
+            $RequesterObject->Run(
+                WebserviceID => $Self->{WebserviceID},
+                Invoker      => 'IngestMany',
+                Asynchronous => 0,
+                Data         => {
+                    Type    => 'docs',
+                    Content => \@Content,
+                },
+            );
+            @Content = ();
+        }
+    }
+
+    # ingest leftovers
+    if ( scalar @Content ) {
+
+        $RequesterObject->Run(
+            WebserviceID => $Self->{WebserviceID},
+            Invoker      => 'IngestMany',
+            Asynchronous => 0,
+            Data         => {
+                Type    => 'docs',
+                Content => \@Content,
+            },
+        );
+    }
+
+    if ($Errors) {
+        $Self->Print("<yellow>Document transfer complete. $Errors error(s) occured!</yellow>\n");
+    }
+    else {
+        $Self->Print("<green>Document transfer complete. Transferred $Count Document items.</green>\n");
+    }
+
+    return 1;
+}
+
+sub Purge {
+    my ( $Self, %Param ) = @_;
+
+    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
+
+    my $Result = $RequesterObject->Run(
+        WebserviceID => $Self->{WebserviceID},
+        Invoker      => 'Purge',
+        Asynchronous => 0,
+        Data         => {},
+    );
+
+    return IsHashRefWithData($Result)        &&
+        $Result->{Success}                   &&
+        IsHashRefWithData( $Result->{Data} ) &&
+        $Result->{Data}->{success};
+}
+
+sub _DocumentSearch {
+
+    my ( $Self, %Param ) = @_;
+
+    my $DocumentRoot  = $Param{DocumentPath};
+    my $NewerThanDays = $Param{NewerThanDays};
+
+    my $SecondsPerDay = 60 * 60 * 24;
+
+    # glob files recursively starting in $DocumentRoot
+    my @Files;
+    find(
+        {
+            wanted => sub {
+
+                # only handle files, not directories
+                if ( !-d $_ ) {
+
+                    # last write time stamp
+                    my ($WriteTime) = ( stat($_) )[9];
+
+                    # if last write time is NewerThanDays
+                    if ( ( time() - $WriteTime ) < ( $NewerThanDays * $SecondsPerDay ) ) {
+
+                        # add this file to result set
+                        push @Files, $_;
+                    }
+                }
+            },
+            no_chdir => 1
+        },
+        $DocumentRoot
+    );
+
+    return \@Files;
+}
+
+1;

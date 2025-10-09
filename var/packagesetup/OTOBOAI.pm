@@ -1,9 +1,17 @@
 # --
-# Copyright (C) 2019-2020 Rother OSS GmbH, https://rother-oss.com/
+# OTOBO is a web-based ticketing system for service organisations.
 # --
-# This software comes with ABSOLUTELY NO WARRANTY. For details, see
-# the enclosed file COPYING for license information (GPL). If you
-# did not receive this file, see https://www.gnu.org/licenses/gpl-3.0.txt.
+# Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
+# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# --
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
 # --
 
 package var::packagesetup::OTOBOAI;
@@ -19,7 +27,7 @@ our @ObjectDependencies = (
 
 =head1 NAME
 
-var::packagesetup::RotherOSSOTOBOAI - code to execute during package installation
+var::packagesetup::OTOBOAI - code to execute during package installation
 
 =head1 SYNOPSIS
 
@@ -37,7 +45,7 @@ create an object
 
     use Kernel::System::ObjectManager;
     local $Kernel::OM = Kernel::System::ObjectManager->new();
-    my $CodeObject = $Kernel::OM->Get('var::packagesetup::FAQ');
+    my $CodeObject = $Kernel::OM->Get('var::packagesetup::OTOBOAI');
 
 =cut
 
@@ -59,10 +67,11 @@ sub new {
         IngestMany => {
             Description => 'Import content to our roboto ai.',
             Events      => [
-#                {
-#                    Asynchronous => '0',
-#                    Event        => 'TicketCreate',
-#                },
+
+                #                {
+                #                    Asynchronous => '0',
+                #                    Event        => 'TicketCreate',
+                #                },
             ],
             Type => 'OTOBOAI::IngestMany',
         },
@@ -127,19 +136,19 @@ sub CodeInstall {
             },
             RemoteSystem => '',
             Requester    => {
-                Invoker => $Self->{Invoker},
+                Invoker   => $Self->{Invoker},
                 Transport => {
                     Config => {
                         DefaultCommand           => 'POST',
                         Host                     => 'http://otobo-ai:8000',
                         InvokerControllerMapping => $Self->{InvokerControllerMapping},
-                        Timeout => '30',
+                        Timeout                  => '30',
                     },
                     Type => 'HTTP::REST',
                 },
             }
 
-                # EO Webservice Config
+            # EO Webservice Config
         },
         ValidID => 1,
         UserID  => 1,
@@ -169,11 +178,11 @@ sub CodeUpgrade {
     my ( $Self, %Param ) = @_;
 
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
-    my $Webservice = $WebserviceObject->WebserviceGet(
+    my $Webservice       = $WebserviceObject->WebserviceGet(
         Name => 'OTOBOAI',
     );
 
-    if (!$Webservice) {
+    if ( !$Webservice ) {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
             Priority => 'error',
             Message  => "Did not find the OTOBOAI webservice!",
@@ -185,10 +194,9 @@ sub CodeUpgrade {
     $Webservice->{Config}{Requester}{Invoker} = $Self->{Invoker};
     $Webservice->{Config}{Requester}{Transport}{InvokerControllerMapping} = $Self->{InvokerControllerMapping};
 
-
     my $Success = $WebserviceObject->WebserviceUpdate(
-        %{ $Webservice },
-        UserID  => 1,
+        %{$Webservice},
+        UserID => 1,
     );
 
     if ( !$Success ) {

@@ -34,25 +34,27 @@ our @ObjectDependencies = (
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
     'Kernel::System::Package',
-);
-
-# Inform the CodePolicy about the soft dependencies that are intentionally not in @ObjectDependencies.
-# Soft dependencies are modules that used by this object, but who don't affect the state of this object.
-# There is no need to discard this module when one of the soft dependencies is discarded.
-our @SoftObjectDependencies = (
-    'Kernel::System::FAQ',
+    'Kernel::System::Main',
+    'Kernel::System::AIAnswer',
 );
 
 sub Configure {
     my ( $Self, %Param ) = @_;
 
-    $Self->Description('Import existing tickets and faq articles to the AI vector database.');
+    $Self->Description('Retrieve an AI geenrated Answer from the otobo-ai-services container.');
     $Self->AddOption(
         Name        => 'article-id',
         Description => 'ArticleID',
-        Required    => 1,
+        Required    => 0,
         HasValue    => 1,
         ValueRegex  => qr/^\d+$/smx,
+    );
+    $Self->AddOption(
+        Name        => 'question',
+        Description => 'Question',
+        Required    => 0,
+        HasValue    => 1,
+        ValueRegex  => qr/^.+$/smx,
     );
 
     return;
@@ -61,7 +63,7 @@ sub Configure {
 sub PreRun {
     my ( $Self, %Param ) = @_;
 
-    # check whether elastic search web service is enabled and if not, activate it
+    # check whether otobo-ai web service is enabled and if not, activate it
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
     my $AIWebservice = $WebserviceObject->WebserviceGet(
@@ -98,26 +100,46 @@ sub PreRun {
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    my $ArticleID = $Self->GetOption('article-id');
-    my $TicketID  = $Kernel::OM->Get('Kernel::System::Ticket::Article')->TicketIDLookup(
-        ArticleID => $ArticleID,
-    );
+    my $AIAnswerObject = $Kernel::OM->Get('Kernel::System::AIAnswer');
+    my $Result;
 
-    my $Result = $Kernel::OM->Get('Kernel::GenericInterface::Requester')->Run(
-        WebserviceID => $Self->{WebserviceID},
-        Invoker      => 'GetAnswer',
-        Asynchronous => 0,
-        Data         => {
-            TicketID  => $TicketID,
-            ArticleID => $ArticleID,
+    my $Question = $Self->GetOption('question');
+    if ($Question) {
+
+        $Result = $AIAnswerObject->GetAnswer(
+            Question => $Question,
+        );
+    }
+    else {
+
+        my $ArticleID = $Self->GetOption('article-id');
+
+        if ( !$ArticleID ) {
+
+            $Self->Print("<red>Either Question or ArticleID parameter is required.</red>\n");
+            die;
         }
-    );
 
-    use Data::Dumper;
-    print Dumper($Result);
+        my $TicketID = $Kernel::OM->Get('Kernel::System::Ticket::Article')->TicketIDLookup(
+            ArticleID => $ArticleID,
+        );
+
+        if ( !$TicketID ) {
+            $Self->Print("<red>Could not determine TicketID.</red>\n");
+            die;
+        }
+
+        $Result = $AIAnswerObject->GetAnswer(
+            ObjectID => $TicketID,
+        );
+    }
+
+    my $MainObject = $Kernel::OM->Get('Kernel::System::Main');
+    my $Dump       = $MainObject->Dump($Result);
+
+    $Self->Print("$Dump\n");
 
     return $Self->ExitCodeOk();
 }
 
 1;
-

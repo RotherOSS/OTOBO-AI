@@ -1,29 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
-    <Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
+<Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
         <Navigation></Navigation>
         <Value>
             <Hash>
+                <DefaultItem>
+                    <Array></Array>
+                </DefaultItem>
                 <Item Key="Queue">
                     <Array>
                         <Item>Raw</Item>
                     </Array>
                 </Item>
-                <Item Key="UseSubQueues"></Item>
+                <Item Key="UseSubQueues">1</Item>
+                <Item Key="Types">
+                    <Array>
+                        <Item>closed successful</Item>
+                    </Array>
+                </Item>
+                <Item Key="StateTypes">
+                    <Array>
+                        <Item>closed</Item>
+                    </Array>
+                </Item>
+                <Item Key="Services">
+                    <Array>
+                    </Array>
+                </Item>
+                <Item Key="TicketCloseTimeNewerMinutes">518400</Item>
+                <Item Key="TicketCloseTimeOlderMinutes">1440</Item>
+                <Item Key="ArchiveFlags">
+                    <Array>
+                        <Item>y</Item>
+                        <Item>n</Item>
+                    </Array>
+                </Item>
+<!--
+                <Item Key="DynamicField_FieldNameX">
+                    <Hash>
+                        <Item Key="Empty">0</Item>
+                        <Item Key="Equals">123</Item>
+                        <Item Key="Like">some value</Item>
+                        <Item Key="GreaterThan">2001-01-01 01:01:01</Item>
+                        <Item Key="GreaterThanEquals">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThan">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThanEquals">2001-01-01 01:01:01</Item>
+
+                    </Hash>
+                </Item>
+-->
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="OTOBOAI::FAQ::SearchRestrictions" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
+    <Setting Name="OTOBOAI::Ticket::Chunks" Required="0" Valid="1">
+        <Description Translatable="1">Which articles to include for ticket chunk ingestion.</Description>
+        <Navigation></Navigation>
+        <Value>
+            <Hash>
+                <Item Key="OnlyAgentArticles">1</Item>
+                <Item Key="OnlyVisibleForCustomer">1</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::FAQ::SearchRestrictions" Required="0" Valid="1">
+        <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
         <Navigation></Navigation>
         <Value>
             <Hash>
                 <Item Key="CategoryIDs">
                     <Array>
                         <Item>1</Item>
+                        <Item>2</Item>
+                        <Item>3</Item>
                     </Array>
                 </Item>
+                <Item Key="LanguageIDs">
+                    <Array>
+                        <Item>1</Item>
+                        <Item>2</Item>
+                    </Array>
+                </Item>
+                <Item Key="States">
+                    <Hash>
+                        <Item Key="1">internal</Item>
+                        <Item Key="2">external</Item>
+                        <Item Key="3">public</Item>
+                    </Hash>
+                </Item>
+                <Item Key="Approved">1</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::Document::SearchRestrictions" Required="0" Valid="1">
+        <Description Translatable="1">Which documents to include for AI search ingestion.</Description>
+        <Navigation></Navigation>
+        <Value>
+            <Hash>
+                <Item Key="NewerThanDays">300</Item>
+                <Item Key="DocumentPath">/opt/otobo/var/ai/doc</Item>
             </Hash>
         </Value>
     </Setting>
@@ -49,18 +124,6 @@
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="GenericInterface::Invoker::Module###OTOBOAI::Purge" Required="0" Valid="1">
-        <Description Translatable="1">GenericInterface module registration for the invoker layer.</Description>
-        <Navigation>GenericInterface::Invoker::ModuleRegistration</Navigation>
-        <Value>
-            <Hash>
-                <Item Key="Name">Purge</Item>
-                <Item Key="Controller">Purge</Item>
-                <Item Key="ConfigDialog">AdminGenericInterfaceInvokerDefault</Item>
-            </Hash>
-        </Value>
-    </Setting>
-# Rother AI
     <Setting Name="DynamicFields::Driver###TextAreaAI" Required="0" Valid="1">
         <Description Translatable="1">DynamicField backend registration.</Description>
         <Navigation>Core::DynamicFields::DriverRegistration</Navigation>
@@ -76,5 +139,29 @@
             </Hash>
         </Value>
     </Setting>
-# EO AI    
+    <Setting Name="Daemon::SchedulerCronTaskManager::Task###RebuildOtoboAIIndex" Required="0" Valid="0" ConfigLevel="100">
+        <Description Translatable="1">Rebuilds the Otobo AI Vector DB index.</Description>
+        <Navigation>Daemon::SchedulerCronTaskManager::Task</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="TaskName">RebuildOtoboAIIndex</Item>
+                <!--
+                    run job once at 01:00 AM in the Morning
+                -->
+                <Item Key="Schedule">0 1 * * *</Item>
+                <Item Key="Module">Kernel::System::Console::Command::Maint::AI::Import</Item>
+                <Item Key="Function">Execute</Item>
+                <Item Key="MaximumParallelInstances">1</Item>
+                <Item Key="Params">
+                    <Array>
+                        <Item>--target</Item>
+                        <Item>tfd</Item>
+                        <Item>--reimport</Item>
+                        <Item>1</Item>
+                    </Array>
+                </Item>
+            </Hash>
+        </Value>
+    </Setting>
+
 </otobo_config>

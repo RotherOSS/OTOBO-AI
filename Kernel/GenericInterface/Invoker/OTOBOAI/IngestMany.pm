@@ -33,7 +33,7 @@ our $ObjectManagerDisabled = 1;
 
 =head1 NAME
 
-Kernel::GenericInterface::Invoker::Elasticsearch::TicketManagement
+Kernel::GenericInterface::Invoker::OTOBOAI::IngestMany
 
 =head1 PUBLIC INTERFACE
 
@@ -67,22 +67,23 @@ sub new {
 
 =head2 PrepareRequest()
 
-prepare the invocation of the configured remote web service.
-In most cases this will set up the C<docapi> and other parameters for the Elasticsearch REST interface.
-In some cases the request will be aborted by returning C<StopCommunication => 1>.
-In other cases one or more different web service calls will be performed and the original request will be aborted.
+prepare the invocation of the configured remote web service. This will ingest data
+into the Otobo AI vector DB.
 
     my $Result = $InvokerObject->PrepareRequest(
         Data => {                               # data payload
-            ...
+            Content => $Content,                # data payload
+            Type    => 'faq',                   # one of faq|ticket_pairs|ticket_chunks|doc
         },
     );
 
     $Result = {
         Success         => 1,                   # 0 or 1
         ErrorMessage    => '',                  # in case of error
-        Data            => {                    # data payload after Invoker
-            ...
+        Data    => {
+            type    => $Param{Data}{Type},
+            content => $Param{Data}{Content},
+            $TypeSettings{ $Param{Data}{Type} }->%*,
         },
     };
 
@@ -90,9 +91,6 @@ In other cases one or more different web service calls will be performed and the
 
 sub PrepareRequest {
     my ( $Self, %Param ) = @_;
-
-use Data::Dumper;
-print STDERR Dumper(\%Param);
 
     # check needed I
     for my $Needed (qw/Content Type/) {
@@ -107,12 +105,12 @@ print STDERR Dumper(\%Param);
     my $JSONObject = $Kernel::OM->Get('Kernel::System::JSON');
 
     my %TypeSettings = (
-        faq => {
+        faqs => {
             embed_content_types => ['question'],
             store_fulltext      => $JSONObject->True(),
             fulltext_types      => ['answer'],
         },
-        doc => {
+        docs => {
             embed_content_types => ['text'],
             store_fulltext      => $JSONObject->False(),
             fulltext_types      => ['text'],

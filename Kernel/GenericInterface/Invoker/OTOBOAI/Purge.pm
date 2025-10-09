@@ -31,9 +31,11 @@ use Kernel::System::VariableCheck qw(:all);
 
 our $ObjectManagerDisabled = 1;
 
+=for stopwords postgres ai fulltext
+
 =head1 NAME
 
-Kernel::GenericInterface::Invoker::Elasticsearch::TicketManagement
+Kernel::GenericInterface::Invoker::OTOBOAI::Purge
 
 =head1 PUBLIC INTERFACE
 
@@ -67,23 +69,19 @@ sub new {
 
 =head2 PrepareRequest()
 
-prepare the invocation of the configured remote web service.
-In most cases this will set up the C<docapi> and other parameters for the Elasticsearch REST interface.
-In some cases the request will be aborted by returning C<StopCommunication => 1>.
-In other cases one or more different web service calls will be performed and the original request will be aborted.
+prepare the invocation of the configured remote web service. This will
+call the Purge endpoint on the otobo-ai-docker container to
+reset the otobo AI vector db and the fulltext postgres db.
+Call this before doing a re-import so you can start over from scratch.
 
     my $Result = $InvokerObject->PrepareRequest(
-        Data => {                               # data payload
-            ...
-        },
+        Data => {}                               # data payload
     );
 
     $Result = {
         Success         => 1,                   # 0 or 1
         ErrorMessage    => '',                  # in case of error
-        Data            => {                    # data payload after Invoker
-            ...
-        },
+        Data            => {}                    # data payload after Invoker
     };
 
 =cut
@@ -114,7 +112,7 @@ This will just return the data that was passed to the function.
         Success         => 1,                   # 0 or 1
         ErrorMessage    => '',                  # in case of error
         Data            => {                    # data payload after Invoker
-            ...
+            success => 'true'
         },
     };
 

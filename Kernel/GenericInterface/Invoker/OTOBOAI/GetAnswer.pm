@@ -31,9 +31,11 @@ use Kernel::System::VariableCheck qw(:all);
 
 our $ObjectManagerDisabled = 1;
 
+=for stopwords ai
+
 =head1 NAME
 
-Kernel::GenericInterface::Invoker::Elasticsearch::TicketManagement
+Kernel::GenericInterface::Invoker::OTOBOAI::GetAnswer
 
 =head1 PUBLIC INTERFACE
 
@@ -67,22 +69,25 @@ sub new {
 
 =head2 PrepareRequest()
 
-prepare the invocation of the configured remote web service.
-In most cases this will set up the C<docapi> and other parameters for the Elasticsearch REST interface.
-In some cases the request will be aborted by returning C<StopCommunication => 1>.
-In other cases one or more different web service calls will be performed and the original request will be aborted.
+prepare the invocation of the configured remote web service. This will query the
+otobo-ai-docker container for an Answer.
 
     my $Result = $InvokerObject->PrepareRequest(
         Data => {                               # data payload
-            ...
+            Question  => $Question,
         },
     );
 
     $Result = {
         Success         => 1,                   # 0 or 1
         ErrorMessage    => '',                  # in case of error
-        Data            => {                    # data payload after Invoker
-            ...
+        Data    => {
+            input => {
+                question   => $Question,
+                do_scoring => $Kernel::OM->Get('Kernel::System::JSON')->True(),
+            },
+            config => {},
+            kwargs => {},
         },
     };
 
@@ -91,8 +96,10 @@ In other cases one or more different web service calls will be performed and the
 sub PrepareRequest {
     my ( $Self, %Param ) = @_;
 
+    my $Question = $Param{Data}{Question};
+
     # check needed
-    for my $Needed (qw/TicketID ArticleID/) {
+    for my $Needed (qw/Question/) {
         if ( !$Param{Data}{$Needed} ) {
             return {
                 Success      => 0,
@@ -101,29 +108,11 @@ sub PrepareRequest {
         }
     }
 
-    my $ArticleObject  = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-    my $ArticleBackend = $ArticleObject->BackendForArticle(
-        TicketID  => $Param{Data}{TicketID},
-        ArticleID => $Param{Data}{ArticleID},
-    );
-
-    my %Article = $ArticleBackend->ArticleGet(
-        TicketID  => $Param{Data}{TicketID},
-        ArticleID => $Param{Data}{ArticleID},
-    );
-
-    if ( !$Article{Body} ) {
-        return {
-            Success      => 0,
-            ErrorMessage => "No body in the article!",
-        };
-    }
-
     return {
         Success => 1,
         Data    => {
             input => {
-                question   => $Article{Subject} . '. ' . $Article{Body},
+                question   => $Question,
                 do_scoring => $Kernel::OM->Get('Kernel::System::JSON')->True(),
             },
             config => {},
@@ -149,8 +138,9 @@ This will just return the data that was passed to the function.
     $Result = {
         Success         => 1,                   # 0 or 1
         ErrorMessage    => '',                  # in case of error
-        Data            => {                    # data payload after Invoker
-            ...
+        Data    => {
+            Answer => $Param{Data}{output}{generation},
+            Score  => $Param{Data}{output}{score},
         },
     };
 
