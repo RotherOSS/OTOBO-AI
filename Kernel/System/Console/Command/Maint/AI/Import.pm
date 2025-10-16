@@ -484,31 +484,6 @@ sub MigrateDocs {
         # slurp content of file
         my $FileContent = file($DocumentPath)->slurp();
 
-        # PDF files always start with the same magic bytes
-        if ( $FileContent =~ /^%PDF-/ ) {
-
-            # it's a PDF!
-            my $UA = LWP::UserAgent->new();
-
-            my $Request = POST(
-                'http://pdf2txt:5050/',
-                'Content-Type' => 'application/pdf',
-                Content        => $FileContent
-            );
-
-            my $Response = $UA->request($Request);
-            if ( !$Response->is_success ) {
-                next DOCUMENT;
-            }
-
-            $FileContent = $Response->decoded_content;
-        }
-        else {
-
-            # scrub HTML, if any
-            $FileContent = $HTMLUtilsObject->ToAscii( String => $FileContent );
-        }
-
         push @Content, [
             {
 
