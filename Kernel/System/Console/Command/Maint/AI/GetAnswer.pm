@@ -35,7 +35,7 @@ our @ObjectDependencies = (
     'Kernel::System::Ticket::Article',
     'Kernel::System::Package',
     'Kernel::System::Main',
-    'Kernel::System::AIAnswer',
+    'Kernel::System::OtoboAI',
 );
 
 sub Configure {
@@ -100,13 +100,13 @@ sub PreRun {
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    my $AIAnswerObject = $Kernel::OM->Get('Kernel::System::AIAnswer');
+    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
     my $Result;
 
     my $Question = $Self->GetOption('question');
     if ($Question) {
 
-        $Result = $AIAnswerObject->GetAnswer(
+        $Result = $OtoboAIObject->GetAnswer(
             Question => $Question,
         );
     }
@@ -129,7 +129,7 @@ sub Run {
             die;
         }
 
-        $Result = $AIAnswerObject->GetAnswer(
+        $Result = $OtoboAIObject->GetAnswer(
             ObjectID => $TicketID,
         );
     }

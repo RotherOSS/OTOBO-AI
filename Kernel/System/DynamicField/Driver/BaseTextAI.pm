@@ -42,7 +42,7 @@ our @ObjectDependencies = (
     'Kernel::System::DynamicFieldValue',
     'Kernel::System::Log',
     'Kernel::System::Main',
-    'Kernel::System::AIAnswer',
+    'Kernel::System::OtoboAI',
 );
 
 =head1 NAME
@@ -151,9 +151,9 @@ sub ValueGet {
     );
     return $Cache if $Cache;
 
-    my $AIAnswerObject = $Kernel::OM->Get('Kernel::System::AIAnswer');
+    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
 
-    $AIAnswerObject->GetAnswerAsync(
+    $OtoboAIObject->GetAnswerAsync(
         ObjectID => $Param{ObjectID},
     );
 

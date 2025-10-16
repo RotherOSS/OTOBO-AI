@@ -124,6 +124,17 @@
             </Hash>
         </Value>
     </Setting>
+    <Setting Name="GenericInterface::Invoker::Module###OTOBOAI::Purge" Required="0" Valid="1">
+        <Description Translatable="1">GenericInterface module registration for the invoker layer.</Description>
+        <Navigation>GenericInterface::Invoker::ModuleRegistration</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Name">Purge</Item>
+                <Item Key="Controller">Purge</Item>
+                <Item Key="ConfigDialog">AdminGenericInterfaceInvokerDefault</Item>
+            </Hash>
+        </Value>
+    </Setting>
     <Setting Name="DynamicFields::Driver###TextAreaAI" Required="0" Valid="1">
         <Description Translatable="1">DynamicField backend registration.</Description>
         <Navigation>Core::DynamicFields::DriverRegistration</Navigation>
