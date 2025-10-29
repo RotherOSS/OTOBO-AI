@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <otobo_package version="1.0">
     <Name>OTOBO-AI</Name>
-    <Version>0.0.0</Version>
+    <Version>11.0.0</Version>
     <Framework>11.0.x</Framework>
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
