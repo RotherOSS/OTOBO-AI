@@ -51,7 +51,7 @@ sub Configure {
     $Self->AddOption(
         Name        => 'target',
         Description =>
-            "Specify which objects will be migrated. t: Tickets; f: FAQ articles; If not specified all sources will be handled.",
+            "Specify which objects will be migrated. t: Tickets; f: FAQ articles; d: documents. If not specified all sources will be handled.",
         Required   => 0,
         HasValue   => 1,
         ValueRegex => qr/^[tfd]+$/smx,
