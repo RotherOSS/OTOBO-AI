@@ -142,7 +142,7 @@ sub CodeInstall {
                         DefaultCommand           => 'POST',
                         Host                     => 'http://otobo-ai:8000',
                         InvokerControllerMapping => $Self->{InvokerControllerMapping},
-                        Timeout                  => '30',
+                        Timeout                  => '300',
                     },
                     Type => 'HTTP::REST',
                 },
