@@ -8,7 +8,7 @@
                 <DefaultItem>
                     <Array></Array>
                 </DefaultItem>
-                <Item Key="Queue">
+                <Item Key="Queues">
                     <Array>
                         <Item>Raw</Item>
                     </Array>
@@ -16,12 +16,12 @@
                 <Item Key="UseSubQueues">1</Item>
                 <Item Key="Types">
                     <Array>
-                        <Item>closed successful</Item>
                     </Array>
                 </Item>
                 <Item Key="StateTypes">
                     <Array>
                         <Item>closed</Item>
+                        <Item>closed successful</Item>
                     </Array>
                 </Item>
                 <Item Key="Services">
