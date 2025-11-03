@@ -144,8 +144,10 @@
                 <Item Key="DisplayName" Translatable="1">Textarea AI</Item>
                 <Item Key="Module">Kernel::System::DynamicField::Driver::TextAreaAI</Item>
                 <Item Key="ConfigDialog">AdminDynamicFieldText</Item>
+                <Item Key="DisabledAdd">1</Item>
                 <Item Key="ObjectTypes">
                     <Array>
+                        <Item>Article</Item>
                     </Array>
                 </Item>
             </Hash>
