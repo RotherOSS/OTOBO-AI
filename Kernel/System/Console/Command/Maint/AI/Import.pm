@@ -144,6 +144,13 @@ sub MigrateTickets {
     my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
     my $TicketRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::Chunks')             // {};
 
+    # remove search parameters with empty arrays as they prevent search results entirely
+    for my $ArrayParam (qw(Queues Services StateTypes Types)) {
+        if ( !IsArrayRefWithData( $SearchRestrictions->{$ArrayParam} ) ) {
+            delete $SearchRestrictions->{$ArrayParam};
+        }
+    }
+
     @TicketIDs = $TicketObject->TicketSearch(
         Result     => 'ARRAY',
         Limit      => 100_000_000,
