@@ -34,14 +34,13 @@ use parent qw(Kernel::System::Console::BaseCommand);
 # This module must be discarded when one of the hard dependencies has been discarded.
 our @ObjectDependencies = (
     'Kernel::Config',
-    'Kernel::Output::HTML::Layout',
-    'Kernel::System::GenericInterface::Webservice',
-    'Kernel::System::Ticket',
-    'Kernel::System::Ticket::Article',
-    'Kernel::System::Package',
     'Kernel::GenericInterface::Requester',
     'Kernel::System::FAQ',
+    'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::HTMLUtils',
+    'Kernel::System::Package',
+    'Kernel::System::Ticket',
+    'Kernel::System::Ticket::Article',
 );
 
 sub Configure {
@@ -159,7 +158,7 @@ sub MigrateTickets {
 
     if ( $#TicketIDs > 100 ) {
         $Self->Print(
-            "<yellow>Tickets are transfered. This can take several hours, depending on the number of tickets.</yellow>\n"
+            "<yellow>Tickets are transferred. This can take several hours, depending on the number of tickets.</yellow>\n"
         );
     }
 
@@ -318,7 +317,7 @@ sub MigrateTickets {
 
     # TODO: Error handling
     #if ($Errors) {
-    #    $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occured!</yellow>\n");
+    #    $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occurred!</yellow>\n");
     #}
     #else {
     $Self->Print("<green>Ticket transfer complete. Transferred $Count tickets.</green>\n");
@@ -365,7 +364,7 @@ sub MigrateFAQs {
 
     if ( $#FAQIDs > 100 ) {
         $Self->Print(
-            "<yellow>FAQ article are transfered. This can take several hours, depending on the number of faq article.</yellow>\n"
+            "<yellow>FAQ article are transferred. This can take several hours, depending on the number of faq article.</yellow>\n"
         );
     }
 
@@ -449,7 +448,7 @@ sub MigrateFAQs {
     }
 
     if ($Errors) {
-        $Self->Print("<yellow>FAQ transfer complete. $Errors error(s) occured!</yellow>\n");
+        $Self->Print("<yellow>FAQ transfer complete. $Errors error(s) occurred!</yellow>\n");
     }
     else {
         $Self->Print("<green>FAQ transfer complete. Transferred $Count FAQ items.</green>\n");
@@ -463,7 +462,6 @@ sub MigrateDocs {
 
     # prepare the import
     my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
-    my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
 
     # determine search restrictions for document search
     my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
@@ -524,7 +522,7 @@ sub MigrateDocs {
     }
 
     if ($Errors) {
-        $Self->Print("<yellow>Document transfer complete. $Errors error(s) occured!</yellow>\n");
+        $Self->Print("<yellow>Document transfer complete. $Errors error(s) occurred!</yellow>\n");
     }
     else {
         $Self->Print("<green>Document transfer complete. Transferred $Count Document items.</green>\n");
