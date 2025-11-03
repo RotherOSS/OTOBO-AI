@@ -16,6 +16,7 @@
                 <Item Key="UseSubQueues">1</Item>
                 <Item Key="Types">
                     <Array>
+                        <Item>Unclassified</Item>
                     </Array>
                 </Item>
                 <Item Key="StateTypes">
