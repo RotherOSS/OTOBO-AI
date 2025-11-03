@@ -21,25 +21,22 @@ use warnings;
 
 our @ObjectDependencies = (
     'Kernel::Config',
+    'Kernel::System::DynamicField',
+    'Kernel::System::DynamicField::Backend',
     'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::Log',
+    'Kernel::System::Valid',
 );
 
 =head1 NAME
 
 var::packagesetup::OTOBOAI - code to execute during package installation
 
-=head1 SYNOPSIS
-
-All functions
-
 =head1 PUBLIC INTERFACE
-
-=over 4
 
 =cut
 
-=item new()
+=head2 new()
 
 create an object
 
@@ -107,7 +104,7 @@ sub new {
     return $Self;
 }
 
-=item CodeInstall()
+=head2 CodeInstall()
 
 run the code install part
 
@@ -166,7 +163,7 @@ sub CodeInstall {
     }
 }
 
-=item CodeUpgrade()
+=head2 CodeUpgrade()
 
 run the code upgrade part
 
@@ -209,7 +206,7 @@ sub CodeUpgrade {
     return 1;
 }
 
-=item CodeUninstall()
+=head2 CodeUninstall()
 
 run the code uninstall part
 
@@ -234,5 +231,3 @@ sub CodeUninstall {
 }
 
 1;
-
-=back
