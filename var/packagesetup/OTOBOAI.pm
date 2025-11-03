@@ -115,6 +115,9 @@ run the code install part
 sub CodeInstall {
     my ( $Self, %Param ) = @_;
 
+    # create OTOBOAI dynamic field
+    $Self->_CreateAIDynamicField();
+
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
     my $ID               = $WebserviceObject->WebserviceAdd(
         Name   => 'OTOBO-AI',
@@ -226,6 +229,135 @@ sub CodeUninstall {
         ID     => $Webservice->{ID},
         UserID => 1,
     );
+
+    # delete OTOBOAI dynamic field
+    $Self->_DeleteAIDynamicField();
+
+    return 1;
+}
+
+=head2 _CreateAIDynamicField()
+
+creates the dynamic field needed for the AI response functionality
+
+    my $Result = $CodeObject->_CreateAIDynamicField();
+
+=cut
+
+sub _CreateAIDynamicField {
+    my ( $Self, %Param ) = @_;
+
+    my $ValidID = $Kernel::OM->Get('Kernel::System::Valid')->ValidLookup(
+        Valid => 'valid',
+    );
+
+    # get all current dynamic fields
+    my $DynamicFieldList = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldListGet(
+        Valid => 0,
+    );
+
+    # get the list of order numbers (is already sorted).
+    my @DynamicfieldOrderList;
+    for my $Dynamicfield ( @{$DynamicFieldList} ) {
+        push @DynamicfieldOrderList, $Dynamicfield->{FieldOrder};
+    }
+
+    # get the last element from the order list and add 1
+    my $NextOrderNumber = 1;
+    if (@DynamicfieldOrderList) {
+        $NextOrderNumber = $DynamicfieldOrderList[-1] + 1;
+    }
+
+    # create a dynamic fields lookup table
+    my %DynamicFieldLookup;
+    DYNAMICFIELD:
+    for my $DynamicField ( @{$DynamicFieldList} ) {
+        next DYNAMICFIELD if ref $DynamicField ne 'HASH';
+        $DynamicFieldLookup{ $DynamicField->{Name} } = $DynamicField;
+    }
+
+    # check if the dynamic field already exists
+    if ( ref $DynamicFieldLookup{'OTOBOAI'} ne 'HASH' ) {
+
+        # create a new field
+        my $FieldID = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldAdd(
+            Name       => 'OTOBOAI',
+            Label      => 'OTOBO AI',
+            FieldType  => 'TextAreaAI',
+            FieldOrder => $NextOrderNumber,
+            ObjectType => 'Article',
+            Config     => {
+                DefaultValue => '',
+                RegExList    => [],
+                Tooltip      => '',
+            },
+            InternalField => 1,
+            ValidID       => $ValidID,
+            UserID        => 1,
+        );
+
+        if ( !$FieldID ) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'error',
+                Message  => 'Could not create dynamic field OTOBOAI. Please review the logs.',
+            );
+        }
+    }
+    else {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => 'Dynamic field with name OTOBOAI already exists.',
+        );
+    }
+
+    return 1;
+}
+
+=head2 _DeleteAIDynamicField()
+
+=for stopwords OTOBOAI
+
+Deletes the dynamic field OTOBOAI.
+
+    my $Result = $CodeObject->_DeleteAIDynamicField();
+
+=cut
+
+sub _DeleteAIDynamicField {
+    my ( $Self, %Param ) = @_;
+
+    # get necessary objects
+    my $DynamicFieldObject        = $Kernel::OM->Get('Kernel::System::DynamicField');
+    my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+    my $LogObject                 = $Kernel::OM->Get('Kernel::System::Log');
+
+    my $DynamicFieldConfig = $DynamicFieldObject->DynamicFieldGet(
+        Name => 'OTOBOAI',
+    );
+
+    my $ValuesDeleteSuccess = $DynamicFieldBackendObject->AllValuesDelete(
+        DynamicFieldConfig => $DynamicFieldConfig,
+        UserID             => 1,
+    );
+
+    if ( !$ValuesDeleteSuccess ) {
+        $LogObject->Log(
+            'Priority' => 'error',
+            'Message'  => "Could not delete values for DynamicField $DynamicFieldConfig->{Name}!",
+        );
+    }
+
+    my $Success = $DynamicFieldObject->DynamicFieldDelete(
+        ID     => $DynamicFieldConfig->{ID},
+        UserID => 1,
+    );
+
+    if ( !$Success ) {
+        $LogObject->Log(
+            'Priority' => 'error',
+            'Message'  => "Could not delete DynamicField $DynamicFieldConfig->{Name}!",
+        );
+    }
 
     return 1;
 }
