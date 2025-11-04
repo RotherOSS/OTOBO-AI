@@ -88,6 +88,7 @@ sub ValueGet {
 
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
 
+    # NOTE as the field is restricted to object type article, ObjectID is an ArticleID
     $OtoboAIObject->GetAnswerAsync(
         ObjectID => $Param{ObjectID},
     );
