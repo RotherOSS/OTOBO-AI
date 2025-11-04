@@ -170,7 +170,7 @@ sub MigrateTickets {
     }
 
     BATCH:
-    while ( $Count < $#TicketIDs ) {
+    while ( $Count < scalar @TicketIDs ) {
         my $Until = $Count + $BatchSize - 1;
         if ( $Until > $#TicketIDs ) {
             $Until = $#TicketIDs;
