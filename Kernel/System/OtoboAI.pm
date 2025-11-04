@@ -137,31 +137,19 @@ sub GetAnswer {
 
     if ($ObjectID) {
 
-        # Fetch Article and Ticket Data
-        my $TicketID = $ObjectID;
-        my $ArticleID;
-
         my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-        my @ArticleList   = $ArticleObject->ArticleList(
-            TicketID => $TicketID,
+
+        my $ArticleID = $ObjectID;
+        my $TicketID  = $ArticleObject->TicketIDLookup(
+            ArticleID => $ArticleID,
         );
 
-        ARTICLE:
-        for my $Article (@ArticleList) {
-
-            # We need the first article
-            if ( $Article->{ArticleNumber} == 1 ) {
-                $ArticleID = $Article->{ArticleID};
-                last ARTICLE;
-            }
-        }
-
-        my $ArticleBackend = $ArticleObject->BackendForArticle(
+        my $ArticleBackendObject = $ArticleObject->BackendForArticle(
             TicketID  => $TicketID,
             ArticleID => $ArticleID,
         );
 
-        my %Article = $ArticleBackend->ArticleGet(
+        my %Article = $ArticleBackendObject->ArticleGet(
             TicketID  => $TicketID,
             ArticleID => $ArticleID,
         );

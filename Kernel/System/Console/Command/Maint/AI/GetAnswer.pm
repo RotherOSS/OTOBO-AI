@@ -120,17 +120,8 @@ sub Run {
             die;
         }
 
-        my $TicketID = $Kernel::OM->Get('Kernel::System::Ticket::Article')->TicketIDLookup(
-            ArticleID => $ArticleID,
-        );
-
-        if ( !$TicketID ) {
-            $Self->Print("<red>Could not determine TicketID.</red>\n");
-            die;
-        }
-
         $Result = $OtoboAIObject->GetAnswer(
-            ObjectID => $TicketID,
+            ObjectID => $ArticleID,
         );
     }
 
