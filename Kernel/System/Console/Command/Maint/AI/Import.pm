@@ -553,7 +553,7 @@ sub Purge {
     return IsHashRefWithData($Result)        &&
         $Result->{Success}                   &&
         IsHashRefWithData( $Result->{Data} ) &&
-        $Result->{Data}->{success};
+        $Result->{Data}{success};
 }
 
 sub _DocumentSearch {

@@ -185,7 +185,7 @@ sub GetAnswer {
         Message  => "OtoboAI GetAnswer Result: $Dump",
     );
 
-    my $Answer = $Result->{Data}->{Answer} || "";
+    my $Answer = $Result->{Data}{Answer} || "";
 
     # set cache if ObjectID was given
     if ( $Param{ObjectID} ) {
