@@ -10,7 +10,6 @@
     <Filelist>
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAI.xml" />
         <File Permission="660" Location="Kernel/System/OtoboAI.pm" />
-        <File Permission="660" Location="Kernel/System/DynamicField/Driver/BaseTextAI.pm" />
         <File Permission="660" Location="Kernel/System/DynamicField/Driver/TextAreaAI.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Import.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/GetAnswer.pm" />
