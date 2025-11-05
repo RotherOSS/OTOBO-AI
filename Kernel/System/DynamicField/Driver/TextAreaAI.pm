@@ -81,4 +81,149 @@ sub ValueSet {
     return $Self->SUPER::ValueSet(%Param);
 }
 
+sub EditFieldValueGet {
+    my ( $Self, %Param ) = @_;
+
+    # this field is intended to be readonly and therefor must never have an EditFieldValue
+    return;
+}
+
+sub EditFieldRender {
+    my ( $Self, %Param ) = @_;
+
+    # take config from field config
+    my $FieldConfig = $Param{DynamicFieldConfig}{Config};
+    my $FieldName   = 'DynamicField_' . $Param{DynamicFieldConfig}{Name};
+    my $FieldLabel  = $Param{DynamicFieldConfig}{Label};
+
+    my $Value = '';
+
+    # set the field value or default
+    if ( $Param{UseDefaultValue} ) {
+        $Value = $FieldConfig->{DefaultValue} // '';
+    }
+    $Value = $Param{Value} // $Value;
+
+    # extract the dynamic field value from the web request
+    my $FieldValue = $Self->EditFieldValueGet(
+        %Param,
+    );
+
+    if ( defined $FieldValue ) {
+        $Value = $FieldValue;
+    }
+
+    if ( !ref $Value ) {
+        $Value = [$Value];
+    }
+    elsif ( !$Value->@* ) {
+        $Value = [undef];
+    }
+
+    # set the rows number
+    my $RowsNumber = defined $FieldConfig->{Rows} && $FieldConfig->{Rows} ? $FieldConfig->{Rows} : '7';
+
+    # set the cols number
+    my $ColsNumber = defined $FieldConfig->{Cols} && $FieldConfig->{Cols} ? $FieldConfig->{Cols} : '42';
+
+    # check and set class if necessary
+    my $FieldClass = 'DynamicFieldTextArea';
+    if ( defined $Param{Class} && $Param{Class} ne '' ) {
+        $FieldClass .= ' ' . $Param{Class};
+    }
+
+    # set classes according to mandatory and acl hidden params
+    if ( $Param{ACLHidden} && $Param{Mandatory} ) {
+        $FieldClass .= ' Validate_Required_IfVisible';
+    }
+    elsif ( $Param{Mandatory} ) {
+        $FieldClass .= ' Validate_Required';
+    }
+
+    # set error css class
+    if ( $Param{ServerError} ) {
+        $FieldClass .= ' ServerError';
+    }
+
+    # set validation class for maximum characters
+    $FieldClass .= ' Validate_MaxLength';
+
+    my $FieldLabelEscaped = $Param{LayoutObject}->Ascii2Html(
+        Text => $Param{LayoutObject}{LanguageObject}->Translate($FieldLabel),
+    );
+
+    # create field HTML
+    # the XHTML definition does not support maxlength attribute for a text-area field,
+    # we use data-maxlength instead
+    # Notice that some browsers count new lines \n\r as only 1 character. In these cases the
+    # validation framework might generate an error while the user is still capable to enter text in the
+    # text-area. Otherwise the maxlength property will prevent to enter more text than the maximum.
+    my $MaxLength = $Param{MaxLength} // $Self->{MaxLength};
+
+    my $ErrorMessage1 = $Param{LayoutObject}{LanguageObject}->Translate("This field is required or");
+    my $ErrorMessage2 = $Param{LayoutObject}{LanguageObject}->Translate("The field content is too long!");
+    my $ErrorMessage3 = $Param{LayoutObject}{LanguageObject}->Translate( "Maximum size is %s characters.", $MaxLength );
+
+    my %FieldTemplateData = (
+        FieldClass        => $FieldClass,
+        FieldName         => $FieldName,
+        FieldLabelEscaped => $FieldLabelEscaped,
+        Readonly          => $Param{Readonly},
+        RowsNumber        => $RowsNumber,
+        ColsNumber        => $ColsNumber,
+        MaxLength         => $MaxLength,
+        ErrorMessage1     => $ErrorMessage1,
+        ErrorMessage2     => $ErrorMessage2,
+        ErrorMessage3     => $ErrorMessage3,
+        DivID             => $FieldName . 'Error',
+    );
+
+    my $FieldTemplateFile = 'DynamicField/Agent/TextArea';
+
+    my %Error = (
+        ServerError => $Param{ServerError},
+        Mandatory   => $Param{Mandatory},
+    );
+    my @ResultHTML;
+    for my $ValueIndex ( 0 .. $#{$Value} ) {
+        $FieldTemplateData{FieldID}      = $FieldConfig->{MultiValue} ? $FieldName . '_' . $ValueIndex : $FieldName;
+        $FieldTemplateData{ValueEscaped} = $Param{LayoutObject}->Ascii2Html(
+            Text => $Value->[$ValueIndex],
+        );
+
+        if ( !$ValueIndex ) {
+            if ( $Error{ServerError} ) {
+                $Error{DivIDServerError} = $FieldTemplateData{FieldID} . 'ServerError';
+                $Error{ErrorMessage}     = Translatable( $Param{ErrorMessage} || 'This field is required.' );
+            }
+            if ( $Error{Mandatory} ) {
+                $Error{DivIDMandatory}       = $FieldTemplateData{FieldID} . 'Error';
+                $Error{FieldRequiredMessage} = Translatable('This field is required.');
+            }
+        }
+
+        push @ResultHTML, $Param{LayoutObject}->Output(
+            TemplateFile => $FieldTemplateFile,
+            Data         => {
+                %FieldTemplateData,
+                %Error,
+            },
+        );
+    }
+
+    # call EditLabelRender on the common Driver
+    my $LabelString = $Self->EditLabelRender(
+        %Param,
+        Mandatory => $Param{Mandatory} || '0',
+        FieldName => $FieldName,
+    );
+
+    my $Data = {
+        Label => $LabelString,
+        Field => $ResultHTML[0],
+    };
+
+    return $Data;
+}
+
 1;
