@@ -486,6 +486,35 @@ sub Template {
         Template   => $TemplateType,
     );
 
+# Rother OSS / OTOBO-AI
+    # when template is of type Answer, replace AI tag
+    if (
+        $TemplateType eq 'Answer'
+        && $Param{TicketID}
+        && $Param{ArticleID}
+    ) {
+
+        # fetch dynamic field value for article id
+        my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+            Name => 'OTOBOAI',
+        );
+        my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
+            DynamicFieldConfig => $OTOBOAIDFConfig,
+            ObjectID           => $Param{ArticleID},
+        );
+
+        # replace <OTOBO_AIAnswer_OTOBOAI> tag
+        my $Start = '<';
+        my $End   = '>';
+        if ( $Self->{RichText} ) {
+            $Start = '&lt;';
+            $End   = '&gt;';
+        }
+        my $AITag = $Start . 'OTOBO_AIAnswer_OTOBOAI' . $End;
+        $TemplateText =~ s/$AITag/$OTOBOAIValue/g;
+    }
+# EO OTOBO-AI
+
     if ( $Self->{RichText} ) {
         $TemplateText =~ s/&lt;/</g;
         $TemplateText =~ s/&gt;/>/g;
