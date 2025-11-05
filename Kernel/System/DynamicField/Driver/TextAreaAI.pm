@@ -67,6 +67,8 @@ sub new {
 
     # Settings that are specific to the TextAreaAI dynamic field
     $Self->{Behaviors}{IsCustomerInterfaceCapable} = 0;
+    $Self->{Behaviors}{IsSetCapable}               = 0;
+    $Self->{Behaviors}{IsStatsCondition}           = 0;
 
     return $Self;
 }
