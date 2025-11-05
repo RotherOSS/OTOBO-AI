@@ -77,7 +77,7 @@ sub GetAnswerAsync {
                                                                   #   task by the scheduler
         MaximumParallelInstances => 0,                            # optional, default: 0 (unlimited), number of same
                                                                   #   function calls from the same object that can be
-                                                                  #   executed at the the same time
+                                                                  #   executed at the same time
     );
 
     if ( !$Success ) {
