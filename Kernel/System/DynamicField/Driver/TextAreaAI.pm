@@ -68,41 +68,17 @@ sub new {
     # Settings that are specific to the TextAreaAI dynamic field
     $Self->{Behaviors}{IsCustomerInterfaceCapable} = 0;
 
-    # create cache prefix
-    $Self->{CachePrefix} = 'AIAnswer';
-    $Self->{CacheType}   = 'AIAnswer';
-    $Self->{CacheTTL}    = 60 * 60 * 24 * 20;
-
     return $Self;
 }
 
-sub ValueGet {
+sub ValueSet {
     my ( $Self, %Param ) = @_;
 
-    # read cache
-    my $Cache = $Kernel::OM->Get('Kernel::System::Cache')->Get(
-        Type => $Self->{CacheType},
-        Key  => $Self->{CachePrefix} . $Param{ObjectID},
-    );
-    return $Cache if $Cache;
+    if ( !$Param{AsyncCall} ) {
+        return 1;
+    }
 
-    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
-
-    # NOTE as the field is restricted to object type article, ObjectID is an ArticleID
-    $OtoboAIObject->GetAnswerAsync(
-        ObjectID => $Param{ObjectID},
-    );
-
-    my $Answer = "<[waiting for AI answer]>";
-
-    # set cache
-    $Kernel::OM->Get('Kernel::System::Cache')->Set(
-        Type  => $Self->{CacheType},
-        TTL   => $Self->{CacheTTL},
-        Key   => $Self->{CachePrefix} . $Param{ObjectID},
-        Value => $Answer,
-    );
-    return $Answer;
+    return $Self->SUPER::ValueSet(%Param);
 }
 
 1;

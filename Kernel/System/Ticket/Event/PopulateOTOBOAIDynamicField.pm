@@ -26,6 +26,7 @@ our @ObjectDependencies = (
     'Kernel::System::DynamicField',
     'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
+    'Kernel::System::OtoboAI',
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
 );
@@ -68,30 +69,27 @@ sub Run {
     }
 
     # get necessary objects
-    my $TicketObject         = $Kernel::OM->Get('Kernel::System::Ticket');
-    my $ArticleObject        = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-    my $ArticleBackendObject = $ArticleObject->BackendForArticle(
-        TicketID  => $Param{Data}{TicketID},
-        ArticleID => $Param{Data}{ArticleID},
-    );
-
-    my $CacheKey = '_PopulateOTOBOAIDynamicField::AlreadyProcessed';
+    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 
     # loop protection: only execute this handler once for each article
+    my $CacheKey = '_PopulateOTOBOAIDynamicField::AlreadyProcessed';
     return if ( $ArticleObject->{$CacheKey}{ $Param{Data}{ArticleID} } );
 
-    # get dynamic field objects
-    my $DynamicFieldObject        = $Kernel::OM->Get('Kernel::System::DynamicField');
-    my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
-
-    my $AIFieldConfig = $DynamicFieldObject->DynamicFieldGet(
+    # prepopulate AI dynamic field with default answer
+    my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
         Name => 'OTOBOAI',
     );
-
-    # call ValueGet to trigger populating the field with AI response
-    my $Success = $DynamicFieldBackendObject->ValueGet(
-        DynamicFieldConfig => $AIFieldConfig,
+    $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+        DynamicFieldConfig => $OTOBOAIDFConfig,
         ObjectID           => $Param{Data}{ArticleID},
+        Value              => '<|waiting for AI answer|>',
+        AsyncCall          => 1,
+        UserID             => $Param{UserID},
+    );
+
+    # trigger asynchronously fetching AI answer
+    $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
+        ObjectID => $Param{Data}{ArticleID},
     );
 
     $ArticleObject->{$CacheKey}->{ $Param{Data}{ArticleID} } = 1;

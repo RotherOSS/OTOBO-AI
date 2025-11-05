@@ -28,10 +28,12 @@ use warnings;
 use parent qw(Kernel::System::AsynchronousExecutor);
 
 our @ObjectDependencies = (
+    'Kernel::GenericInterface::Requester',
     'Kernel::System::Cache',
+    'Kernel::System::DynamicField',
+    'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
     'Kernel::System::Main',
-    'Kernel::GenericInterface::Requester',
     'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::Ticket::Article',
 );
@@ -107,7 +109,7 @@ sub GetAnswer {
     my $ErrorMessage = '';
     my $Success      = 0;
 
-    # check whether otobo ai is enabled and if not, activate it
+    # check whether otobo AI is enabled and if not, activate it
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
     my $AIWebservice = $WebserviceObject->WebserviceGet(
@@ -187,13 +189,20 @@ sub GetAnswer {
 
     my $Answer = $Result->{Data}{Answer} || "";
 
-    # set cache if ObjectID was given
-    if ( $Param{ObjectID} ) {
-        $Kernel::OM->Get('Kernel::System::Cache')->Set(
-            Type  => $Self->{CacheType},
-            TTL   => $Self->{CacheTTL},
-            Key   => $Self->{CachePrefix} . $Param{ObjectID},
-            Value => $Answer || "",
+    # set dynamic field value if ObjectID was given
+    if ($ObjectID) {
+
+        # fetching dynamic field config
+        my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+            Name => 'OTOBOAI',
+        );
+
+        $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+            DynamicFieldConfig => $OTOBOAIDFConfig,
+            ObjectID           => $ObjectID,
+            Value              => $Answer,
+            AsyncCall          => 1,
+            UserID             => 1,
         );
     }
 
