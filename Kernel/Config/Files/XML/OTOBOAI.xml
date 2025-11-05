@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
-<Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
+    <Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
-        <Navigation></Navigation>
+        <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
                 <DefaultItem>
@@ -56,7 +56,7 @@
     </Setting>
     <Setting Name="OTOBOAI::Ticket::Chunks" Required="0" Valid="1">
         <Description Translatable="1">Which articles to include for ticket chunk ingestion.</Description>
-        <Navigation></Navigation>
+        <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
                 <Item Key="OnlyAgentArticles">1</Item>
@@ -66,7 +66,7 @@
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
-        <Navigation></Navigation>
+        <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
                 <Item Key="CategoryIDs">
@@ -95,7 +95,7 @@
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Which documents to include for AI search ingestion.</Description>
-        <Navigation></Navigation>
+        <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
                 <Item Key="NewerThanDays">300</Item>
