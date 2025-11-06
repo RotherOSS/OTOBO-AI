@@ -19,6 +19,12 @@ package Kernel::System::Ticket::Event::PopulateOTOBOAIDynamicField;
 use strict;
 use warnings;
 
+# core modules
+use List::Util qw(first);
+
+# CPAN modules
+
+# OTOBO modules
 use Kernel::System::VariableCheck qw(:all);
 
 our @ObjectDependencies = (
@@ -44,8 +50,6 @@ sub new {
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    return unless $Param{Event} eq 'ArticleCreate';
-
     # check needed stuff
     for my $Needed (qw(Data Event Config UserID)) {
         if ( !$Param{$Needed} ) {
@@ -57,8 +61,13 @@ sub Run {
         }
     }
 
-    # listen to all kinds of events
-    for my $IDName (qw(ArticleID TicketID)) {
+    # listen to all configured events
+    if ( $Param{Config}{Event} ) {
+        return unless $Param{Config}{Event} =~ /$Param{Event}/;
+    }
+
+    # check needed params in data
+    for my $IDName (qw(ArticleID TicketID OldTicketData)) {
         if ( !$Param{Data}{$IDName} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
@@ -66,6 +75,11 @@ sub Run {
             );
             return;
         }
+    }
+
+    # check queue restriction
+    if ( IsArrayRefWithData( $Param{Config}{Queues} ) ) {
+        return unless first { $_ eq $Param{Data}{OldTicketData}{Queue} } $Param{Config}{Queues}->@*;
     }
 
     # get necessary objects
@@ -92,7 +106,7 @@ sub Run {
         ObjectID => $Param{Data}{ArticleID},
     );
 
-    $ArticleObject->{$CacheKey}->{ $Param{Data}{ArticleID} } = 1;
+    $ArticleObject->{$CacheKey}{ $Param{Data}{ArticleID} } = 1;
 
     return 1;
 }
