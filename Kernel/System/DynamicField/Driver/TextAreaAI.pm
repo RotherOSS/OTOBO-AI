@@ -228,4 +228,10 @@ sub EditFieldRender {
     return $Data;
 }
 
+sub GetFieldTypeSettings {
+    my ( $Self, %Param ) = @_;
+
+    return ();
+}
+
 1;

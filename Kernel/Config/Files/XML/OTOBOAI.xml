@@ -143,7 +143,7 @@
             <Hash>
                 <Item Key="DisplayName" Translatable="1">Textarea AI</Item>
                 <Item Key="Module">Kernel::System::DynamicField::Driver::TextAreaAI</Item>
-                <Item Key="ConfigDialog">AdminDynamicFieldText</Item>
+                <Item Key="ConfigDialog">AdminDynamicFieldTextAreaAI</Item>
                 <Item Key="DisabledAdd">1</Item>
                 <Item Key="ObjectTypes">
                     <Array>
@@ -187,6 +187,43 @@
                 <Item Key="Transaction">1</Item>
                 <Item Key="Queues">
                     <Array>
+                    </Array>
+                </Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="Frontend::Module###AdminDynamicFieldTextAreaAI" Required="0" Valid="1">
+        <Description Translatable="1">Frontend module registration for the agent interface.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration</Navigation>
+        <Value>
+            <Item ValueType="FrontendRegistration">
+                <Hash>
+                    <Item Key="GroupRo">
+                        <Array>
+                        </Array>
+                    </Item>
+                    <Item Key="Group">
+                        <Array>
+                            <Item>admin</Item>
+                        </Array>
+                    </Item>
+                    <Item Key="Description" Translatable="1">This module is part of the admin area of OTOBO.</Item>
+                    <Item Key="Title" Translatable="1">Dynamic Fields TextAreaAI Backend GUI</Item>
+                    <Item Key="NavBarName">Admin</Item>
+                </Hash>
+            </Item>
+        </Value>
+    </Setting>
+    <Setting Name="Loader::Module::AdminDynamicFieldTextAreaAI###003-OTOBOAI" Required="0" Valid="1">
+        <Description Translatable="1">Loader module registration for the agent interface.</Description>
+        <Navigation>Frontend::Admin::ModuleRegistration::Loader</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="JavaScript">
+                    <Array>
+                        <Item>Core.Agent.Admin.DynamicField.js</Item>
+                        <Item>Core.Agent.Admin.DynamicFieldText.js</Item>
+                        <Item>Core.Agent.Admin.SysConfig.Entity.js</Item>
                     </Array>
                 </Item>
             </Hash>

@@ -11,6 +11,8 @@
     <Filelist>
         <File Permission="660" Location="Custom/Kernel/System/TemplateGenerator.pm" />
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAI.xml" />
+        <File Permission="660" Location="Kernel/Modules/AdminDynamicFieldTextAreaAI.pm" />
+        <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AdminDynamicFieldTextAreaAI.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/DynamicField/Agent/TextAreaAI.tt" />
         <File Permission="660" Location="Kernel/System/OtoboAI.pm" />
         <File Permission="660" Location="Kernel/System/DynamicField/Driver/TextAreaAI.pm" />
