@@ -502,6 +502,9 @@ sub Template {
             DynamicFieldConfig => $OTOBOAIDFConfig,
             ObjectID           => $Param{ArticleID},
         );
+        my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
+            String => "Bla\nBlabla\n\nBla",
+        );
 
         # replace <OTOBO_AIAnswer_OTOBOAI> tag
         my $Start = '<';
@@ -511,7 +514,7 @@ sub Template {
             $End   = '&gt;';
         }
         my $AITag = $Start . 'OTOBO_AIAnswer_OTOBOAI' . $End;
-        $TemplateText =~ s/$AITag/$OTOBOAIValue/g;
+        $TemplateText =~ s/$AITag/$HTMLValue/g;
     }
 # EO OTOBO-AI
 
