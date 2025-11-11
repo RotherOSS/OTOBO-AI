@@ -503,7 +503,7 @@ sub Template {
             ObjectID           => $Param{ArticleID},
         );
         my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
-            String => $OTOBOAIValue,
+            String => $OTOBOAIValue || '',
         );
 
         # replace <OTOBO_AIAnswer_OTOBOAI> tag
