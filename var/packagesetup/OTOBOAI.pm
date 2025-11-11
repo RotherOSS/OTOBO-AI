@@ -373,27 +373,52 @@ sub _DeleteAIDynamicField {
 sub _CreateAIAnswerTemplate {
     my ( $Self, %Param ) = @_;
 
-    # add template
-    my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
-        Name         => 'OTOBOAI Answer Template',
-        Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_OTOBOAI>',
-        ContentType  => 'text/plain; charset=utf-8',
-        TemplateType => 'Answer',
-        ValidID      => 1,
-        UserID       => 1,
-    );
-
-    # add template to every valid queue
+    # get all valid queues
     my $QueueObject = $Kernel::OM->Get('Kernel::System::Queue');
     my %QueueData   = $QueueObject->QueueList( Valid => 1 );
 
-    for my $QueueID ( keys %QueueData ) {
-        $QueueObject->QueueStandardTemplateMemberAdd(
-            QueueID            => $QueueID,
-            StandardTemplateID => $TemplateID,
-            Active             => 1,
-            UserID             => 1,
+    # add english template
+    {
+        my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
+            Name         => 'OTOBOAI Answer Template [EN]',
+            Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_OTOBOAI>',
+            ContentType  => 'text/plain; charset=utf-8',
+            TemplateType => 'Answer',
+            ValidID      => 1,
+            UserID       => 1,
         );
+
+        # add template to every valid queue
+        for my $QueueID ( keys %QueueData ) {
+            $QueueObject->QueueStandardTemplateMemberAdd(
+                QueueID            => $QueueID,
+                StandardTemplateID => $TemplateID,
+                Active             => 1,
+                UserID             => 1,
+            );
+        }
+    }
+
+    # add german template
+    {
+        my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
+            Name         => 'OTOBOAI Antwortvorlage [DE]',
+            Template     => 'Die vorgeschlagene KI-Antwort ist: <OTOBO_AIAnswer_OTOBOAI>',
+            ContentType  => 'text/plain; charset=utf-8',
+            TemplateType => 'Answer',
+            ValidID      => 1,
+            UserID       => 1,
+        );
+
+        # add template to every valid queue
+        for my $QueueID ( keys %QueueData ) {
+            $QueueObject->QueueStandardTemplateMemberAdd(
+                QueueID            => $QueueID,
+                StandardTemplateID => $TemplateID,
+                Active             => 1,
+                UserID             => 1,
+            );
+        }
     }
 
     return 1;
