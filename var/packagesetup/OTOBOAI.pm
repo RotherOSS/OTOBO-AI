@@ -430,12 +430,16 @@ sub _DeleteAIAnswerTemplate {
     my $StandardTemplateObject = $Kernel::OM->Get('Kernel::System::StandardTemplate');
 
     # delete template
-    my $TemplateID = $StandardTemplateObject->StandardTemplateLookup(
-        Name => 'OTOBOAI Answer Template',
-    );
-    $StandardTemplateObject->StandardTemplateDelete(
-        ID => $TemplateID,
-    );
+    for my $TemplateName ( ( 'OTOBOAI Answer Template [EN]', 'OTOBOAI Antwortvorlage [DE]' ) ) {
+        my $TemplateID = $StandardTemplateObject->StandardTemplateLookup(
+            StandardTemplate => $TemplateName,
+        );
+
+        # also cleans up the queue relations before deleting
+        $StandardTemplateObject->StandardTemplateDelete(
+            ID => $TemplateID,
+        );
+    }
 
     return 1;
 }
