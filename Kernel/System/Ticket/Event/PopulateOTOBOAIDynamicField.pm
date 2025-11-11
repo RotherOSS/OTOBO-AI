@@ -67,7 +67,7 @@ sub Run {
     }
 
     # check needed params in data
-    for my $IDName (qw(ArticleID TicketID OldTicketData)) {
+    for my $IDName (qw(TicketID OldTicketData)) {
         if ( !$Param{Data}{$IDName} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
@@ -77,17 +77,41 @@ sub Run {
         }
     }
 
+    # get necessary objects
+    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+
+    # handle missing article data by fetching last customer article
+    my $ArticleID;
+    if ( $Param{Data}{ArticleID} ) {
+        $ArticleID = $Param{Data}{ArticleID};
+    }
+    else {
+        my @Articles = $ArticleObject->ArticleList(
+            TicketID   => $Param{Data}{TicketID},
+            SenderType => 'customer',
+            OnlyLast   => 1,
+        );
+        if (@Articles) {
+            $ArticleID = $Articles[0]{ArticleID};
+        }
+    }
+
+    if ( !$ArticleID ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "No ArticleID in Data and found no customer article!",
+        );
+        return;
+    }
+
     # check queue restriction
     if ( IsArrayRefWithData( $Param{Config}{Queues} ) ) {
         return unless first { $_ eq $Param{Data}{OldTicketData}{Queue} } $Param{Config}{Queues}->@*;
     }
 
-    # get necessary objects
-    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-
     # loop protection: only execute this handler once for each article
     my $CacheKey = '_PopulateOTOBOAIDynamicField::AlreadyProcessed';
-    return if ( $ArticleObject->{$CacheKey}{ $Param{Data}{ArticleID} } );
+    return if ( $ArticleObject->{$CacheKey}{$ArticleID} );
 
     # prepopulate AI dynamic field with default answer
     my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
@@ -95,7 +119,7 @@ sub Run {
     );
     $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
         DynamicFieldConfig => $OTOBOAIDFConfig,
-        ObjectID           => $Param{Data}{ArticleID},
+        ObjectID           => $ArticleID,
         Value              => '<|waiting for AI answer|>',
         AsyncCall          => 1,
         UserID             => $Param{UserID},
@@ -103,10 +127,10 @@ sub Run {
 
     # trigger asynchronously fetching AI answer
     $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
-        ObjectID => $Param{Data}{ArticleID},
+        ObjectID => $ArticleID,
     );
 
-    $ArticleObject->{$CacheKey}{ $Param{Data}{ArticleID} } = 1;
+    $ArticleObject->{$CacheKey}{$ArticleID} = 1;
 
     return 1;
 }
