@@ -98,7 +98,7 @@ The following settings are available:
 
 
 Otobo AI Context Data Ingestion
-===============================
+-------------------------------
 
 Import Otobo Data into the vector DB:
 
@@ -118,7 +118,7 @@ If you ask a question that is not part of the context, the AI will answer with i
 
 
 Otobo Dynamic Field Config
-==========================
+--------------------------
 
 Installing the otobo-ai extension package will automatically install the OtoboAI Dynamic Field as an internal Dynamic Field for 
 articles.
@@ -148,7 +148,7 @@ no send an ArticleID, the fallback is to use the last article from Customer as t
 
 
 Otobo RAG based Response Template
-=================================
+---------------------------------
 
 The Otobo AI extension package installs two RAG Answer templates by default:
 
