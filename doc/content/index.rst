@@ -33,8 +33,9 @@ Configuration
 In order to make use of this package you need to run the Otobo AI Services docker container first.
 Please resort to the documentation if Otobo AI Services for more details, but as a quick guide:
 
+
 Otobo-ai-services
-^^^^^^^^^^^^^^^^^
+-----------------
 
 **Note:** *Preliminary documentation, this assumes you start the otobo-ai-services container from it's 
 own docker-compose.yml, but this is likely to change*
@@ -47,8 +48,9 @@ own docker-compose.yml, but this is likely to change*
 - edit the `.env` file and set the OTOBO_AI_API_KEY to something of your liking
 - start up container with `docker compose up -d`
 
+
 Test LLM connectivity
-^^^^^^^^^^^^^^^^^^^^^
+---------------------
 
 Run this from the host where the otobo-ai-services container runs, and optionally also inside the container.
 
@@ -58,8 +60,10 @@ Run this from the host where the otobo-ai-services container runs, and optionall
 
 You should see a stream of text chunks coming back from the LLM
 
+
 Test otobo-ai-services web service
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+----------------------------------
+
 ::
    
    curl -v 'http://otobo-ai:8000/otobo-ai/tfd_rag1/invoke' -H'Authorization: apikey <OTOBO_AI_API_KEY>' 
@@ -67,8 +71,9 @@ Test otobo-ai-services web service
 
 You should see `Weiterleiten an Kundenservice` returned as result, which is the default answer if no context available for thequestion.
 
+
 Otobo-ai extension package
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 - Install this package as usual via Otobo Package Manager in the Admin UI.
 - Verify the AI Webservice invokers have been installed properly at - go to Admin UI -> Webservices -> Edit Web Service: OTOBO-AI
@@ -78,8 +83,9 @@ Otobo-ai extension package
 
 **Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
 
+
 System Configuration Settings
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 The following settings are available:
 
@@ -89,6 +95,7 @@ The following settings are available:
 - OTOBOAI::Document::SearchRestrictions
 
 **Note:** You need to review and adjust those settings to match your needs!
+
 
 Otobo AI Context Data Ingestion
 ===============================
