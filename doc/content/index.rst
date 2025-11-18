@@ -1,22 +1,31 @@
-.. image:: ../images/otobo-logo.png
-   :align: center
-
 .. toctree::
     :maxdepth: 2
     :caption: Contents
 
 Sacrifice to Sphinx
 ===================
-.. This chapter must always be empty. Any content is lost when creating the final version of the documentation.
 
-Overview
-========
+Description
+===========
 The Otobo AI package is the Otobo extension to interface with LLM for Retrieval-Augmented Generation (RAG)
 
+System requirements
+===================
 
-Summary
--------
+Framework
+---------
+OTOBO 11.0.x
 
+Packages
+--------
+\-
+
+Third-party software
+--------------------
+\-
+
+Usage
+=====
 This package adds support for storing Ticket, FAQ, and Document data in a Vector DB and using an LLM to
 generate Response Proposal via RAG.
 
@@ -26,10 +35,8 @@ The whole Otobo AI Solution consists of 3 Components
 - The Otobo AI Services docker container providing the Vector DB
 - A LLM for the actual RAG generation
 
-
-Configuration
-=============
-
+Setup
+-----
 In order to make use of this package you need to run the Otobo AI Services docker container first.
 Please resort to the documentation if Otobo AI Services for more details, but as a quick guide:
 
@@ -83,102 +90,77 @@ Otobo-ai extension package
 
 **Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
 
+Configuration Reference
+-----------------------
 
-System Configuration Settings
------------------------------
+Core::DynamicFields::DriverRegistration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The following settings are available:
+DynamicFields::Driver###TextAreaAI
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+DynamicField backend registration.
 
-- OTOBOAI::Ticket::SearchRestrictions
-- OTOBOAI::Ticket::Chunks
-- OTOBOAI::FAQ::SearchRestrictions
-- OTOBOAI::Document::SearchRestrictions
+Core::Event::Ticket
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-**Note:** You need to review and adjust those settings to match your needs!
+Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Event module registration. For more performance you can define a trigger event (e. g. Event => TicketCreate). This is only possible if all Ticket dynamic fields need the same event.
 
+Core::OTOBOAI
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Otobo AI Context Data Ingestion
--------------------------------
+OTOBOAI::Document::SearchRestrictions
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Which documents to include for AI search ingestion.
 
-Import Otobo Data into the vector DB:
+OTOBOAI::FAQ::SearchRestrictions
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Which FAQ articles to include for FAQ ingestion.
 
-::
+OTOBOAI::Ticket::Chunks
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Which articles to include for ticket chunk ingestion.
 
-   bin/otobo.Console.pl Maint::AI::Import --reimport
+OTOBOAI::Ticket::SearchRestrictions
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Add search restrictions or params, to add not all tickets in the otobo ai vector database.
 
+Daemon::SchedulerCronTaskManager::Task
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-After a successful ingestion run, the RAG process can be tested with the following command line:
+Daemon::SchedulerCronTaskManager::Task###RebuildOtoboAIIndex
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Rebuilds the Otobo AI Vector DB index.
 
-::
+Frontend::Admin::ModuleRegistration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-   bin/otobo.Console.pl Maint::AI::GetAnswer --question 'Tell me about Shakespeare'
+Frontend::Module###AdminDynamicFieldTextAreaAI
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Frontend module registration for the agent interface.
 
-If you ask a question that is not part of the context, the AI will answer with it's default answer, which is:   
-' Weiterleiten an Kundenservice'
+Frontend::Admin::ModuleRegistration::Loader
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Loader::Module::AdminDynamicFieldTextAreaAI###003-OTOBOAI
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Loader module registration for the agent interface.
 
-Otobo Dynamic Field Config
---------------------------
+GenericInterface::Invoker::ModuleRegistration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Installing the otobo-ai extension package will automatically install the OtoboAI Dynamic Field as an internal Dynamic Field for 
-articles.
+GenericInterface::Invoker::Module###OTOBOAI::GetAnswer
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+GenericInterface module registration for the invoker layer.
 
-The async RAG retrieval process is initiated by a configurable event:
+GenericInterface::Invoker::Module###OTOBOAI::IngestMany
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+GenericInterface module registration for the invoker layer.
 
-::
-
-    <Setting Name="Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField" Required="0" Valid="1">
-        <Description Translatable="1">Event module registration. For more performance you can define a trigger event (e. g. Event =&gt; TicketCreate). This is only possible if all Ticket dynamic fields need the same event.</Description>
-        <Navigation>Core::Event::Ticket</Navigation>
-        <Value>
-            <Hash>
-                <Item Key="Module">Kernel::System::Ticket::Event::PopulateOTOBOAIDynamicField</Item>
-                <Item Key="Event">ArticleCreate</Item>
-                <Item Key="Transaction">1</Item>
-                <Item Key="Queues">
-                    <Array>
-                    </Array>
-                </Item>
-            </Hash>
-        </Value>
-    </Setting>
-
-For Article events, the triggering article will be used as Question for the AI solutions. If configured for Ticket Events that do 
-no send an ArticleID, the fallback is to use the last article from Customer as the Question.
-
-
-Otobo RAG based Response Template
----------------------------------
-
-The Otobo AI extension package installs two RAG Answer templates by default:
-
-- OTOBOAI Answer Template [EN]
-- OTOBOAI Answer Template [DE]
-
-RAG Templates are standard templates that contain the Otobo Replacement Tag `<OTOBO_AIAnswer_OTOBOAI>` which will be replaced with the actual RAG answer from the LLM.
-
-
-System requirements
--------------------
-
-Framework
-^^^^^^^^^
-
-OTOBO 11.0.x
-
-Packages
-^^^^^^^^
-
-This package does not depend on other Otobo packages.
-
-
-Third-party software
-^^^^^^^^^^^^^^^^^^^^
-
-
-Further Reading
----------------
-
+GenericInterface::Invoker::Module###OTOBOAI::Purge
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+GenericInterface module registration for the invoker layer.
 
 About
 =======
@@ -191,3 +173,4 @@ Contact
 
 Version
 -------
+Author: |doc-vendor| / Version: |doc-version| / Date of release: |doc-datestamp|
