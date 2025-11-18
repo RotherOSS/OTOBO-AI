@@ -7,7 +7,7 @@ Sacrifice to Sphinx
 
 Description
 ===========
-The Otobo AI package is the Otobo extension to interface with LLM for Retrieval-Augmented Generation (RAG)
+The OTOBO AI package is the OTOBO extension to interface with Large Language Model (LLM) for Retrieval-Augmented Generation (RAG).
 
 System requirements
 ===================
@@ -26,35 +26,30 @@ Third-party software
 
 Usage
 =====
-This package adds support for storing Ticket, FAQ, and Document data in a Vector DB and using an LLM to
-generate Response Proposal via RAG.
+This package adds support for storing Ticket, FAQ, and Document data in a Vector DB and using an LLM to generate Response Proposal via RAG.
 
-The whole Otobo AI Solution consists of 3 Components
+The whole OTOBO AI Solution consists of 3 Components:
 
-- The Otobo AI Extension package (this module)
-- The Otobo AI Services docker container providing the Vector DB
+- The OTBO AI Extension package (this module)
+- The OTOBO AI Services docker container providing the Vector DB
 - A LLM for the actual RAG generation
 
 Setup
 -----
-In order to make use of this package you need to run the Otobo AI Services docker container first.
-Please resort to the documentation if Otobo AI Services for more details, but as a quick guide:
-
+In order to make use of this package you need to run the OTOBO AI Services docker container first. Please resort to the documentation if OTOBO AI Services for more details, but as a quick guide:
 
 Otobo-ai-services
 -----------------
 
-**Note:** *Preliminary documentation, this assumes you start the otobo-ai-services container from it's 
-own docker-compose.yml, but this is likely to change*
+**Note:** *Preliminary documentation, this assumes you start the otobo-ai-services container from it's own docker-compose.yml, but this is likely to change*
 
-- Get the Otobo AI services container from https://github.com/RotherOSS/otobo-ai-services/
+- Get the OTOBO AI services container from https://github.com/RotherOSS/otobo-ai-services/
 - switch to branch mvp_purge # TODO: this is current dev
 - create a rags folder in the root directory
 - copy the rag_examples/tfd_rag1 folder into the rags folder
 - copy the `.env_example` file to `.env`
 - edit the `.env` file and set the OTOBO_AI_API_KEY to something of your liking
 - start up container with `docker compose up -d`
-
 
 Test LLM connectivity
 ---------------------
@@ -82,13 +77,16 @@ You should see `Weiterleiten an Kundenservice` returned as result, which is the 
 Otobo-ai extension package
 --------------------------
 
-- Install this package as usual via Otobo Package Manager in the Admin UI.
+- Install this package as usual via OTOBO Package Manager in the Admin UI.
 - Verify the AI Webservice invokers have been installed properly at - go to Admin UI -> Webservices -> Edit Web Service: OTOBO-AI
 - Add authentication by going to ‘Otobo as Requester’ -> Configure. Here, add a ‘Common Header’ at the bottom of the page. Set `Header Name` to 'Authorization'. Set `Header Value` to 'apikey <OTOBO_AI_API_KEY>'
 - Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`
 
-
 **Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
+
+The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
+
+Note that in case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
 
 Configuration Reference
 -----------------------
