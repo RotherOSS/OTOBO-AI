@@ -112,6 +112,18 @@ sub Run {
     my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
         Name => 'OTOBOAI',
     );
+
+    # if a value exists, abort
+    #   value either being '<|waiting for AI answer|>' or an actual value
+    #   in both cases we do not want to trigger a new request
+    my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+    my $CurrentValue              = $DynamicFieldBackendObject->ValueGet(
+        DynamicFieldConfig => $OTOBOAIDFConfig,
+        ObjectID           => $ArticleID,
+        UserID             => $Param{UserID},
+    );
+    return if $CurrentValue;
+
     $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
         DynamicFieldConfig => $OTOBOAIDFConfig,
         ObjectID           => $ArticleID,
