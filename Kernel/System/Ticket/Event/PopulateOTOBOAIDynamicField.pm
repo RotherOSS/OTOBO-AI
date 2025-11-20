@@ -61,12 +61,7 @@ sub Run {
         }
     }
 
-    # listen to all configured events
-    if ( $Param{Config}{Event} ) {
-        return unless $Param{Config}{Event} =~ /$Param{Event}/;
-    }
-
-    # check needed params in data
+    # check needed param in data
     for my $IDName (qw(TicketID OldTicketData)) {
         if ( !$Param{Data}{$IDName} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
@@ -121,7 +116,7 @@ sub Run {
         DynamicFieldConfig => $OTOBOAIDFConfig,
         ObjectID           => $ArticleID,
         Value              => '<|waiting for AI answer|>',
-        AsyncCall          => 1,
+        DoWrite            => 1,
         UserID             => $Param{UserID},
     );
 

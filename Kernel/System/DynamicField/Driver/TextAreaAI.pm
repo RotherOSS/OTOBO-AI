@@ -76,7 +76,7 @@ sub new {
 sub ValueSet {
     my ( $Self, %Param ) = @_;
 
-    if ( !$Param{AsyncCall} ) {
+    if ( !$Param{DoWrite} ) {
         return 1;
     }
 

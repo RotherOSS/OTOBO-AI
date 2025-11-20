@@ -201,7 +201,7 @@ sub GetAnswer {
             DynamicFieldConfig => $OTOBOAIDFConfig,
             ObjectID           => $ObjectID,
             Value              => $Answer,
-            AsyncCall          => 1,
+            DoWrite            => 1,
             UserID             => 1,
         );
     }
