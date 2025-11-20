@@ -108,6 +108,10 @@ Event module registration. For more performance you can define a trigger event (
 Core::OTOBOAI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+OTOBOAI::AnswerTemplateRequestType
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Define if fetching the AI answer on opening the Answer template should run synchronous or asynchronous.
+
 OTOBOAI::Document::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Which documents to include for AI search ingestion.

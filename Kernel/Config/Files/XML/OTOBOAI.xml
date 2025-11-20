@@ -229,4 +229,14 @@
             </Hash>
         </Value>
     </Setting>
+    <Setting Name="OTOBOAI::AnswerTemplateRequestType" Required="0" Valid="1">
+        <Description Translatable="1">Define if fetching the AI answer on opening the Answer template should run synchronous or asynchronous.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="Select" SelectedID="Synchronous">
+                <Item ValueType="Option" Value="Synchronous" Translatable="1">Synchronous</Item>
+                <Item ValueType="Option" Value="Asynchronous" Translatable="1">Asynchronous</Item>
+            </Item>
+        </Value>
+    </Setting>
 </otobo_config>
