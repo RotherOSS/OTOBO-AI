@@ -28,6 +28,7 @@ use warnings;
 use parent qw(Kernel::System::AsynchronousExecutor);
 
 our @ObjectDependencies = (
+    'Kernel::Config',
     'Kernel::GenericInterface::Requester',
     'Kernel::System::Cache',
     'Kernel::System::DynamicField',
@@ -45,10 +46,6 @@ sub new {
     # allocate new hash for object
     my $Self = {%Param};
     bless( $Self, $Type );
-
-    $Self->{CachePrefix} = 'AIAnswer';
-    $Self->{CacheType}   = 'AIAnswer';
-    $Self->{CacheTTL}    = 60 * 60 * 24 * 20;
 
     return $Self;
 }
@@ -135,6 +132,7 @@ sub GetAnswer {
 
     # prepare the question
     my $ObjectID = $Param{ObjectID};
+    my $UserID   = $Param{UserID};
     my $Question;
 
     if ($ObjectID) {
@@ -203,6 +201,18 @@ sub GetAnswer {
             Value              => $Answer,
             DoWrite            => 1,
             UserID             => 1,
+        );
+    }
+    elsif ($UserID) {
+        my $CacheObject      = $Kernel::OM->Get('Kernel::System::Cache');
+        my $ConfigObject     = $Kernel::OM->Get('Kernel::Config');
+        my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $Question;                                                            #md5
+        my $TTL              = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Answer} || 24;
+        $CacheObject->Set(
+            Type  => 'OtoboAI',
+            Key   => $CacheKeyQuestion,
+            Value => $Answer,
+            TTL   => 60 * 60 * $TTL,
         );
     }
 

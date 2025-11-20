@@ -1,0 +1,54 @@
+/* OTOBO is a web-based ticketing system for service organisations.
+
+Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
+Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+*/
+
+/**
+ * @package     Skin "Default"
+ * @section     Widgets
+ */
+
+@media screen,projection,tv,handheld {
+
+fieldset.TableLike.FixedLabel.OtoboAIDashboardElem>label {
+  width: 50px;
+}
+
+div.RichTextField.OtoboAIDashboardElem {
+  margin-left: 5%;
+  min-height: 0 !important;
+}
+
+.OtoboAIResponseError {
+  color: darkred;
+}
+
+button.OtoboAIDashboardElem {
+  margin-left: 60px;
+}
+
+.Footer.OtoboAIDashboardElem {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.OtoboAIDashboardElem #Loader img {
+  vertical-align: middle;
+}
+
+.OtoboAIDashboardElem #Loader {
+  display: none;
+}
+
+} /* end @media */
