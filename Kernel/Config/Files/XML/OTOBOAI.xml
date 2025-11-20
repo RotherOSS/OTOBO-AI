@@ -239,4 +239,11 @@
             </Item>
         </Value>
     </Setting>
+    <Setting Name="OTOBOAI::Placeholder" Required="0" Valid="1">
+        <Description Translatable="1">Define a string which is used as a placeholder while waiting for the AI answer.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="String"><![CDATA[<|waiting for AI answer|>]]></Item>
+        </Value>
+    </Setting>
 </otobo_config>

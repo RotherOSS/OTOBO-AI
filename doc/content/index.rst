@@ -120,6 +120,10 @@ OTOBOAI::FAQ::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Which FAQ articles to include for FAQ ingestion.
 
+OTOBOAI::Placeholder
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Define a string which is used as a placeholder while waiting for the AI answer.
+
 OTOBOAI::Ticket::Chunks
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Which articles to include for ticket chunk ingestion.

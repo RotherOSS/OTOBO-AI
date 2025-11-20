@@ -114,7 +114,7 @@ sub Run {
     );
 
     # if a value exists, abort
-    #   value either being '<|waiting for AI answer|>' or an actual value
+    #   value either being the placeholder or an actual value
     #   in both cases we do not want to trigger a new request
     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
     my $CurrentValue              = $DynamicFieldBackendObject->ValueGet(
@@ -124,10 +124,11 @@ sub Run {
     );
     return if $CurrentValue;
 
+    my $Placeholder = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
     $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
         DynamicFieldConfig => $OTOBOAIDFConfig,
         ObjectID           => $ArticleID,
-        Value              => '<|waiting for AI answer|>',
+        Value              => $Placeholder,
         DoWrite            => 1,
         UserID             => $Param{UserID},
     );
