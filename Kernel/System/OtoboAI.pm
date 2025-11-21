@@ -191,8 +191,9 @@ sub GetAnswer {
     if ($ObjectID) {
 
         # fetching dynamic field config
-        my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
-            Name => 'OTOBOAI',
+        my $DynamicFieldName = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+        my $OTOBOAIDFConfig  = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+            Name => $DynamicFieldName,
         );
 
         $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(

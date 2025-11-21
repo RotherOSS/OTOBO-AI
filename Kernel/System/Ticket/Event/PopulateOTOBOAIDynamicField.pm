@@ -108,8 +108,9 @@ sub Run {
     return if ( $ArticleObject->{$CacheKey}{$ArticleID} );
 
     # prepopulate AI dynamic field with default answer
-    my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
-        Name => 'OTOBOAI',
+    my $DynamicFieldName = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+    my $OTOBOAIDFConfig  = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+        Name => $DynamicFieldName,
     );
 
     # if a value exists, abort

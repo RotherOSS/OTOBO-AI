@@ -55,6 +55,9 @@ sub new {
     my $Self = {};
     bless( $Self, $Type );
 
+    # set dynamic field name here
+    $Self->{DynamicFieldName} = 'OTOBOAI';
+
     # always discard the config object before package code is executed,
     # to make sure that the config object will be created newly, so that it
     # will use the recently written new config from the package
@@ -285,11 +288,11 @@ sub _CreateAIDynamicField {
     }
 
     # check if the dynamic field already exists
-    if ( ref $DynamicFieldLookup{'OTOBOAI'} ne 'HASH' ) {
+    if ( ref $DynamicFieldLookup{ $Self->{DynamicFieldName} } ne 'HASH' ) {
 
         # create a new field
         my $FieldID = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldAdd(
-            Name       => 'OTOBOAI',
+            Name       => $Self->{DynamicFieldName},
             Label      => 'OTOBO AI',
             FieldType  => 'TextAreaAI',
             FieldOrder => $NextOrderNumber,
@@ -307,14 +310,14 @@ sub _CreateAIDynamicField {
         if ( !$FieldID ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => 'Could not create dynamic field OTOBOAI. Please review the logs.',
+                Message  => "Could not create dynamic field $Self->{DynamicFieldName}. Please review the logs.",
             );
         }
     }
     else {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
             Priority => 'error',
-            Message  => 'Dynamic field with name OTOBOAI already exists.',
+            Message  => "Dynamic field with name $Self->{DynamicFieldName} already exists.",
         );
     }
 
@@ -323,9 +326,7 @@ sub _CreateAIDynamicField {
 
 =head2 _DeleteAIDynamicField()
 
-=for stopwords OTOBOAI
-
-Deletes the dynamic field OTOBOAI.
+Deletes the dynamic field for AI functionality.
 
     my $Result = $CodeObject->_DeleteAIDynamicField();
 
@@ -339,8 +340,11 @@ sub _DeleteAIDynamicField {
     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
     my $LogObject                 = $Kernel::OM->Get('Kernel::System::Log');
 
+    # running pre-uninstall, so we do have the sysconfig at hand
+    my $DynamicFieldName = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI') || $Self->{DynamicFieldName};
+
     my $DynamicFieldConfig = $DynamicFieldObject->DynamicFieldGet(
-        Name => 'OTOBOAI',
+        Name => $DynamicFieldName,
     );
 
     my $ValuesDeleteSuccess = $DynamicFieldBackendObject->AllValuesDelete(
@@ -381,7 +385,7 @@ sub _CreateAIAnswerTemplate {
     {
         my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
             Name         => 'OTOBOAI Answer Template [EN]',
-            Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_OTOBOAI>',
+            Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
             ContentType  => 'text/plain; charset=utf-8',
             TemplateType => 'Answer',
             ValidID      => 1,
@@ -403,7 +407,7 @@ sub _CreateAIAnswerTemplate {
     {
         my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
             Name         => 'OTOBOAI Antwortvorlage [DE]',
-            Template     => 'Die vorgeschlagene KI-Antwort ist: <OTOBO_AIAnswer_OTOBOAI>',
+            Template     => 'Die vorgeschlagene KI-Antwort ist: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
             ContentType  => 'text/plain; charset=utf-8',
             TemplateType => 'Answer',
             ValidID      => 1,

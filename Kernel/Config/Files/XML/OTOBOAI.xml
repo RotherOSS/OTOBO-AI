@@ -246,4 +246,11 @@
             <Item ValueType="String"><![CDATA[<|waiting for AI answer|>]]></Item>
         </Value>
     </Setting>
+    <Setting Name="OTOBOAI::DynamicFieldOTOBOAI" Required="0" Valid="1">
+        <Description Translatable="1">This option defines the dynamic field in which an OTOBOAI answer is stored.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="Entity" ValueEntityType="DynamicField" ValueEntitySubType="Ticket" ValueRegex="">OTOBOAI</Item>
+        </Value>
+    </Setting>
 </otobo_config>

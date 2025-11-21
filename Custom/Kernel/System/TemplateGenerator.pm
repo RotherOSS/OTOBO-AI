@@ -497,11 +497,12 @@ sub Template {
         && $Param{ArticleID}
     ) {
         my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+        my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
         my $Placeholder = $ConfigObject->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
 
         # fetch dynamic field value for article id
         my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
-            Name => 'OTOBOAI',
+            Name => $DynamicFieldName,
         );
         my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
             DynamicFieldConfig => $OTOBOAIDFConfig,
