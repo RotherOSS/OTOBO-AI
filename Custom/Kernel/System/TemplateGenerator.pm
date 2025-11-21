@@ -539,6 +539,13 @@ sub Template {
             }
             elsif ( $RequestType eq 'Synchronous' ) {
                 if ( !$OTOBOAIValue ) {
+                    $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                        DynamicFieldConfig => $OTOBOAIDFConfig,
+                        ObjectID           => $Param{ArticleID},
+                        Value              => $Placeholder,
+                        DoWrite            => 1,
+                        UserID             => $Param{UserID},
+                    );
                     $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
                         ObjectID => $Param{ArticleID},
                     );
