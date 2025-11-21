@@ -39,7 +39,6 @@ sub Run {
 
     my $LayoutObject  = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
     my $ParamObject   = $Kernel::OM->Get('Kernel::System::Web::Request');
-    my $LogObject     = $Kernel::OM->Get('Kernel::System::Log');
     my $CacheObject   = $Kernel::OM->Get('Kernel::System::Cache');
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
 

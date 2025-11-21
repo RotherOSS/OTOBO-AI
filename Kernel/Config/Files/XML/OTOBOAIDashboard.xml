@@ -49,7 +49,6 @@
                     </Hash>
                 </Item>
                 <Item Key="Mandatory">0</Item>
-                    
             </Hash>
         </Value>
     </Setting>
@@ -60,8 +59,8 @@
             <Hash>
                 <Item Key="JavaScript">
                     <Array>
-			<Item>Core.UI.InputFields.js</Item>
-			<Item>Core.Agent.OtoboAIWidget.js</Item>
+                        <Item>Core.UI.InputFields.js</Item>
+                        <Item>Core.Agent.OtoboAIWidget.js</Item>
                     </Array>
                 </Item>
                 <Item Key="CSS">
@@ -99,7 +98,7 @@
                 </Hash>
             </Item>
         </Value>
-    </Setting>    
+    </Setting>
     <Setting Name="OtoboAIDashboard::Frontend::CacheTTL" Required="1" Valid="1">
         <Description Translatable="1">Number of hours of TTL for the Otobo-AI cache elements.</Description>
         <Navigation>Frontend::Agent::View::Dashboard</Navigation>
@@ -123,5 +122,5 @@
         <Value>
             <Item ValueType="String" ValueRegex="^[0-9]{1,3}$">300</Item>
         </Value>
-    </Setting>    
+    </Setting>
 </otobo_config>

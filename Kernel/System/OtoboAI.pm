@@ -205,7 +205,6 @@ sub GetAnswer {
     }
     elsif ($UserID) {
         my $CacheObject      = $Kernel::OM->Get('Kernel::System::Cache');
-        my $ConfigObject     = $Kernel::OM->Get('Kernel::Config');
         my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $Question;                                                            #md5
         my $TTL              = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Answer} || 24;
         $CacheObject->Set(

@@ -51,10 +51,10 @@ sub Config {
     my ( $Self, %Param ) = @_;
 
     # check if frontend module of link is used
-    if ( $Self->{Config}->{Link} && $Self->{Config}->{Link} =~ /Action=(.+?)([&;].+?|)$/ ) {
+    if ( $Self->{Config}{Link} && $Self->{Config}{Link} =~ /Action=(.+?)([&;].+?|)$/ ) {
         my $Action = $1;
         if ( !$Kernel::OM->Get('Kernel::Config')->Get('Frontend::Module')->{$Action} ) {
-            $Self->{Config}->{Link} = '';
+            $Self->{Config}{Link} = '';
         }
     }
 
@@ -76,7 +76,6 @@ sub FilterContent {
 sub Run {
     my ( $Self, %Param ) = @_;
 
-    my $ParamObject  = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $LayoutObject = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
 
     my $PollingInterval = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::PollingInterval') || 30;
