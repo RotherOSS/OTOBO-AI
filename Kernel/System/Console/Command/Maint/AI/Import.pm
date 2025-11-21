@@ -563,6 +563,11 @@ sub _DocumentSearch {
     my $DocumentRoot  = $Param{DocumentPath};
     my $NewerThanDays = $Param{NewerThanDays};
 
+    if ( !-d $DocumentRoot ) {
+        $Self->Print("<yellow>Skipping Documents (Document folder '$DocumentRoot' does not exist)...</yellow>\n");
+        return;
+    }
+
     my $SecondsPerDay = 60 * 60 * 24;
 
     # glob files recursively starting in $DocumentRoot
