@@ -496,63 +496,9 @@ sub Template {
         && $Param{TicketID}
         && $Param{ArticleID}
     ) {
-        my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
-        my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
-        my $Placeholder = $ConfigObject->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
 
-        # fetch dynamic field value for article id
-        my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
-            Name => $DynamicFieldName,
-        );
-        my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
-            DynamicFieldConfig => $OTOBOAIDFConfig,
-            ObjectID           => $Param{ArticleID},
-        );
-
-        my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
-        if ( $RequestType eq 'Asynchronous' ) {
-            if ( !$OTOBOAIValue ) {
-                $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
-                    ObjectID => $Param{ArticleID},
-                );
-                $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
-                    DynamicFieldConfig => $OTOBOAIDFConfig,
-                    ObjectID           => $Param{ArticleID},
-                    Value              => $Placeholder,
-                    DoWrite            => 1,
-                    UserID             => $Param{UserID},
-                );
-            }
-            elsif ( $OTOBOAIValue eq $Placeholder ) {
-
-                # do nothing
-            }
-            else {
-
-                # do nothing
-            }
-        }
-        elsif ( $RequestType eq 'Synchronous' ) {
-            if ( !$OTOBOAIValue ) {
-                $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
-                    ObjectID => $Param{ArticleID},
-                );
-            }
-            elsif ( $OTOBOAIValue eq $Placeholder ) {
-
-                # do nothing
-            }
-            else {
-
-                # do nothing
-            }
-        }
-
-        my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
-            String => $OTOBOAIValue || '',
-        );
-
-        # replace <OTOBO_AIAnswer_OTOBOAI> tag
+        # check if tag is present in the template first
+        #   to prevent unnecessary request triggering
         my $Start = '<';
         my $End   = '>';
         if ( $Self->{RichText} ) {
@@ -560,7 +506,52 @@ sub Template {
             $End   = '&gt;';
         }
         my $AITag = $Start . 'OTOBO_AIAnswer_OTOBOAI' . $End;
-        $TemplateText =~ s/$AITag/$HTMLValue/g;
+        if ( $TemplateText =~ /$AITag/ ) {
+            my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+            my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+
+            my $Placeholder = $ConfigObject->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
+            $Placeholder = $Kernel::OM->Get('Kernel::Output::HTML::Layout')->{LanguageObject}->Translate( $Placeholder );
+
+            # fetch dynamic field value for article id
+            my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+                Name => $DynamicFieldName,
+            );
+            my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
+                DynamicFieldConfig => $OTOBOAIDFConfig,
+                ObjectID           => $Param{ArticleID},
+            );
+
+            my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
+            if ( $RequestType eq 'Asynchronous' ) {
+                if ( !$OTOBOAIValue ) {
+                    $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
+                        ObjectID => $Param{ArticleID},
+                    );
+                    $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                        DynamicFieldConfig => $OTOBOAIDFConfig,
+                        ObjectID           => $Param{ArticleID},
+                        Value              => $Placeholder,
+                        DoWrite            => 1,
+                        UserID             => $Param{UserID},
+                    );
+                }
+            }
+            elsif ( $RequestType eq 'Synchronous' ) {
+                if ( !$OTOBOAIValue ) {
+                    $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
+                        ObjectID => $Param{ArticleID},
+                    );
+                }
+            }
+
+            my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
+                String => $OTOBOAIValue || '',
+            );
+
+            # replace <OTOBO_AIAnswer_DFName> tag
+            $TemplateText =~ s/$AITag/$HTMLValue/g;
+        }
     }
 # EO OTOBO-AI
 
