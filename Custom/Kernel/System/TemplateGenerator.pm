@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - c6ddc057a0772ab4b00b1309c50eee3e7a058246 - Kernel/System/TemplateGenerator.pm
+# $origin: otobo - 2c6bbb92253542adaaf57bae0c60da559747297f - Kernel/System/TemplateGenerator.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -26,7 +26,7 @@ use warnings;
 # core modules
 
 # CPAN modules
-use URI::Escape qw(uri_escape_utf8 uri_unescape);    ## no perlimports, methods are used in a substution
+use URI::Escape qw(uri_escape_utf8 uri_unescape);    ## no perlimports, methods are used in a substitution
 
 # OTOBO modules
 use Kernel::Language              ();
