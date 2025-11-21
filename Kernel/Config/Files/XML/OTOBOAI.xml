@@ -250,7 +250,7 @@
         <Description Translatable="1">This option defines the dynamic field in which an OTOBOAI answer is stored.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
-            <Item ValueType="Entity" ValueEntityType="DynamicField" ValueEntitySubType="Ticket" ValueRegex="">OTOBOAI</Item>
+            <Item ValueType="Entity" ValueEntityType="DynamicField" ValueEntitySubType="Article" ValueRegex="">OTOBOAI</Item>
         </Value>
     </Setting>
 </otobo_config>
