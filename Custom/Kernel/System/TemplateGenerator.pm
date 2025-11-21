@@ -42,6 +42,9 @@ our @ObjectDependencies = (
     'Kernel::System::Encode',
     'Kernel::System::HTMLUtils',
     'Kernel::System::Log',
+# Rother OSS / OTOBO-AI
+    'Kernel::System::OtoboAI',
+# EO OTOBO-AI
     'Kernel::System::Queue',
     'Kernel::System::Salutation',
     'Kernel::System::Signature',
@@ -493,6 +496,8 @@ sub Template {
         && $Param{TicketID}
         && $Param{ArticleID}
     ) {
+        my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+        my $Placeholder = $ConfigObject->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
 
         # fetch dynamic field value for article id
         my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
@@ -502,6 +507,46 @@ sub Template {
             DynamicFieldConfig => $OTOBOAIDFConfig,
             ObjectID           => $Param{ArticleID},
         );
+
+        my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
+        if ( $RequestType eq 'Asynchronous' ) {
+            if ( !$OTOBOAIValue ) {
+                $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
+                    ObjectID => $Param{ArticleID},
+                );
+                $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                    DynamicFieldConfig => $OTOBOAIDFConfig,
+                    ObjectID           => $Param{ArticleID},
+                    Value              => $Placeholder,
+                    DoWrite            => 1,
+                    UserID             => $Param{UserID},
+                );
+            }
+            elsif ( $OTOBOAIValue eq $Placeholder ) {
+
+                # do nothing
+            }
+            else {
+
+                # do nothing
+            }
+        }
+        elsif ( $RequestType eq 'Synchronous' ) {
+            if ( !$OTOBOAIValue ) {
+                $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
+                    ObjectID => $Param{ArticleID},
+                );
+            }
+            elsif ( $OTOBOAIValue eq $Placeholder ) {
+
+                # do nothing
+            }
+            else {
+
+                # do nothing
+            }
+        }
+
         my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
             String => $OTOBOAIValue || '',
         );
