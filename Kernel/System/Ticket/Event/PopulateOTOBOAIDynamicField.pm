@@ -33,7 +33,6 @@ our @ObjectDependencies = (
     'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
     'Kernel::System::OtoboAI',
-    'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
 );
 

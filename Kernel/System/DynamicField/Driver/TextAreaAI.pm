@@ -34,10 +34,7 @@ use parent qw(Kernel::System::DynamicField::Driver::TextArea);
 use Kernel::Language              qw(Translatable);
 use Kernel::System::VariableCheck qw(:all);
 
-our @ObjectDependencies = (
-    'Kernel::System::Cache',
-    'Kernel::System::OtoboAI',
-);
+our @ObjectDependencies = ();
 
 =head1 NAME
 

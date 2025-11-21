@@ -28,12 +28,7 @@ use parent qw(Kernel::System::Console::BaseCommand);
 # Inform the object manager about the hard dependencies.
 # This module must be discarded when one of the hard dependencies has been discarded.
 our @ObjectDependencies = (
-    'Kernel::Config',
-    'Kernel::Output::HTML::Layout',
     'Kernel::System::GenericInterface::Webservice',
-    'Kernel::System::Ticket',
-    'Kernel::System::Ticket::Article',
-    'Kernel::System::Package',
     'Kernel::System::Main',
     'Kernel::System::OtoboAI',
 );
@@ -41,7 +36,7 @@ our @ObjectDependencies = (
 sub Configure {
     my ( $Self, %Param ) = @_;
 
-    $Self->Description('Retrieve an AI geenrated Answer from the otobo-ai-services container.');
+    $Self->Description('Retrieve an AI generated Answer from the otobo-ai-services container.');
     $Self->AddOption(
         Name        => 'article-id',
         Description => 'ArticleID',

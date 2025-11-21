@@ -33,9 +33,9 @@ our @ObjectDependencies = (
     'Kernel::System::Cache',
     'Kernel::System::DynamicField',
     'Kernel::System::DynamicField::Backend',
+    'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::Log',
     'Kernel::System::Main',
-    'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::Ticket::Article',
 );
 
