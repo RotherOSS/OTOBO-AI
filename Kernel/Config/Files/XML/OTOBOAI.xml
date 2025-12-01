@@ -250,7 +250,14 @@
         <Description Translatable="1">This option defines the dynamic field in which an OTOBOAI answer is stored.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
-            <Item ValueType="Entity" ValueEntityType="DynamicField" ValueEntitySubType="Article" ValueRegex="">OTOBOAI</Item>
+            <Item ValueType="String">OTOBOAI</Item>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::OverwritePreviousResponse" Required="0" Valid="1">
+        <Description Translatable="1">By activating this option, previous AI answers fetched for an article are ignored and a new request to the LLM is started.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="Checkbox">0</Item>
         </Value>
     </Setting>
 </otobo_config>
