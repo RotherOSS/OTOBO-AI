@@ -124,6 +124,10 @@ OTOBOAI::FAQ::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Which FAQ articles to include for FAQ ingestion.
 
+OTOBOAI::OverwritePreviousResponse
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+By activating this option, previous AI answers fetched for an article are ignored and a new request to the LLM is started.
+
 OTOBOAI::Placeholder
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Define a string which is used as a placeholder while waiting for the AI answer.
