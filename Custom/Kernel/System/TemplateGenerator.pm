@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - 2c6bbb92253542adaaf57bae0c60da559747297f - Kernel/System/TemplateGenerator.pm
+# $origin: otobo - 1b2b9b4a41de83976e45aaac1aa63a801cce2cdd - Kernel/System/TemplateGenerator.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -362,7 +362,7 @@ sub Sender {
         }
     }
 
-    # Format sender realname and address conformant to RFC 5322. This is relevant when the real name contain commas
+    # Format sender realname and address compliant to RFC 5322. This is relevant when the real name contain commas
     # or other special symbols.
     return Mail::Address->new( $Address{RealName}, $Address{Email} )->format();
 }
@@ -1652,8 +1652,8 @@ sub _Replace {
         }
     }
 
-    # Dropdown, Checkbox and MultipleSelect DynamicFields, can store values (keys) that are
-    # different from the the values to display
+    # Dropdown, Checkbox and MultiSelect DynamicFields, can store values (keys) that are
+    # different from the values to display
     # <OTOBO_TICKET_DynamicField_NameX> returns the stored key
     # <OTOBO_TICKET_DynamicField_NameX_Value> returns the display value
 
