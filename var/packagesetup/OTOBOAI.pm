@@ -19,6 +19,13 @@ package var::packagesetup::OTOBOAI;
 use strict;
 use warnings;
 
+# core modules
+
+# CPAN modules
+
+# OTOBO modules
+use Kernel::System::VariableCheck qw(IsHashRefWithData);
+
 our @ObjectDependencies = (
     'Kernel::Config',
     'Kernel::System::DynamicField',
@@ -346,6 +353,14 @@ sub _DeleteAIDynamicField {
     my $DynamicFieldConfig = $DynamicFieldObject->DynamicFieldGet(
         Name => $DynamicFieldName,
     );
+
+    if ( !IsHashRefWithData($DynamicFieldConfig) ) {
+        $LogObject->Log(
+            'Priority' => 'error',
+            'Message'  => "DynamicField '$DynamicFieldName' not found on the system!",
+        );
+        return;
+    }
 
     my $ValuesDeleteSuccess = $DynamicFieldBackendObject->AllValuesDelete(
         DynamicFieldConfig => $DynamicFieldConfig,

@@ -518,6 +518,13 @@ sub Template {
             my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
                 Name => $DynamicFieldName,
             );
+            if ( !IsHashRefWithData($OTOBOAIDFConfig) ) {
+                $Kernel::OM->Get('Kernel::System::Log')->Log(
+                    Priority => 'error',
+                    Message  => "DynamicField '$DynamicFieldName' not found on the system!",
+                );
+                return;
+            }
             my $OTOBOAIValue = '';
             if ( !$OverwriteFlag ) {
                 $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
