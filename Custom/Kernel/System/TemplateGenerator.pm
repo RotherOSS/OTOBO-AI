@@ -509,6 +509,7 @@ sub Template {
         if ( $TemplateText =~ /$AITag/ ) {
             my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
             my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+            my $OverwriteFlag    = $ConfigObject->Get('OTOBOAI::OverwritePreviousResponse') || 0;
 
             my $Placeholder = $ConfigObject->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
             $Placeholder = $Kernel::OM->Get('Kernel::Output::HTML::Layout')->{LanguageObject}->Translate( $Placeholder );
@@ -517,10 +518,13 @@ sub Template {
             my $OTOBOAIDFConfig = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
                 Name => $DynamicFieldName,
             );
-            my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
-                DynamicFieldConfig => $OTOBOAIDFConfig,
-                ObjectID           => $Param{ArticleID},
-            );
+            my $OTOBOAIValue = '';
+            if ( !$OverwriteFlag ) {
+                $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
+                    DynamicFieldConfig => $OTOBOAIDFConfig,
+                    ObjectID           => $Param{ArticleID},
+                );
+            }
 
             my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
             if ( $RequestType eq 'Asynchronous' ) {

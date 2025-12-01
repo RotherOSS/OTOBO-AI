@@ -73,6 +73,7 @@ sub Run {
 
     # get necessary objects
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+    my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
 
     # handle missing article data by fetching last customer article
     my $ArticleID;
@@ -108,7 +109,7 @@ sub Run {
     return if ( $ArticleObject->{$CacheKey}{$ArticleID} );
 
     # prepopulate AI dynamic field with default answer
-    my $DynamicFieldName = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+    my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
     my $OTOBOAIDFConfig  = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
         Name => $DynamicFieldName,
     );
@@ -117,11 +118,15 @@ sub Run {
     #   value either being the placeholder or an actual value
     #   in both cases we do not want to trigger a new request
     my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
-    my $CurrentValue              = $DynamicFieldBackendObject->ValueGet(
-        DynamicFieldConfig => $OTOBOAIDFConfig,
-        ObjectID           => $ArticleID,
-        UserID             => $Param{UserID},
-    );
+    my $CurrentValue              = '';
+    my $OverwriteFlag             = $ConfigObject->Get('OTOBOAI::OverwritePreviousResponse') || 0;
+    if ( !$OverwriteFlag ) {
+        $CurrentValue = $DynamicFieldBackendObject->ValueGet(
+            DynamicFieldConfig => $OTOBOAIDFConfig,
+            ObjectID           => $ArticleID,
+            UserID             => $Param{UserID},
+        );
+    }
     return if $CurrentValue;
 
     my $Placeholder = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
