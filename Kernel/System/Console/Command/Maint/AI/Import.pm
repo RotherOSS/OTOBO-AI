@@ -487,7 +487,7 @@ sub MigrateDocs {
         $Count++;
 
         # slurp content of file
-        my $FileContent = file($DocumentPath)->slurp();
+        my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' );
 
         push @Content, [
             {
