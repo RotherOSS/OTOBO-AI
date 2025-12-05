@@ -118,6 +118,19 @@ sub Run {
             }
         }
     }
+    elsif ( $Subaction eq "CancelAIRequest" ) {
+        $CacheObject->Delete(
+            Type => 'OtoboAI',
+            Key  => $CacheKeyRequest,
+        );
+        $JSON = $LayoutObject->JSONEncode(
+            Data => {
+                Status => 'canceled',
+                Value  => $QuestionMd5,
+            },
+        );
+
+    }
 
     # send JSON response
     return $LayoutObject->Attachment(

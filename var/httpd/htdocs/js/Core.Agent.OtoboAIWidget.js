@@ -104,6 +104,11 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         });
 
         $('#CancelQuestion').on('click', function () {
+            var Data = {
+                Action: 'OtoboAIDashboard',
+                Subaction: 'CancelAIRequest',
+            };
+            Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function () {});
             $('#Reply').toggleClass('OtoboAIResponseError', true);
             $('#Reply').val(Core.Language.Translate('Your request was canceled'));
             SetInitialState();
