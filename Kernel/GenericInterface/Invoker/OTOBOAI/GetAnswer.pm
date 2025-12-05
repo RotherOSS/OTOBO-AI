@@ -97,6 +97,10 @@ sub PrepareRequest {
     my ( $Self, %Param ) = @_;
 
     my $Question = $Param{Data}{Question};
+ 
+    my $DoScoringEvaluation = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DoScoringEvaluation')
+        ? $Kernel::OM->Get('Kernel::System::JSON')->True()
+        : $Kernel::OM->Get('Kernel::System::JSON')->False();
 
     # check needed
     for my $Needed (qw/Question/) {
@@ -113,7 +117,7 @@ sub PrepareRequest {
         Data    => {
             input => {
                 question   => $Question,
-                do_scoring => $Kernel::OM->Get('Kernel::System::JSON')->True(),
+                do_scoring => $DoScoringEvaluation,
             },
             config => {},
             kwargs => {},
