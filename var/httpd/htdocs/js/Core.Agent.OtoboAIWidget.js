@@ -77,7 +77,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
                 else {
                     Timeout = setTimeout(function () {
                         $('#Reply').toggleClass('OtoboAIResponseError', true);
-                        $('#Reply').val('Your request has timed out');
+                        $('#Reply').val(Core.Language.Translate('Your request has timed out'));
                         SetInitialState();
                     }, TimeoutInterval * 1000);
                     Timer = setInterval(function () {
@@ -93,7 +93,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
                             }
                             else if (Response.Status === 'fail') {
                                 $('#Reply').toggleClass('OtoboAIResponseError', true);
-                                $('#Reply').val('Your request has failed');
+                                $('#Reply').val(Core.Language.Translate('Your request has failed'));
                                 SetInitialState();
                             }
                         });
@@ -105,7 +105,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
 
         $('#CancelQuestion').on('click', function () {
             $('#Reply').toggleClass('OtoboAIResponseError', true);
-            $('#Reply').val('Your request was canceled');
+            $('#Reply').val(Core.Language.Translate('Your request was canceled'));
             SetInitialState();
             return(false);
         });
