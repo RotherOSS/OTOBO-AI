@@ -20,7 +20,6 @@ use strict;
 use warnings;
 
 use Kernel::Language qw(Translatable);
-use Digest::MD5      qw(md5);
 
 our $ObjectManagerDisabled = 1;
 
@@ -41,10 +40,12 @@ sub Run {
     my $ParamObject   = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $CacheObject   = $Kernel::OM->Get('Kernel::System::Cache');
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
+    my $MainObject    = $Kernel::OM->Get('Kernel::System::Main');
 
     my $Subaction        = $ParamObject->GetParam( Param => 'Subaction' ) || '';
     my $Question         = $ParamObject->GetParam( Param => 'Question' )  || '';
-    my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $Question;        # md5
+    my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );;
+    my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $QuestionMd5;
     my $CacheKeyRequest  = 'OtoboAI-Custom-Request-' . $Self->{UserID};
 
     my $JSON;
@@ -77,7 +78,7 @@ sub Run {
             $JSON = $LayoutObject->JSONEncode(
                 Data => {
                     Status => 'pending',
-                    Value  => $Question,    #md5
+                    Value  => $QuestionMd5,
                 },
             );
         }
@@ -104,7 +105,7 @@ sub Run {
                 $JSON = $LayoutObject->JSONEncode(
                     Data => {
                         Status => 'pending',
-                        Value  => $Question,    # md5
+                        Value  => $QuestionMd5,
                     },
                 );
             }
