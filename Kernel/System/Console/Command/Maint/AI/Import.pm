@@ -24,6 +24,7 @@ use File::Find  qw(find);
 use LWP::UserAgent;
 use File::Basename        qw(basename dirname);
 use HTTP::Request::Common qw{ POST };
+use JSON;
 
 use Kernel::System::VariableCheck qw(:all);
 
@@ -42,13 +43,10 @@ our @ObjectDependencies = (
     'Kernel::System::Package',
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
-    'Kernel::System::OtoboAI',
 );
 
 sub Configure {
     my ( $Self, %Param ) = @_;
-
-    $Self->{TicketSample} = [];
 
     $Self->Description('Import existing tickets and faq articles to the AI vector database.');
     $Self->AddOption(
@@ -69,29 +67,20 @@ sub Configure {
         #        ValueRegex => qr/^[tfd]+$/smx,
     );
     $Self->AddOption(
-        Name        => 'do-scoring',
-        Description =>
-            "Do a re-import of n (default:90%) tickets, then do scoring on the remaining tickets. Any existing data in the AI vectorstore and fulltext postgres DBs will be purged. The value of this option is a file path where to put result csv to.",
-        Required   => 0,
-        HasValue   => 1,
-        ValueRegex => qr/.*/smx,
-    );
-    $Self->AddOption(
-        Name        => 'verbose',
-        Description =>
-            "when scoring, report verbosely for each ticket processed.",
-        Required => 0,
-        HasValue => 0,
-
-        #   ValueRegex => qr/0|1/smx,
-    );
-    $Self->AddOption(
-        Name        => 'sample-size',
+        Name        => 'sample-nth',
         Description =>
             "Only relevant with --do-scoring, specifies the sample size. Take every nth num for sampling. Specifying 10 will take every tenth, resulting in a 10% sample size. Specify 5 to take every 5th which will give 20% Sampelsize. Specify 20 to take every 20th which will yield 5% sample size. The default is 10.",
         Required   => 0,
         HasValue   => 1,
         ValueRegex => qr/[0-9]+/smx,
+    );
+    $Self->AddOption(
+        Name        => 'sample',
+        Description =>
+            "Specify a file path to write a sample.json file containing TicketIDs to sample. When specified, then severy sample-nth Ticket will not be imported, but added to the list of sample ids. The default for sample-nth is 10 to sample every 10th Ticket (10% sample size). Override with the --sample-nth parameter.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
     );
 
     return;
@@ -100,12 +89,20 @@ sub Configure {
 sub PreRun {
     my ( $Self, %Param ) = @_;
 
-    my $DoScoring = $Self->GetOption('do-scoring');
-    if ($DoScoring) {
+    my $Sample = $Self->GetOption('sample');
+    if ($Sample) {
 
-        my $ScoringDir = dirname($DoScoring);
-        if ( !-d $ScoringDir ) {
-            $Self->Print("<red>do-scoring parameter needs a valid path to an output file, but parent path does not exist.</red>\n");
+        my $FullPath = $Sample;
+
+        if ( -d $Sample ) {
+            $FullPath .= "/sample.json";
+        }
+
+        $Self->{SamplePath} = $FullPath;
+
+        my $SampleDir = dirname($FullPath);
+        if ( !-d $SampleDir ) {
+            $Self->Print("<red>do-sample parameter needs a valid path to an output file, but parent path $SampleDir does not exist.</red>\n");
             die;
         }
     }
@@ -147,12 +144,12 @@ sub Run {
         }
     }
 
-    my $DoScoring  = $Self->GetOption('do-scoring');
-    my $SampleSize = $Self->GetOption('sample-size') || 10;
+    my $Sample    = $Self->GetOption('sample');
+    my $SampleNth = $Self->GetOption('sample-nth') || 10;
 
     my $ReImport = $Self->GetOption('reimport');
 
-    if ( $ReImport || $DoScoring ) {
+    if ($ReImport) {
         $Self->Purge();
     }
 
@@ -160,8 +157,8 @@ sub Run {
 
     if ( $Targets =~ /t/ ) {
         $Self->MigrateTickets(
-            DoScoring  => $DoScoring,
-            SampleSize => $SampleSize
+            Sample    => $Sample,
+            SampleNth => $SampleNth
         );
     }
 
@@ -173,20 +170,14 @@ sub Run {
         $Self->MigrateDocs();
     }
 
-    if ($DoScoring) {
-        $Self->DoScoring(
-            OutputFile => $DoScoring
-        );
-    }
-
     return $Self->ExitCodeOk();
 }
 
 sub MigrateTickets {
     my ( $Self, %Param ) = @_;
 
-    my $DoScoring  = $Param{DoScoring};
-    my $SampleSize = $Param{SampleSize};
+    my $Sample    = $Param{Sample};
+    my $SampleNth = $Param{SampleNth};
 
     my $TicketObject    = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ArticleObject   = $Kernel::OM->Get('Kernel::System::Ticket::Article');
@@ -213,9 +204,10 @@ sub MigrateTickets {
         %{$SearchRestrictions},
     );
 
-    my $Count     = 0;
-    my $Imported  = 0;
-    my $Handled   = 0;
+    my $Count    = 0;
+    my $Imported = 0;
+    my $Handled  = 0;
+    my @TicketSample;
     my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#TicketIDs / 10 ) ) )[1];
     my $Percent1  = ( sort { $a <=> $b } ( 1,  int( $#TicketIDs / 100 ) ) )[1];
 
@@ -251,14 +243,14 @@ sub MigrateTickets {
             my $QuestionArticle = shift @Articles;
             my @AnswerArticles;
 
-            if ($DoScoring) {
+            if ($Sample) {
 
                 # keep 10% sample of tickets for testing and do NOT import them
 
-                if ( $Handled % $SampleSize == 0 ) {
+                if ( $Handled % $SampleNth == 0 ) {
 
                     $Handled++;
-                    push $Self->{TicketSample}->@*, $TicketID;
+                    push @TicketSample, $TicketID;
                     next TICKETID;
                 }
             }
@@ -398,12 +390,15 @@ sub MigrateTickets {
     #else {
     $Self->Print("<green>Ticket transfer complete. Considered $Count tickets, of wich $Imported where imported.</green>\n");
 
-    if ($DoScoring) {
+    if ($Sample) {
 
-        my $SampleSize = scalar $Self->{TicketSample}->@*;
+        my $SampleSize = scalar @TicketSample;
         $Self->Print(
             "<yellow>$SampleSize</yellow> Tickets have been held back for sampling.\n"
         );
+
+        my $JSON = encode_json( \@TicketSample );
+        file( $Self->{SamplePath} )->spew($JSON);
     }
 
     #}
@@ -631,96 +626,6 @@ sub Purge {
         $Result->{Success}                   &&
         IsHashRefWithData( $Result->{Data} ) &&
         $Result->{Data}{success};
-}
-
-sub DoScoring {
-
-    my ( $Self, %Param ) = @_;
-
-    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
-    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-
-    my $OutputCSVFileHandle;
-
-    ## no critic(OTOBO::ProhibitOpen InputOutput::RequireBriefOpen)
-    open( $OutputCSVFileHandle, '>', $Param{OutputFile} ) || die("failed to open file '$Param{OutputFile}'");
-
-    print $OutputCSVFileHandle "TicketID\tScore\r\n";
-
-    my $TotalScore = 0.0;
-    my $NumScores  = 0;
-    my $SampleSize = scalar $Self->{TicketSample}->@*;
-    my $Verbose    = $Self->GetOption('verbose');
-
-    if ($Verbose) {
-        $Self->Print("Sample Size: $SampleSize\n");
-    }
-
-    for my $TicketID ( $Self->{TicketSample}->@* ) {
-
-        my $ArticleID;
-        my @Articles = $ArticleObject->ArticleList(
-            TicketID   => $TicketID,
-            SenderType => 'customer',
-            OnlyFirst  => 1,
-        );
-        if (@Articles) {
-            $ArticleID = $Articles[0]{ArticleID};
-        }
-
-        if ($ArticleID) {
-
-            if ($Verbose) {
-
-                $Self->Print("<yellow>-----------------------------------------------</yellow>\n");
-                $Self->Print("TicketID: $TicketID\n");
-
-                my $ArticleBackendObject = $ArticleObject->BackendForArticle(
-                    TicketID  => $TicketID,
-                    ArticleID => $ArticleID,
-                );
-
-                my %Article = $ArticleBackendObject->ArticleGet(
-                    TicketID  => $TicketID,
-                    ArticleID => $ArticleID,
-                );
-
-                $Self->Print( "Question: " . $Article{Subject} . "\r\n" . $Article{Body} . "\r\n" );
-            }
-
-            my $Result = $OtoboAIObject->GetAnswer(
-                ObjectID => $ArticleID,
-                Persist  => 0
-            );
-
-            if ( IsHashRefWithData($Result) && $Result->{Success} == 1 ) {
-                if ($Verbose) {
-
-                    $Self->Print( "Answer: " . $Result->{Data}->{Answer} . "\r\nScore: " . $Result->{Data}->{Score} . "\r\n" );
-                }
-
-                $TotalScore += $Result->{Data}->{Score};
-                $NumScores++;
-
-                my $Line = $TicketID . "\t" . $Result->{Data}->{Score};
-                print $OutputCSVFileHandle "$Line\r\n";
-            }
-            else {
-                $Self->Print( "<red>Error: " . $Result->{Error} . "</red>\n" );
-            }
-        }
-    }
-
-    close($OutputCSVFileHandle);
-
-    my $Score = 0;
-    if ( $NumScores > 0 ) {
-        $Score = $TotalScore / $NumScores;
-    }
-
-    $Self->Print("<yellow>$NumScores Tickets out of $SampleSize TicketSample have been scored, and the overall score is: $Score</yellow>\n");
-
-    return;
 }
 
 sub _DocumentSearch {
