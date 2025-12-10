@@ -40,6 +40,22 @@ our @ObjectDependencies = (
     'Kernel::System::Ticket::Article',
 );
 
+=head1 NAME
+
+Kernel::System::OtoboAI - get OtoboAI GetAnswer for a Question or an ArticleID
+
+=head1 DESCRIPTION
+
+call OtoboAI GetAnswer synchronously or asynchronously
+
+=head2 new()
+
+create a OtoboAI object. Do not use it directly, instead use:
+
+    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
+
+=cut
+
 sub new {
 
     my ( $Type, %Param ) = @_;
@@ -50,6 +66,20 @@ sub new {
 
     return $Self;
 }
+
+
+=head2 GetAnswerAsync()
+
+Get an OtoboAI Answer asynchronously.
+
+    my $Success = $OtoboAIObject->GetAnswerAsync(
+        Question => '<some ai question>',  # the question to ask the LLM            
+        ObjectID => $ArticleID,            # if given, construct question from Article Subject+Body
+                                           # results will be stored in this Articles AIResult DynamicField
+        UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
+    );
+
+=cut
 
 sub GetAnswerAsync {
     my ( $Self, %Param ) = @_;
@@ -91,6 +121,37 @@ sub GetAnswerAsync {
 
     return 1;
 }
+
+
+=head2 GetAnswer()
+
+Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this wull happen on a Daemon thread.
+
+    my $Result = $OtoboAIObject->GetAnswerAsync(
+        Question => '<some ai question>',  # the question to ask the LLM            
+        ObjectID => $ArticleID,            # if given, construct question from Article Subject+Body
+                                           # results will be stored in this Articles AIResult DynamicField
+        UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
+        Persist  => 1|0,                   # optional, default is 1. Whether to persist Result in DF (with ObjectID) or
+                                           # poplate the use specific cache key
+    );
+
+    # on success
+    $Result = {
+        Success => 1,
+        Data => {
+            Answer => 'the AI answer as text',
+            Score  => 'The AI evaluation score %.',  # only if scoring is activated, see SysConfig
+        },
+    }
+
+    # on error
+    $Result = {
+        Success => 0,
+        Error => "SomeErrorMsg",
+    }
+
+=cut
 
 sub GetAnswer {
     my ( $Self, %Param ) = @_;
@@ -134,6 +195,7 @@ sub GetAnswer {
     # prepare the question
     my $ObjectID = $Param{ObjectID};
     my $UserID   = $Param{UserID};
+    my $Persist  = $Param{Persist} // 1;
     my $Question;
 
     if ($ObjectID) {
@@ -189,7 +251,7 @@ sub GetAnswer {
     my $Answer = $Result->{Data}{Answer} || "";
 
     # set dynamic field value if ObjectID was given
-    if ($ObjectID) {
+    if ( $ObjectID && $Persist ) {
 
         # fetching dynamic field config
         my $DynamicFieldName = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
@@ -212,7 +274,7 @@ sub GetAnswer {
             UserID             => 1,
         );
     }
-    elsif ($UserID) {
+    elsif ( $UserID && $Persist ) {
         my $CacheObject      = $Kernel::OM->Get('Kernel::System::Cache');
         my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $Question;                                                            #md5
         my $TTL              = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Answer} || 24;
@@ -224,7 +286,10 @@ sub GetAnswer {
         );
     }
 
-    return $Answer;
+    return {
+        Success => 1,
+        Data    => $Result->{Data},
+    };
 }
 
 1;

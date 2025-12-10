@@ -559,7 +559,7 @@ sub Template {
                     );
                     $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
                         ObjectID => $Param{ArticleID},
-                    );
+                    )->{Answer};
                 }
             }
 

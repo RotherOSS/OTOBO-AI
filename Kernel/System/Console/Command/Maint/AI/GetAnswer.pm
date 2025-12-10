@@ -31,6 +31,7 @@ our @ObjectDependencies = (
     'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::Main',
     'Kernel::System::OtoboAI',
+    'Kernel::System::Ticket::Article',
 );
 
 sub Configure {
@@ -40,6 +41,13 @@ sub Configure {
     $Self->AddOption(
         Name        => 'article-id',
         Description => 'ArticleID',
+        Required    => 0,
+        HasValue    => 1,
+        ValueRegex  => qr/^\d+$/smx,
+    );
+    $Self->AddOption(
+        Name        => 'ticket-id',
+        Description => 'TicketID',
         Required    => 0,
         HasValue    => 1,
         ValueRegex  => qr/^\d+$/smx,
@@ -107,11 +115,26 @@ sub Run {
     }
     else {
 
+        my $TicketID  = $Self->GetOption('ticket-id');
         my $ArticleID = $Self->GetOption('article-id');
 
         if ( !$ArticleID ) {
 
-            $Self->Print("<red>Either Question or ArticleID parameter is required.</red>\n");
+            my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+            my @Articles      = $ArticleObject->ArticleList(
+                TicketID   => $TicketID,
+                SenderType => 'customer',
+                OnlyFirst  => 1,
+            );
+            if (@Articles) {
+                $ArticleID = $Articles[0]{ArticleID};
+            }
+
+        }
+
+        if ( !$ArticleID ) {
+
+            $Self->Print("<red>Either Question or ArticleID or TicketID parameter is required.</red>\n");
             die;
         }
 

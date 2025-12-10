@@ -22,6 +22,7 @@ use warnings;
 use Path::Class qw(file);
 use File::Find  qw(find);
 use LWP::UserAgent;
+use File::Basename        qw(basename dirname);
 use HTTP::Request::Common qw{ POST };
 
 use Kernel::System::VariableCheck qw(:all);
@@ -41,10 +42,13 @@ our @ObjectDependencies = (
     'Kernel::System::Package',
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
+    'Kernel::System::OtoboAI',
 );
 
 sub Configure {
     my ( $Self, %Param ) = @_;
+
+    $Self->{TicketSample} = [];
 
     $Self->Description('Import existing tickets and faq articles to the AI vector database.');
     $Self->AddOption(
@@ -58,11 +62,36 @@ sub Configure {
     $Self->AddOption(
         Name        => 'reimport',
         Description =>
-            "Do a re-import, which means the AI vectorstore and fulltext postgres Dbs will be purged.",
+            "Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged.",
         Required => 0,
         HasValue => 0,
 
         #        ValueRegex => qr/^[tfd]+$/smx,
+    );
+    $Self->AddOption(
+        Name        => 'do-scoring',
+        Description =>
+            "Do a re-import of n (default:90%) tickets, then do scoring on the remaining tickets. Any existing data in the AI vectorstore and fulltext postgres DBs will be purged. The value of this option is a file path where to put result csv to.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
+    );
+    $Self->AddOption(
+        Name        => 'verbose',
+        Description =>
+            "when scoring, report verbosely for each ticket processed.",
+        Required => 0,
+        HasValue => 0,
+
+        #   ValueRegex => qr/0|1/smx,
+    );
+    $Self->AddOption(
+        Name        => 'sample-size',
+        Description =>
+            "Only relevant with --do-scoring, specifies the sample size. Take every nth num for sampling. Specifying 10 will take every tenth, resulting in a 10% sample size. Specify 5 to take every 5th which will give 20% Sampelsize. Specify 20 to take every 20th which will yield 5% sample size. The default is 10.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/[0-9]+/smx,
     );
 
     return;
@@ -70,6 +99,16 @@ sub Configure {
 
 sub PreRun {
     my ( $Self, %Param ) = @_;
+
+    my $DoScoring = $Self->GetOption('do-scoring');
+    if ($DoScoring) {
+
+        my $ScoringDir = dirname($DoScoring);
+        if ( !-d $ScoringDir ) {
+            $Self->Print("<red>do-scoring parameter needs a valid path to an output file, but parent path does not exist.</red>\n");
+            die;
+        }
+    }
 
     return;
 }
@@ -108,16 +147,22 @@ sub Run {
         }
     }
 
+    my $DoScoring  = $Self->GetOption('do-scoring') || 10;
+    my $SampleSize = $Self->GetOption('sample-size');
+
     my $ReImport = $Self->GetOption('reimport');
 
-    if ($ReImport) {
+    if ( $ReImport || $DoScoring ) {
         $Self->Purge();
     }
 
     my $Targets = $Self->GetOption('target') || "tdf";
 
     if ( $Targets =~ /t/ ) {
-        $Self->MigrateTickets();
+        $Self->MigrateTickets(
+            DoScoring  => $DoScoring,
+            SampleSize => $SampleSize
+        );
     }
 
     if ( $Targets =~ /f/ ) {
@@ -128,11 +173,20 @@ sub Run {
         $Self->MigrateDocs();
     }
 
+    if ($DoScoring) {
+        $Self->DoScoring(
+            OutputFile => $DoScoring
+        );
+    }
+
     return $Self->ExitCodeOk();
 }
 
 sub MigrateTickets {
     my ( $Self, %Param ) = @_;
+
+    my $DoScoring  = $Param{DoScoring};
+    my $SampleSize = $Param{SampleSize};
 
     my $TicketObject    = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ArticleObject   = $Kernel::OM->Get('Kernel::System::Ticket::Article');
@@ -160,14 +214,14 @@ sub MigrateTickets {
     );
 
     my $Count     = 0;
+    my $Imported  = 0;
+    my $Handled   = 0;
     my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#TicketIDs / 10 ) ) )[1];
     my $Percent1  = ( sort { $a <=> $b } ( 1,  int( $#TicketIDs / 100 ) ) )[1];
 
-    if ( $#TicketIDs > 100 ) {
-        $Self->Print(
-            "<yellow>Tickets are transferred. This can take several hours, depending on the number of tickets.</yellow>\n"
-        );
-    }
+    $Self->Print(
+        "<yellow>" . ( scalar @TicketIDs ) . " Tickets are considered for transfer. This can take several hours, depending on the number of tickets.</yellow>\n"
+    );
 
     BATCH:
     while ( $Count < scalar @TicketIDs ) {
@@ -196,6 +250,18 @@ sub MigrateTickets {
 
             my $QuestionArticle = shift @Articles;
             my @AnswerArticles;
+
+            if ($DoScoring) {
+
+                # keep 10% sample of tickets for testing and do NOT import them
+
+                if ( $Handled % $SampleSize == 0 ) {
+
+                    $Handled++;
+                    push $Self->{TicketSample}->@*, $TicketID;
+                    next TICKETID;
+                }
+            }
 
             ARTICLE:
             for my $Article (@Articles) {
@@ -255,6 +321,9 @@ sub MigrateTickets {
 
             next TICKETID if !@AnswerArticles;
 
+            $Handled++;
+            $Imported++;
+
             push @ImportTicketsQA, [
                 {
                     type => 'question',
@@ -312,7 +381,7 @@ sub MigrateTickets {
             if ( ++$Count % $Percent10 == 0 ) {
                 my $Percent = int( $Count / ( $#TicketIDs / 100 ) );
                 $Self->Print(
-                    "<yellow>$Count</yellow> of <yellow>$#TicketIDs</yellow> processed (<yellow>$Percent %</yellow> done).\n"
+                    "<yellow>$Count</yellow> of <yellow>$#TicketIDs</yellow> processed (<yellow>$Percent %</yellow> done. $Handled Tickets handled, $Imported Tickets imported).\n"
                 );
             }
             elsif ( $#TicketIDs > 50 && $Count % $Percent1 == 0 ) {
@@ -327,7 +396,15 @@ sub MigrateTickets {
     #    $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occurred!</yellow>\n");
     #}
     #else {
-    $Self->Print("<green>Ticket transfer complete. Transferred $Count tickets.</green>\n");
+    $Self->Print("<green>Ticket transfer complete. Considered $Count tickets, of wich $Imported where imported.</green>\n");
+
+    if ($DoScoring) {
+
+        my $SampleSize = scalar $Self->{TicketSample}->@*;
+        $Self->Print(
+            "<yellow>$SampleSize</yellow> Tickets have been held back for sampling.\n"
+        );
+    }
 
     #}
 
@@ -556,6 +633,96 @@ sub Purge {
         $Result->{Data}{success};
 }
 
+sub DoScoring {
+
+    my ( $Self, %Param ) = @_;
+
+    my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
+    my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+
+    my $OutputCSVFileHandle;
+
+    ## no critic(OTOBO::ProhibitOpen InputOutput::RequireBriefOpen)
+    open( $OutputCSVFileHandle, '>', $Param{OutputFile} ) || die("failed to open file '$Param{OutputFile}'");
+
+    print $OutputCSVFileHandle "TicketID\tScore\r\n";
+
+    my $TotalScore = 0.0;
+    my $NumScores  = 0;
+    my $SampleSize = scalar $Self->{TicketSample}->@*;
+    my $Verbose    = $Self->GetOption('verbose');
+
+    if ($Verbose) {
+        $Self->Print("Sample Size: $SampleSize\n");
+    }
+
+    for my $TicketID ( $Self->{TicketSample}->@* ) {
+
+        my $ArticleID;
+        my @Articles = $ArticleObject->ArticleList(
+            TicketID   => $TicketID,
+            SenderType => 'customer',
+            OnlyFirst  => 1,
+        );
+        if (@Articles) {
+            $ArticleID = $Articles[0]{ArticleID};
+        }
+
+        if ($ArticleID) {
+
+            if ($Verbose) {
+
+                $Self->Print("<yellow>-----------------------------------------------</yellow>\n");
+                $Self->Print("TicketID: $TicketID\n");
+
+                my $ArticleBackendObject = $ArticleObject->BackendForArticle(
+                    TicketID  => $TicketID,
+                    ArticleID => $ArticleID,
+                );
+
+                my %Article = $ArticleBackendObject->ArticleGet(
+                    TicketID  => $TicketID,
+                    ArticleID => $ArticleID,
+                );
+
+                $Self->Print( "Question: " . $Article{Subject} . "\r\n" . $Article{Body} . "\r\n" );
+            }
+
+            my $Result = $OtoboAIObject->GetAnswer(
+                ObjectID => $ArticleID,
+                Persist  => 0
+            );
+
+            if ( IsHashRefWithData($Result) && $Result->{Success} == 1 ) {
+                if ($Verbose) {
+
+                    $Self->Print( "Answer: " . $Result->{Data}->{Answer} . "\r\nScore: " . $Result->{Data}->{Score} . "\r\n" );
+                }
+
+                $TotalScore += $Result->{Data}->{Score};
+                $NumScores++;
+
+                my $Line = $TicketID . "\t" . $Result->{Data}->{Score};
+                print $OutputCSVFileHandle "$Line\r\n";
+            }
+            else {
+                $Self->Print( "<red>Error: " . $Result->{Error} . "</red>\n" );
+            }
+        }
+    }
+
+    close($OutputCSVFileHandle);
+
+    my $Score = 0;
+    if ( $NumScores > 0 ) {
+        $Score = $TotalScore / $NumScores;
+    }
+
+    $Self->Print("<yellow>$NumScores Tickets out of $SampleSize TicketSample have been scored, and the overall score is: $Score</yellow>\n");
+
+    return;
+}
+
 sub _DocumentSearch {
 
     my ( $Self, %Param ) = @_;
@@ -579,12 +746,19 @@ sub _DocumentSearch {
                 # only handle files, not directories
                 if ( !-d $_ ) {
 
-                    # last write time stamp
-                    my ($WriteTime) = ( stat($_) )[9];
+                    if ($NewerThanDays) {
 
-                    # if last write time is NewerThanDays
-                    if ( ( time() - $WriteTime ) < ( $NewerThanDays * $SecondsPerDay ) ) {
+                        # last write time stamp
+                        my ($WriteTime) = ( stat($_) )[9];
 
+                        # if last write time is NewerThanDays
+                        if ( ( time() - $WriteTime ) < ( $NewerThanDays * $SecondsPerDay ) ) {
+
+                            # add this file to result set
+                            push @Files, $_;
+                        }
+                    }
+                    else {
                         # add this file to result set
                         push @Files, $_;
                     }
