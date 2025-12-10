@@ -147,8 +147,8 @@ sub Run {
         }
     }
 
-    my $DoScoring  = $Self->GetOption('do-scoring') || 10;
-    my $SampleSize = $Self->GetOption('sample-size');
+    my $DoScoring  = $Self->GetOption('do-scoring');
+    my $SampleSize = $Self->GetOption('sample-size') || 10;
 
     my $ReImport = $Self->GetOption('reimport');
 
