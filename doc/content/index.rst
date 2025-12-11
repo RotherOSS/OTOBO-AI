@@ -44,7 +44,7 @@ Otobo-ai-services
 **Note:** *Preliminary documentation, this assumes you start the otobo-ai-services container from it's own docker-compose.yml, but this is likely to change*
 
 - Get the OTOBO AI services container from https://github.com/RotherOSS/otobo-ai-services/
-- switch to branch mvp_purge # TODO: this is current dev
+- switch to branch master
 - create a rags folder in the root directory
 - copy the rag_examples/tfd_rag1 folder into the rags folder
 - copy the `.env_example` file to `.env`
@@ -87,6 +87,103 @@ Otobo-ai extension package
 The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
 
 Note that in case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
+
+
+Fine Tuning with Sample Score Evaluation
+========================================
+
+The Console Commands ``Maint::AI::Import`` and ``Maint::AI::Scoring`` can be used to do quality fine-tuning by using a sample set of tickets 
+and evaluation the Quality score of the Sample. This allows to repeat samples runs to run multiple times, with different prompts. Quality Score
+is a floating point number in the range from zero (0) to one (1).
+
+
+To use Sampling/Scoring, you need to create a Ticket Sample subset first:
+
+::
+
+   bin/otobo.Console.pl Maint::AI::Import --reimport --sample /opt/otobo/sample.json
+
+
+This will do a reimport of all sources (tickets, faqs, and docs) but will import only 90% of importable tickets into the AI vector-database
+and retain the remaining 10% of Tickets for sampling. For the sample, a JSON encoded list of TicketIDs will be written to the json file specified by the 
+sample parameter. This JSON file can then be fed multiple times into the ``Maint::AI::Scoring`` console command to evaluate the quality score.
+
+To run a sample score evaluation, run:
+
+::
+
+   bin/otobo.Console.pl Maint::AI::Scoring --verbose --limit 100 --sample /opt/otobo/sample.json --result /opt/otobo/scoring.csv
+
+
+This will read the first 100 TicketIDs from the sample.json file produced above, run each ticket through AI Answer generation and evaluate
+the quality score of the resulting answer. Output will be written as a simple CSV (tab separated) file containing two columns with the TicketIDs
+and the calculated quality score. Overall average quality score will be written to STDOUT also. The --verbose and --limit parameters are optional.
+
+
+Console Commands
+================
+
+``Maint::AI::GetAnswer``
+
+::
+
+   bin/otobo.Console.pl Maint::AI::GetAnswer --help
+   
+   Retrieve an AI generated Answer from the otobo-ai-services container.
+   
+   Usage:
+    otobo.Console.pl Maint::AI::GetAnswer [--article-id ...] [--ticket-id ...] [--question ...]
+   
+   Options:
+    [--article-id ...]             - ArticleID
+    [--ticket-id ...]              - TicketID
+    [--question ...]               - Question
+    [--help|h]                     - Display help for this command.
+    [--no-ansi]                    - Do not perform ANSI terminal output coloring.
+    [--quiet]                      - Suppress informative output, only retain error messages.
+
+
+``Maint::AI::Import``
+
+::
+
+   bin/otobo.Console.pl Maint::AI::Import --help
+   
+   Import existing tickets and faq articles to the AI vector database.
+   
+   Usage:
+    otobo.Console.pl Maint::AI::Import [--target ...] [--reimport] [--sample-nth ...] [--sample ...]
+   
+   Options:
+    [--target ...]                 - Specify which objects will be migrated. t: Tickets; f: FAQ articles; d: documents. If not specified all sources will be handled.
+    [--reimport]                   - Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged.
+    [--sample-nth ...]             - Only relevant with --do-scoring, specifies the sample size. Take every nth num for sampling. Specifying 10 will take every tenth, resulting in a 10% sample size. Specify 5 to take every 5th which will give 20% Sampelsize. Specify 20 to take every 20th which will yield 5% sample size. The default is 10.
+    [--sample ...]                 - Specify a file path to write a sample.json file containing TicketIDs to sample. When specified, then severy sample-nth Ticket will not be imported, but added to the list of sample ids. The default for sample-nth is 10 to sample every 10th Ticket (10% sample size). Override with the --sample-nth parameter.
+    [--help|h]                     - Display help for this command.
+    [--no-ansi]                    - Do not perform ANSI terminal output coloring.
+    [--quiet]                      - Suppress informative output, only retain error messages.
+
+``Maint::AI::Scoring``
+
+::
+
+   bin/otobo.Console.pl Maint::AI::Scoring --help
+   
+   Do a quality evaluation and write the coring result into a file
+   
+   Usage:
+    otobo.Console.pl Maint::AI::Scoring [--sample ...] [--result ...] [--verbose] [--limit ...]
+   
+   Options:
+    [--sample ...]                 - Specify wfile path to sample.json file with the TicketIDs to sample. This file can be produced by the 'Maint::AI::Import' console command using the --sample option.
+    [--result ...]                 - Specify the file path for the scoring output should be written to in CSV (tab separated) format.
+    [--verbose]                    - when scoring, report verbosely for each ticket processed.
+    [--limit ...]                  - when scoring, max number of ticket ids to take from sample.
+    [--help|h]                     - Display help for this command.
+    [--no-ansi]                    - Do not perform ANSI terminal output coloring.
+    [--quiet]                      - Suppress informative output, only retain error messages.
+
+
 
 Configuration Reference
 -----------------------
@@ -139,6 +236,11 @@ Which articles to include for ticket chunk ingestion.
 OTOBOAI::Ticket::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Add search restrictions or params, to add not all tickets in the otobo ai vector database.
+
+OTOBOAI::DoScoringEvaluation
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Do an extra evaluation step by an extra LLM roundtrip and return a result score. Recommended for fine-tuning test, do not
+use in production.
 
 Daemon::SchedulerCronTaskManager::Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
