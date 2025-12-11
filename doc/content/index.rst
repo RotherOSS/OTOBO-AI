@@ -4,6 +4,7 @@
 
 Sacrifice to Sphinx
 ===================
+Amen.
 
 Description
 ===========
