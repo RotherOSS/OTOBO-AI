@@ -81,9 +81,17 @@ Otobo-ai extension package
 - Install this package as usual via OTOBO Package Manager in the Admin UI.
 - Verify the AI Webservice invokers have been installed properly at - go to Admin UI -> Webservices -> Edit Web Service: OTOBO-AI
 - Add authentication by going to ‘Otobo as Requester’ -> Configure. Here, add a ‘Common Header’ at the bottom of the page. Set `Header Name` to 'Authorization'. Set `Header Value` to 'apikey <OTOBO_AI_API_KEY>'
-- Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`
+
+Example Screenshot:
+
+.. image:: ../images/headers.png
 
 **Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
+
+- Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`
+
+
+
 
 The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
 
