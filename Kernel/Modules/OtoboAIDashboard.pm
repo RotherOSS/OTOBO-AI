@@ -44,7 +44,7 @@ sub Run {
 
     my $Subaction        = $ParamObject->GetParam( Param => 'Subaction' ) || '';
     my $Question         = $ParamObject->GetParam( Param => 'Question' )  || '';
-    my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );;
+    my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );
     my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $QuestionMd5;
     my $CacheKeyRequest  = 'OtoboAI-Custom-Request-' . $Self->{UserID};
 
@@ -64,23 +64,37 @@ sub Run {
         }
         else
         {
-            $OtoboAIObject->GetAnswerAsync(
-                Question => $Question,
-                UserID   => $Self->{UserID}
+            my $RequestExists = $CacheObject->Get(
+                Type => 'OtoboAI',
+                Key  => $CacheKeyRequest,
             );
-            my $TTL = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Request} || 24;
-            $CacheObject->Set(
-                Type  => 'OtoboAI',
-                Key   => $CacheKeyRequest,
-                Value => $Question,
-                TTL   => 60 * 60 * $TTL,
-            );
-            $JSON = $LayoutObject->JSONEncode(
-                Data => {
-                    Status => 'pending',
-                    Value  => $QuestionMd5,
-                },
-            );
+            if ($RequestExists) {
+                $JSON = $LayoutObject->JSONEncode(
+                    Data => {
+                        Status => 'ongoing',
+                        Value  => $RequestExists,
+                    },
+                );
+            }
+            else {
+                $OtoboAIObject->GetAnswerAsync(
+                    Question => $Question,
+                    UserID   => $Self->{UserID}
+                );
+                my $TTL = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Request} || 24;
+                $CacheObject->Set(
+                    Type  => 'OtoboAI',
+                    Key   => $CacheKeyRequest,
+                    Value => $Question,
+                    TTL   => 60 * 60 * $TTL,
+                );
+                $JSON = $LayoutObject->JSONEncode(
+                    Data => {
+                        Status => 'pending',
+                        Value  => $QuestionMd5,
+                    },
+                );
+            }
         }
     }
     elsif ( $Subaction eq "PollAIAnswer" ) {
@@ -94,6 +108,10 @@ sub Run {
                     Status => 'success',
                     Value  => $Answer,
                 },
+            );
+            $CacheObject->Delete(
+                Type => 'OtoboAI',
+                Key  => $CacheKeyRequest,
             );
         }
         else {

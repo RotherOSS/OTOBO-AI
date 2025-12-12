@@ -47,57 +47,70 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
             clearInterval(Timer);
             clearTimeout(Timeout);
         }
-        
+
+        function SetRequestPendingState () {
+            $('#SubmitQuestion').hide();
+            $('#CancelQuestion').show();
+            $('#Reply').val('');
+            $('#Reply').toggleClass('OtoboAIResponseError', false);
+            $('#Loader').show();
+        }
+
         //document.getElementById("ComposeRequest").addEventListener("submit", function(event) {
         //    event.preventDefault();
         //    console.log("Form not sent");
         //});
 
+        function StartPolling () {
+            var PollingInterval = Core.Config.Get('PollingInterval');
+            var TimeoutInterval = Core.Config.Get('TimeoutInterval');
+            Timeout = setTimeout(function () {
+                $('#Reply').toggleClass('OtoboAIResponseError', true);
+                $('#Reply').val(Core.Language.Translate('Your request has timed out'));
+                SetInitialState();
+            }, TimeoutInterval * 1000);
+            Timer = setInterval(function () {
+                var Data = {
+                    Action: 'OtoboAIDashboard',
+                    Subaction: 'PollAIAnswer',
+                    Question: $('#Request').val()
+                };
+                Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
+                    if (Response.Status === 'success') {
+                        $('#Reply').val(Response.Value);
+                        SetInitialState();
+                    }
+                    else if (Response.Status === 'fail') {
+                        $('#Reply').toggleClass('OtoboAIResponseError', true);
+                        $('#Reply').val(Core.Language.Translate('Your request has failed'));
+                        SetInitialState();
+                    }
+                });
+            }, PollingInterval * 1000);
+        }
+
         $('#SubmitQuestion').on('click', function () {
             if (!Core.Form.Validate.ValidateElement($('#Request'))) {
                 return(false);
             }
-            $('#SubmitQuestion').hide();
-            $('#CancelQuestion').show();
-            $('#Reply').val('');
-            $('#Reply').toggleClass('OtoboAIResponseError', false);
-            var PollingInterval = Core.Config.Get('PollingInterval');
-            var TimeoutInterval = Core.Config.Get('TimeoutInterval');
+            SetRequestPendingState();
             var Data = {
                 Action: 'OtoboAIDashboard',
                 Subaction: 'GetAIAnswer',
                 Question: $('#Request').val()
             };
-            $('#Loader').show();
             Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
                 if (Response.Status === 'success') {
                     $('#Reply').val(Response.Value);
                     SetInitialState();
                 }
+                else if (Response.Status === 'ongoing') {
+                    $('#Reply').toggleClass('OtoboAIResponseError', true);
+                    $('#Reply').val('You already have the following request going on: "' + Response.Value + '"');
+                    SetInitialState();
+                }
                 else {
-                    Timeout = setTimeout(function () {
-                        $('#Reply').toggleClass('OtoboAIResponseError', true);
-                        $('#Reply').val(Core.Language.Translate('Your request has timed out'));
-                        SetInitialState();
-                    }, TimeoutInterval * 1000);
-                    Timer = setInterval(function () {
-                        Data = {
-                            Action: 'OtoboAIDashboard',
-                            Subaction: 'PollAIAnswer',
-                            Question: $('#Request').val()
-                        };
-                        Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
-                            if (Response.Status === 'success') {
-                                $('#Reply').val(Response.Value);
-                                SetInitialState();
-                            }
-                            else if (Response.Status === 'fail') {
-                                $('#Reply').toggleClass('OtoboAIResponseError', true);
-                                $('#Reply').val(Core.Language.Translate('Your request has failed'));
-                                SetInitialState();
-                            }
-                        });
-                    }, PollingInterval * 1000);
+                    StartPolling();
                 }
             });
             return(false);
@@ -114,6 +127,11 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
             SetInitialState();
             return(false);
         });
+
+        if ($('#Request').val()) {
+            SetRequestPendingState();
+            StartPolling();
+        }
     };
 
     Core.Init.RegisterNamespace(TargetNS, 'APP_MODULE');

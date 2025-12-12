@@ -15,27 +15,39 @@
 # --
 <form action="[% Env("CGIHandle") %]" method="post" enctype="multipart/form-data" name="ComposeRequest" id="ComposeRequest" class="Validate">
     <fieldset class="TableLike FixedLabel OtoboAIDashboardElem">
-        <label class="Mandatory" for="Request"><span class="Marker">*</span>[% Translate("Text") | html %]:</label>
-        <div class="RichTextField OtoboAIDashboardElem">
-            <textarea id="Request" name="Request" rows="5" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" class="RichText Validate_Required [% Data.BodyInvalid | html %]">[% Data.Question %]</textarea>
-            <div id="RequestError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
-            <div id="RequestServerError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
+
+        <div class="Row" style="grid-template-columns: 1fr">
+            <div class="FieldCell" style="grid-column: 1 / span 1">
+                <label class="Mandatory" for="Request"><span class="Marker">*</span>[% Translate("Text") | html %]:</label>
+#                <div class="Field OtoboAIDashboardElem">
+                <div class="Field">
+                    <textarea id="Request" name="Request" rows="5" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" class="RichText Validate_Required [% Data.BodyInvalid | html %]">[% Data.Question %]</textarea>
+                    <div id="RequestError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
+                    <div id="RequestServerError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
+                </div>
+            </div>
         </div>
-        <div class="Clear"></div>
-        <div class="RichTextField OtoboAIDashboardElem">
-            <textarea id="Reply" rows="15" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" readonly class="Readonly RichText">[% Data.Response %]</textarea>
+        <div class="Row" style="grid-template-columns: 1fr">
+            <div class="FieldCell" style="grid-column: 1 / span 1">
+#                <div class="Field OtoboAIDashboardElem">
+                <div class="Field">
+                    <textarea id="Reply" rows="15" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" readonly class="Readonly RichText"></textarea>
+                    <div id="RequestError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
+                    <div id="RequestServerError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
+                </div>
+            </div>
         </div>
-        <div class="Clear"></div>
-    </fieldset>
-    <div class="Footer OtoboAIDashboardElem">
-        <button id="SubmitQuestion" class="OtoboAIDashboardElem CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Send request") | html %]" >
-            <span>[% Translate("Send request") | html %]</span>
-        </button>
+        <div class="Field SpacingTop">
+#            <button id="SubmitQuestion" class="OtoboAIDashboardElem CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Send request") | html %]" >
+            <button id="SubmitQuestion" class="CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Send request") | html %]" >
+                <span>[% Translate("Send request") | html %]</span>
+            </button>
+        </div>
         <button id="CancelQuestion" style="display:none" class="OtoboAIDashboardElem CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Cancel") | html %]" >
             <span>[% Translate("Cancel") | html %]</span>
         </button>
         <div id="Loader">
             <img src=[% Config("Frontend::WebPath") %]skins/Agent/default/img/loader.gif alt="[% Translate("Waiting reply") | html %]"/>
         </div>
-    </div>
+    </fieldset>
 </form>
