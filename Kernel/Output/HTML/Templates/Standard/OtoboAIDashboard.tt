@@ -14,40 +14,34 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # --
 <form action="[% Env("CGIHandle") %]" method="post" enctype="multipart/form-data" name="ComposeRequest" id="ComposeRequest" class="Validate">
-    <fieldset class="TableLike FixedLabel OtoboAIDashboardElem">
+    <fieldset class="TableLike FixedLabel">
 
         <div class="Row" style="grid-template-columns: 1fr">
             <div class="FieldCell" style="grid-column: 1 / span 1">
-                <label class="Mandatory" for="Request"><span class="Marker">*</span>[% Translate("Text") | html %]:</label>
-#                <div class="Field OtoboAIDashboardElem">
                 <div class="Field">
-                    <textarea id="Request" name="Request" rows="5" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" class="RichText Validate_Required [% Data.BodyInvalid | html %]">[% Data.Question %]</textarea>
+                    <textarea class="OtoboAITextArea" title="Your question?" placeholder="Your question?" id="Request" name="Request" rows="5" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" class="RichText Validate_Required [% Data.BodyInvalid | html %]">[% Data.Question %]</textarea>
                     <div id="RequestError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
                     <div id="RequestServerError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
                 </div>
             </div>
         </div>
-        <div class="Row" style="grid-template-columns: 1fr">
+        <div id="ReplyBox" class="Row" style="grid-template-columns: 1fr">
             <div class="FieldCell" style="grid-column: 1 / span 1">
-#                <div class="Field OtoboAIDashboardElem">
                 <div class="Field">
-                    <textarea id="Reply" rows="15" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" readonly class="Readonly RichText"></textarea>
+                    <textarea class="OtoboAITextArea" id="Reply" rows="15" cols="[% Config("OtoboAIDashboard::Frontend::TextAreaQuestion") %]" readonly class="Readonly RichText"></textarea>
                     <div id="RequestError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
                     <div id="RequestServerError" class="TooltipErrorMessage"><p>[% Translate("This field is required.") | html %]</p></div>
                 </div>
             </div>
         </div>
         <div class="Field SpacingTop">
-#            <button id="SubmitQuestion" class="OtoboAIDashboardElem CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Send request") | html %]" >
             <button id="SubmitQuestion" class="CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Send request") | html %]" >
-                <span>[% Translate("Send request") | html %]</span>
+                <span><span><i class="ooofo ooofo-add"></i>[% Translate("Send request") | html %]</span>
             </button>
-        </div>
-        <button id="CancelQuestion" style="display:none" class="OtoboAIDashboardElem CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Cancel") | html %]" >
-            <span>[% Translate("Cancel") | html %]</span>
-        </button>
-        <div id="Loader">
-            <img src=[% Config("Frontend::WebPath") %]skins/Agent/default/img/loader.gif alt="[% Translate("Waiting reply") | html %]"/>
+            <button id="CancelQuestion" class="CallForAction Primary" accesskey="g" title="[% Translate("Send question") | html %] (g)" value="[% Translate("Cancel") | html %]" >
+                <span>[% Translate("Cancel") | html %]</span>
+            </button>
+            <img id="OtoboAILoader" src=[% Config("Frontend::WebPath") %]skins/Agent/default/img/loader.gif alt="[% Translate("Waiting reply") | html %]"/>
         </div>
     </fieldset>
 </form>

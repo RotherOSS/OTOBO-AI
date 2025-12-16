@@ -41,7 +41,8 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         var Timeout;
 
         function SetInitialState () {
-            $('#Loader').hide();            
+            $('#Request').toggleClass('OtoboAIEmptyQuestionError', false);
+            $('#OtoboAILoader').hide();
             $('#CancelQuestion').hide();
             $('#SubmitQuestion').show();
             clearInterval(Timer);
@@ -51,9 +52,12 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         function SetRequestPendingState () {
             $('#SubmitQuestion').hide();
             $('#CancelQuestion').show();
+            $('#ReplyBox').hide();
             $('#Reply').val('');
             $('#Reply').toggleClass('OtoboAIResponseError', false);
-            $('#Loader').show();
+            $('#OtoboAILoader').show();
+            $('#Request').toggleClass('OtoboAIEmptyQuestionError', false);
+
         }
 
         //document.getElementById("ComposeRequest").addEventListener("submit", function(event) {
@@ -67,6 +71,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
             Timeout = setTimeout(function () {
                 $('#Reply').toggleClass('OtoboAIResponseError', true);
                 $('#Reply').val(Core.Language.Translate('Your request has timed out'));
+                $('#ReplyBox').show();
                 SetInitialState();
             }, TimeoutInterval * 1000);
             Timer = setInterval(function () {
@@ -78,11 +83,13 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
                 Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
                     if (Response.Status === 'success') {
                         $('#Reply').val(Response.Value);
+                        $('#ReplyBox').show();
                         SetInitialState();
                     }
                     else if (Response.Status === 'fail') {
                         $('#Reply').toggleClass('OtoboAIResponseError', true);
                         $('#Reply').val(Core.Language.Translate('Your request has failed'));
+                        $('#ReplyBox').show();
                         SetInitialState();
                     }
                 });
@@ -90,7 +97,11 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         }
 
         $('#SubmitQuestion').on('click', function () {
-            if (!Core.Form.Validate.ValidateElement($('#Request'))) {
+            //if (!Core.Form.Validate.ValidateElement($('#Request'))) {
+            //    return(false);
+            //}
+            if (!$('#Request').val().trim()) {
+                $('#Request').toggleClass('OtoboAIEmptyQuestionError', true);
                 return(false);
             }
             SetRequestPendingState();
@@ -102,11 +113,13 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
             Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
                 if (Response.Status === 'success') {
                     $('#Reply').val(Response.Value);
+                    $('#ReplyBox').show();
                     SetInitialState();
                 }
                 else if (Response.Status === 'ongoing') {
                     $('#Reply').toggleClass('OtoboAIResponseError', true);
                     $('#Reply').val('You already have the following request going on: "' + Response.Value + '"');
+                    $('#ReplyBox').show();
                     SetInitialState();
                 }
                 else {
@@ -124,6 +137,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
             Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function () {});
             $('#Reply').toggleClass('OtoboAIResponseError', true);
             $('#Reply').val(Core.Language.Translate('Your request was canceled'));
+            $('#ReplyBox').show();
             SetInitialState();
             return(false);
         });
