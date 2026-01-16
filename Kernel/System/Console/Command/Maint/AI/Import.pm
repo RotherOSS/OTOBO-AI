@@ -316,25 +316,31 @@ sub MigrateTickets {
             $Handled++;
             $Imported++;
 
-            push @ImportTicketsQA, [
-                {
-                    type => 'question',
-                    text => $QuestionArticle->{Subject} . '. ' . $QuestionArticle->{Body},
-                },
-                {
-                    type => 'answer',
-                    text => $AnswerArticles[0]{Subject} . '. ' . $AnswerArticles[0]{Body},
-                },
-            ];
-
-            push @ImportTicketsAgentArticles, [
-                map {
+            push @ImportTicketsQA, {
+                "source_id" => $TicketID,
+                "content_items" => [
                     {
-                        type => 'text',
-                        text => $_->{Subject} . '. ' . $_->{Body},
-                    }
-                } @AnswerArticles
-            ];
+                        type => 'question',
+                        text => $QuestionArticle->{Subject} . '. ' . $QuestionArticle->{Body},
+                    },
+                    {
+                        type => 'answer',
+                        text => $AnswerArticles[0]{Subject} . '. ' . $AnswerArticles[0]{Body},
+                    },
+                ]
+            };
+
+            push @ImportTicketsAgentArticles, {
+                "source_id" => $TicketID,
+                "content_items" => [
+                    map {
+                        {
+                            type => 'text',
+                            text => $_->{Subject} . '. ' . $_->{Body},
+                        }
+                    } @AnswerArticles
+                ]
+            };
         }
 
         my $Result;
@@ -472,16 +478,19 @@ sub MigrateFAQs {
         my $Answer = $HTMLUtilsObject->ToAscii( String => $FAQ{Field3} );
 
         # prepare data item for invoker
-        push @FAQData, [
-            {
-                type => 'question',
-                text => $Question,
-            },
-            {
-                type => 'answer',
-                text => $Answer,
-            }
-        ];
+        push @FAQData, {
+            "sourcee_id" => $FAQID,
+            "content_items" => [
+                {
+                    type => 'question',
+                    text => $Question,
+                },
+                {
+                    type => 'answer',
+                    text => $Answer,
+                }
+            ]
+        };
 
         # bacthes of 10 FAQs
         if ( $Count % 10 == 0 ) {
@@ -561,13 +570,16 @@ sub MigrateDocs {
         # slurp content of file
         my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' );
 
-        push @Content, [
-            {
+        push @Content, {
+            "source_id" => $DocumentPath,
+            "content_items" => [
+                {
 
-                type => 'text',
-                text => $FileContent,
-            }
-        ];
+                    type => 'text',
+                    text => $FileContent,
+                }
+            ]
+        };
 
         # ingest in batches of 10
         if ( $Count % 10 ) {
