@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # $origin: otobo - 1b2b9b4a41de83976e45aaac1aa63a801cce2cdd - Kernel/System/TemplateGenerator.pm
 # --
@@ -535,31 +535,40 @@ sub Template {
 
             my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
             if ( $RequestType eq 'Asynchronous' ) {
-                if ( !$OTOBOAIValue ) {
+                if ( !$OTOBOAIValue || $OTOBOAIValue eq $Placeholder ) {
                     $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
                         ObjectID => $Param{ArticleID},
                     );
-                    $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
-                        DynamicFieldConfig => $OTOBOAIDFConfig,
-                        ObjectID           => $Param{ArticleID},
-                        Value              => $Placeholder,
-                        DoWrite            => 1,
-                        UserID             => $Param{UserID},
-                    );
+
+                    if ( !$OTOBOAIValue ) {
+                        $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                            DynamicFieldConfig => $OTOBOAIDFConfig,
+                            ObjectID           => $Param{ArticleID},
+                            Value              => $Placeholder,
+                            DoWrite            => 1,
+                            UserID             => $Param{UserID},
+                        );
+                    }
                 }
             }
             elsif ( $RequestType eq 'Synchronous' ) {
-                if ( !$OTOBOAIValue ) {
-                    $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
-                        DynamicFieldConfig => $OTOBOAIDFConfig,
-                        ObjectID           => $Param{ArticleID},
-                        Value              => $Placeholder,
-                        DoWrite            => 1,
-                        UserID             => $Param{UserID},
-                    );
-                    $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
+                if ( !$OTOBOAIValue || $OTOBOAIValue eq $Placeholder ) {
+
+                    if ( !$OTOBOAIValue ) {
+                        $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                            DynamicFieldConfig => $OTOBOAIDFConfig,
+                            ObjectID           => $Param{ArticleID},
+                            Value              => $Placeholder,
+                            DoWrite            => 1,
+                            UserID             => $Param{UserID},
+                        );
+                    }
+                    my $Result = $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswer(
                         ObjectID => $Param{ArticleID},
-                    )->{Answer};
+                    );
+                    if(IsHashRefWithData($Result) && IsHashRefWithData($Result->{Data})) {
+                        $OTOBOAIValue = $Result->{Data}->{Answer};
+                    }
                 }
             }
 

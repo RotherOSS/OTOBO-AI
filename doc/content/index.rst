@@ -88,12 +88,15 @@ Example Screenshot:
 
 **Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
 
-- Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`
+Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`. At minimum configure these two settings:
 
-
-
-
+- ``OTOBOAI::Ticket::SearchRestrictions`` - Hash of `TicketSearch <https://github.com/RotherOSS/otobo/blob/rel-11_0/Kernel/System/Ticket/TicketSearch.pm#L46>`_ Parameters.
+     Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::Ticket::SearchRestrictions' Key in Config.pm and provide the TicketSearch Hash in Code
+- ``OTOBOAI::FAQ::SearchRestrictions`` - Hash of `FAQSearch <https://github.com/RotherOSS/FAQ/blob/master/Kernel/System/FAQSearch.pm#L44>`_ Parameters.
+     Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::FAQ::SearchRestrictions' Key in Config.pm and provide the FAQSearch Hash in Code
+   
 The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
+Check ``Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField``
 
 Note that in case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
 
