@@ -479,7 +479,7 @@ sub MigrateFAQs {
 
         # prepare data item for invoker
         push @FAQData, {
-            "sourcee_id" => $FAQID,
+            "source_id" => "$FAQID",
             "content_items" => [
                 {
                     type => 'question',
@@ -574,7 +574,6 @@ sub MigrateDocs {
             "source_id" => $DocumentPath,
             "content_items" => [
                 {
-
                     type => 'text',
                     text => $FileContent,
                 }
