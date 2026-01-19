@@ -88,8 +88,18 @@ sub Run {
         Key   => 'TimeoutInterval',
         Value => $TimeoutInterval,
     );
+    my $CacheObject     = $Kernel::OM->Get('Kernel::System::Cache');
+    my $CacheKeyRequest = 'OtoboAI-Custom-Request-' . $Self->{UserID};
+    my $RequestExists   = $CacheObject->Get(
+        Type => 'OtoboAI',
+        Key  => $CacheKeyRequest,
+    );
+
     my $Content = $LayoutObject->Output(
         TemplateFile => 'OtoboAIDashboard',
+        Data         => {
+            Question => $RequestExists,
+        }
     );
 
     return $Content;

@@ -20,7 +20,6 @@ use strict;
 use warnings;
 
 use Kernel::Language qw(Translatable);
-use Digest::MD5      qw(md5);
 
 our $ObjectManagerDisabled = 1;
 
@@ -41,10 +40,12 @@ sub Run {
     my $ParamObject   = $Kernel::OM->Get('Kernel::System::Web::Request');
     my $CacheObject   = $Kernel::OM->Get('Kernel::System::Cache');
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
+    my $MainObject    = $Kernel::OM->Get('Kernel::System::Main');
 
     my $Subaction        = $ParamObject->GetParam( Param => 'Subaction' ) || '';
     my $Question         = $ParamObject->GetParam( Param => 'Question' )  || '';
-    my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $Question;        # md5
+    my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );
+    my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $QuestionMd5;
     my $CacheKeyRequest  = 'OtoboAI-Custom-Request-' . $Self->{UserID};
 
     my $JSON;
@@ -63,23 +64,37 @@ sub Run {
         }
         else
         {
-            $OtoboAIObject->GetAnswerAsync(
-                Question => $Question,
-                UserID   => $Self->{UserID}
+            my $RequestExists = $CacheObject->Get(
+                Type => 'OtoboAI',
+                Key  => $CacheKeyRequest,
             );
-            my $TTL = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Request} || 24;
-            $CacheObject->Set(
-                Type  => 'OtoboAI',
-                Key   => $CacheKeyRequest,
-                Value => $Question,
-                TTL   => 60 * 60 * $TTL,
-            );
-            $JSON = $LayoutObject->JSONEncode(
-                Data => {
-                    Status => 'pending',
-                    Value  => $Question,    #md5
-                },
-            );
+            if ($RequestExists) {
+                $JSON = $LayoutObject->JSONEncode(
+                    Data => {
+                        Status => 'ongoing',
+                        Value  => $RequestExists,
+                    },
+                );
+            }
+            else {
+                $OtoboAIObject->GetAnswerAsync(
+                    Question => $Question,
+                    UserID   => $Self->{UserID}
+                );
+                my $TTL = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Request} || 24;
+                $CacheObject->Set(
+                    Type  => 'OtoboAI',
+                    Key   => $CacheKeyRequest,
+                    Value => $Question,
+                    TTL   => 60 * 60 * $TTL,
+                );
+                $JSON = $LayoutObject->JSONEncode(
+                    Data => {
+                        Status => 'pending',
+                        Value  => $QuestionMd5,
+                    },
+                );
+            }
         }
     }
     elsif ( $Subaction eq "PollAIAnswer" ) {
@@ -94,6 +109,10 @@ sub Run {
                     Value  => $Answer,
                 },
             );
+            $CacheObject->Delete(
+                Type => 'OtoboAI',
+                Key  => $CacheKeyRequest,
+            );
         }
         else {
             my $RequestExists = $CacheObject->Get(
@@ -104,7 +123,7 @@ sub Run {
                 $JSON = $LayoutObject->JSONEncode(
                     Data => {
                         Status => 'pending',
-                        Value  => $Question,    # md5
+                        Value  => $QuestionMd5,
                     },
                 );
             }
@@ -116,6 +135,19 @@ sub Run {
                 );
             }
         }
+    }
+    elsif ( $Subaction eq "CancelAIRequest" ) {
+        $CacheObject->Delete(
+            Type => 'OtoboAI',
+            Key  => $CacheKeyRequest,
+        );
+        $JSON = $LayoutObject->JSONEncode(
+            Data => {
+                Status => 'canceled',
+                Value  => $QuestionMd5,
+            },
+        );
+
     }
 
     # send JSON response

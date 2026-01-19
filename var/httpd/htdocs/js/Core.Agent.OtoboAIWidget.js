@@ -41,74 +41,111 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         var Timeout;
 
         function SetInitialState () {
-            $('#Loader').hide();            
+            $('#Request').toggleClass('OtoboAIEmptyQuestionError', false);
+            $('#OtoboAILoader').hide();
             $('#CancelQuestion').hide();
             $('#SubmitQuestion').show();
             clearInterval(Timer);
             clearTimeout(Timeout);
         }
-        
+
+        function SetRequestPendingState () {
+            $('#SubmitQuestion').hide();
+            $('#CancelQuestion').show();
+            $('#ReplyBox').hide();
+            $('#Reply').val('');
+            $('#Reply').toggleClass('OtoboAIResponseError', false);
+            $('#OtoboAILoader').show();
+            $('#Request').toggleClass('OtoboAIEmptyQuestionError', false);
+
+        }
+
         //document.getElementById("ComposeRequest").addEventListener("submit", function(event) {
         //    event.preventDefault();
         //    console.log("Form not sent");
         //});
 
-        $('#SubmitQuestion').on('click', function () {
-            if (!Core.Form.Validate.ValidateElement($('#Request'))) {
-                return(false);
-            }
-            $('#SubmitQuestion').hide();
-            $('#CancelQuestion').show();
-            $('#Reply').val('');
-            $('#Reply').toggleClass('OtoboAIResponseError', false);
+        function StartPolling () {
             var PollingInterval = Core.Config.Get('PollingInterval');
             var TimeoutInterval = Core.Config.Get('TimeoutInterval');
+            Timeout = setTimeout(function () {
+                $('#Reply').toggleClass('OtoboAIResponseError', true);
+                $('#Reply').val(Core.Language.Translate('Your request has timed out'));
+                $('#ReplyBox').show();
+                SetInitialState();
+            }, TimeoutInterval * 1000);
+            Timer = setInterval(function () {
+                var Data = {
+                    Action: 'OtoboAIDashboard',
+                    Subaction: 'PollAIAnswer',
+                    Question: $('#Request').val()
+                };
+                Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
+                    if (Response.Status === 'success') {
+                        $('#Reply').val(Response.Value);
+                        $('#ReplyBox').show();
+                        SetInitialState();
+                    }
+                    else if (Response.Status === 'fail') {
+                        $('#Reply').toggleClass('OtoboAIResponseError', true);
+                        $('#Reply').val(Core.Language.Translate('Your request has failed'));
+                        $('#ReplyBox').show();
+                        SetInitialState();
+                    }
+                });
+            }, PollingInterval * 1000);
+        }
+
+        $('#SubmitQuestion').on('click', function () {
+            //if (!Core.Form.Validate.ValidateElement($('#Request'))) {
+            //    return(false);
+            //}
+            if (!$('#Request').val().trim()) {
+                $('#Request').toggleClass('OtoboAIEmptyQuestionError', true);
+                return(false);
+            }
+            SetRequestPendingState();
             var Data = {
                 Action: 'OtoboAIDashboard',
                 Subaction: 'GetAIAnswer',
                 Question: $('#Request').val()
             };
-            $('#Loader').show();
             Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
                 if (Response.Status === 'success') {
                     $('#Reply').val(Response.Value);
+                    $('#ReplyBox').show();
+                    SetInitialState();
+                }
+                else if (Response.Status === 'ongoing') {
+                    $('#Reply').toggleClass('OtoboAIResponseError', true);
+                    $('#Reply').val('You already have the following request going on: "' + Response.Value + '"');
+                    $('#ReplyBox').show();
                     SetInitialState();
                 }
                 else {
-                    Timeout = setTimeout(function () {
-                        $('#Reply').toggleClass('OtoboAIResponseError', true);
-                        $('#Reply').val('Your request has timed out');
-                        SetInitialState();
-                    }, TimeoutInterval * 1000);
-                    Timer = setInterval(function () {
-                        Data = {
-                            Action: 'OtoboAIDashboard',
-                            Subaction: 'PollAIAnswer',
-                            Question: $('#Request').val()
-                        };
-                        Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function (Response) {
-                            if (Response.Status === 'success') {
-                                $('#Reply').val(Response.Value);
-                                SetInitialState();
-                            }
-                            else if (Response.Status === 'fail') {
-                                $('#Reply').toggleClass('OtoboAIResponseError', true);
-                                $('#Reply').val('Your request has failed');
-                                SetInitialState();
-                            }
-                        });
-                    }, PollingInterval * 1000);
+                    StartPolling();
                 }
             });
             return(false);
         });
 
         $('#CancelQuestion').on('click', function () {
+            var Data = {
+                Action: 'OtoboAIDashboard',
+                Subaction: 'CancelAIRequest',
+            };
+            Core.AJAX.FunctionCall(Core.Config.Get('Baselink'), Data, function () {});
             $('#Reply').toggleClass('OtoboAIResponseError', true);
-            $('#Reply').val('Your request was canceled');
+            $('#Reply').val(Core.Language.Translate('Your request was canceled'));
+            $('#ReplyBox').show();
             SetInitialState();
             return(false);
         });
+
+        if ($('#Request').val()) {
+            SetRequestPendingState();
+            StartPolling();
+        }
     };
 
     Core.Init.RegisterNamespace(TargetNS, 'APP_MODULE');

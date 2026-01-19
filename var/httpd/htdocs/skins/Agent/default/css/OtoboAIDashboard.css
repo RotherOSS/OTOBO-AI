@@ -20,34 +20,31 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 @media screen,projection,tv,handheld {
 
-fieldset.TableLike.FixedLabel.OtoboAIDashboardElem>label {
-  width: 50px;
-}
-
-div.RichTextField.OtoboAIDashboardElem {
-  margin-left: 5%;
-  min-height: 0 !important;
-}
-
 .OtoboAIResponseError {
   color: darkred;
 }
 
-button.OtoboAIDashboardElem {
-  margin-left: 60px;
+#CancelQuestion {
+  display: none;
 }
 
-.Footer.OtoboAIDashboardElem {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-}
-
-.OtoboAIDashboardElem #Loader img {
+#OtoboAILoader {
   vertical-align: middle;
+  margin-left: 10px;
+  display: none;
 }
 
-.OtoboAIDashboardElem #Loader {
+.OtoboAITextArea {
+  padding: 10px;
+  width: 70%;
+}
+
+.OtoboAITextArea[readonly] {
+  background-color: #FFF;
+}
+
+
+#ReplyBox {
   display: none;
 }
 
