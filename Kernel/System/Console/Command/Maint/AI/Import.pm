@@ -204,6 +204,7 @@ sub MigrateTickets {
         %{$SearchRestrictions},
     );
 
+    my $Errors   = 0;
     my $Count    = 0;
     my $Imported = 0;
     my $Handled  = 0;
@@ -370,6 +371,13 @@ sub MigrateTickets {
                     Content => \@ImportTicketsAgentArticles,
                 },
             );
+
+            if(!$Result->{Success}) {
+                $Errors++;
+                $Self->Print(
+                    "<red>"Error importing Tickets.$Result->{ErrorMessage}."</red>\n"
+                );                
+            }
         }
 
         # TODO: Could be beautified for batches
@@ -389,25 +397,23 @@ sub MigrateTickets {
         }
     }
 
-    # TODO: Error handling
-    #if ($Errors) {
-    #    $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occurred!</yellow>\n");
-    #}
-    #else {
-    $Self->Print("<green>Ticket transfer complete. Considered $Count tickets, of wich $Imported where imported.</green>\n");
-
-    if ($Sample) {
-
-        my $SampleSize = scalar @TicketSample;
-        $Self->Print(
-            "<yellow>$SampleSize</yellow> Tickets have been held back for sampling.\n"
-        );
-
-        my $JSON = encode_json( \@TicketSample );
-        file( $Self->{SamplePath} )->spew($JSON);
+    if ($Errors) {
+        $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occurred!</yellow>\n");
     }
+    else {
+        $Self->Print("<green>Ticket transfer complete. Considered $Count tickets, of wich $Imported where imported.</green>\n");
 
-    #}
+        if ($Sample) {
+
+            my $SampleSize = scalar @TicketSample;
+            $Self->Print(
+                "<yellow>$SampleSize</yellow> Tickets have been held back for sampling.\n"
+            );
+
+            my $JSON = encode_json( \@TicketSample );
+            file( $Self->{SamplePath} )->spew($JSON);
+        }
+    }
 
     return 1;
 }
@@ -524,7 +530,7 @@ sub MigrateFAQs {
     # ingest leftovers
     if ( scalar @FAQData ) {
 
-        $RequesterObject->Run(
+        my $Result = $RequesterObject->Run(
             WebserviceID => $Self->{WebserviceID},
             Invoker      => 'IngestMany',
             Asynchronous => 0,
@@ -533,6 +539,13 @@ sub MigrateFAQs {
                 Content => \@FAQData,
             },
         );
+
+        if(!$Result->{Success}) {
+            $Errors++;
+            $Self->Print(
+                "<red>"Error importing FAQs.$Result->{ErrorMessage}."</red>\n"
+            );                
+        }        
     }
 
     if ($Errors) {
@@ -600,7 +613,7 @@ sub MigrateDocs {
     # ingest leftovers
     if ( scalar @Content ) {
 
-        $RequesterObject->Run(
+        my $Result = $RequesterObject->Run(
             WebserviceID => $Self->{WebserviceID},
             Invoker      => 'IngestMany',
             Asynchronous => 0,
@@ -609,6 +622,12 @@ sub MigrateDocs {
                 Content => \@Content,
             },
         );
+        if(!$Result->{Success}) {
+            $Errors++;
+            $Self->Print(
+                "<red>"Error importing Documents.$Result->{ErrorMessage}."</red>\n"
+            );                
+        }        
     }
 
     if ($Errors) {
