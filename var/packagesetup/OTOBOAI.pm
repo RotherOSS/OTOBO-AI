@@ -399,30 +399,8 @@ sub _CreateAIAnswerTemplate {
     # add english template
     {
         my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
-            Name         => 'OTOBOAI Answer Template [EN]',
+            Name         => 'OTOBOAI Answer Template',
             Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
-            ContentType  => 'text/plain; charset=utf-8',
-            TemplateType => 'Answer',
-            ValidID      => 1,
-            UserID       => 1,
-        );
-
-        # add template to every valid queue
-        for my $QueueID ( keys %QueueData ) {
-            $QueueObject->QueueStandardTemplateMemberAdd(
-                QueueID            => $QueueID,
-                StandardTemplateID => $TemplateID,
-                Active             => 1,
-                UserID             => 1,
-            );
-        }
-    }
-
-    # add german template
-    {
-        my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
-            Name         => 'OTOBOAI Antwortvorlage [DE]',
-            Template     => 'Die vorgeschlagene KI-Antwort ist: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
             ContentType  => 'text/plain; charset=utf-8',
             TemplateType => 'Answer',
             ValidID      => 1,
@@ -449,7 +427,7 @@ sub _DeleteAIAnswerTemplate {
     my $StandardTemplateObject = $Kernel::OM->Get('Kernel::System::StandardTemplate');
 
     # delete template
-    for my $TemplateName ( ( 'OTOBOAI Answer Template [EN]', 'OTOBOAI Antwortvorlage [DE]' ) ) {
+    for my $TemplateName ( ( 'OTOBOAI Answer Template'  ) ) {
         my $TemplateID = $StandardTemplateObject->StandardTemplateLookup(
             StandardTemplate => $TemplateName,
         );
