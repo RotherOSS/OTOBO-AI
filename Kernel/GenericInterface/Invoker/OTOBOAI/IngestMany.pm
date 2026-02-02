@@ -178,6 +178,17 @@ sub HandleResponse {
         };
     }
 
+    # extra handling for errors from python ai container
+    if(IsHashRefWithData($Param{Data}) && exists($Param{Data}{success})) {
+        if($Param{Data}{success} == 0 ) {
+
+            return {
+                Success      => 0,
+                ErrorMessage => $Param{ResponseErrorMessage},
+            };
+        }
+    }
+
     return {
         Success => 1,
         Data    => $Param{Data},

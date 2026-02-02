@@ -357,6 +357,13 @@ sub MigrateTickets {
                     Content => \@ImportTicketsQA,
                 },
             );
+
+            if(!$Result->{Success}) {
+                $Errors++;
+                $Self->Print(
+                    "<red>Error importing Tickets: ".$Result->{ErrorMessage}."</red>\n"
+                );                
+            }
         }
 
         if (@ImportTicketsAgentArticles) {
@@ -375,7 +382,7 @@ sub MigrateTickets {
             if(!$Result->{Success}) {
                 $Errors++;
                 $Self->Print(
-                    "<red>"Error importing Tickets.$Result->{ErrorMessage}."</red>\n"
+                    "<red>Error importing Tickets: ".$Result->{ErrorMessage}."</red>\n"
                 );                
             }
         }
@@ -502,7 +509,7 @@ sub MigrateFAQs {
         if ( $Count % 10 == 0 ) {
 
             # ingest
-            $RequesterObject->Run(
+            my $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
                 Invoker      => 'IngestMany',
                 Asynchronous => 0,
@@ -511,6 +518,14 @@ sub MigrateFAQs {
                     Content => \@FAQData,
                 },
             );
+
+            if(!$Result->{Success}) {
+                $Errors++;
+                $Self->Print(
+                    "<red>Error importing FAQs: ".$Result->{ErrorMessage}."</red>\n"
+                );                
+            }        
+
             @FAQData = ();
         }
 
@@ -543,7 +558,7 @@ sub MigrateFAQs {
         if(!$Result->{Success}) {
             $Errors++;
             $Self->Print(
-                "<red>"Error importing FAQs.$Result->{ErrorMessage}."</red>\n"
+                "<red>Error importing FAQs: ".$Result->{ErrorMessage}."</red>\n"
             );                
         }        
     }
@@ -597,7 +612,7 @@ sub MigrateDocs {
         if ( $Count % 10 ) {
 
             # ingest
-            $RequesterObject->Run(
+            my $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
                 Invoker      => 'IngestMany',
                 Asynchronous => 0,
@@ -606,6 +621,14 @@ sub MigrateDocs {
                     Content => \@Content,
                 },
             );
+
+            if(!$Result->{Success}) {
+                $Errors++;
+                $Self->Print(
+                    "<red>Error importing Documents: ".$Result->{ErrorMessage}."</red>\n"
+                );                
+            }        
+
             @Content = ();
         }
     }
@@ -622,10 +645,11 @@ sub MigrateDocs {
                 Content => \@Content,
             },
         );
+
         if(!$Result->{Success}) {
             $Errors++;
             $Self->Print(
-                "<red>"Error importing Documents.$Result->{ErrorMessage}."</red>\n"
+                "<red>Error importing Documents: ".$Result->{ErrorMessage}."</red>\n"
             );                
         }        
     }
