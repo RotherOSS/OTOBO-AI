@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -317,12 +317,11 @@ sub MigrateTickets {
             $Handled++;
             $Imported++;
 
-
             my $QuestionSubject = $QuestionArticle->{Subject} // '';
-            my $QuestionBody    = $QuestionArticle->{Body} // '';
+            my $QuestionBody    = $QuestionArticle->{Body}    // '';
             my $AnswerSubject   = $AnswerArticles[0]{Subject} // '';
             push @ImportTicketsQA, {
-                "source_id" => $TicketID,
+                "source_id"     => $TicketID,
                 "content_items" => [
                     {
                         type => 'question',
@@ -336,12 +335,12 @@ sub MigrateTickets {
             };
 
             push @ImportTicketsAgentArticles, {
-                "source_id" => $TicketID,
+                "source_id"     => $TicketID,
                 "content_items" => [
                     map {
                         {
                             type => 'text',
-                            text => ($_->{Subject} // '') . '. ' . ($_->{Body} // ''),
+                            text => ( $_->{Subject} // '' ) . '. ' . ( $_->{Body} // '' ),
                         }
                     } @AnswerArticles
                 ]
@@ -362,11 +361,11 @@ sub MigrateTickets {
                 },
             );
 
-            if(!$Result->{Success}) {
+            if ( !$Result->{Success} ) {
                 $Errors++;
                 $Self->Print(
-                    "<red>Error importing Tickets: ".$Result->{ErrorMessage}."</red>\n"
-                );                
+                    "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n"
+                );
             }
         }
 
@@ -383,11 +382,11 @@ sub MigrateTickets {
                 },
             );
 
-            if(!$Result->{Success}) {
+            if ( !$Result->{Success} ) {
                 $Errors++;
                 $Self->Print(
-                    "<red>Error importing Tickets: ".$Result->{ErrorMessage}."</red>\n"
-                );                
+                    "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n"
+                );
             }
         }
 
@@ -496,7 +495,7 @@ sub MigrateFAQs {
 
         # prepare data item for invoker
         push @FAQData, {
-            "source_id" => "$FAQID",
+            "source_id"     => "$FAQID",
             "content_items" => [
                 {
                     type => 'question',
@@ -523,12 +522,12 @@ sub MigrateFAQs {
                 },
             );
 
-            if(!$Result->{Success}) {
+            if ( !$Result->{Success} ) {
                 $Errors++;
                 $Self->Print(
-                    "<red>Error importing FAQs: ".$Result->{ErrorMessage}."</red>\n"
-                );                
-            }        
+                    "<red>Error importing FAQs: " . $Result->{ErrorMessage} . "</red>\n"
+                );
+            }
 
             @FAQData = ();
         }
@@ -559,12 +558,12 @@ sub MigrateFAQs {
             },
         );
 
-        if(!$Result->{Success}) {
+        if ( !$Result->{Success} ) {
             $Errors++;
             $Self->Print(
-                "<red>Error importing FAQs: ".$Result->{ErrorMessage}."</red>\n"
-            );                
-        }        
+                "<red>Error importing FAQs: " . $Result->{ErrorMessage} . "</red>\n"
+            );
+        }
     }
 
     if ($Errors) {
@@ -603,7 +602,7 @@ sub MigrateDocs {
         my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' ) // '';
 
         push @Content, {
-            "source_id" => $DocumentPath,
+            "source_id"     => $DocumentPath,
             "content_items" => [
                 {
                     type => 'text',
@@ -626,12 +625,12 @@ sub MigrateDocs {
                 },
             );
 
-            if(!$Result->{Success}) {
+            if ( !$Result->{Success} ) {
                 $Errors++;
                 $Self->Print(
-                    "<red>Error importing Document '$DocumentPath' : ".$Result->{ErrorMessage}."</red>\n"
-                );                
-            }        
+                    "<red>Error importing Document '$DocumentPath' : " . $Result->{ErrorMessage} . "</red>\n"
+                );
+            }
 
             @Content = ();
         }
@@ -650,12 +649,12 @@ sub MigrateDocs {
             },
         );
 
-        if(!$Result->{Success}) {
+        if ( !$Result->{Success} ) {
             $Errors++;
             $Self->Print(
-                "<red>Error importing Documents: ".$Result->{ErrorMessage}."</red>\n"
-            );                
-        }        
+                "<red>Error importing Documents: " . $Result->{ErrorMessage} . "</red>\n"
+            );
+        }
     }
 
     if ($Errors) {

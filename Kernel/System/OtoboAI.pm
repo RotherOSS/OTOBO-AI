@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -67,13 +67,12 @@ sub new {
     return $Self;
 }
 
-
 =head2 GetAnswerAsync()
 
 Get an OtoboAI Answer asynchronously.
 
     my $Success = $OtoboAIObject->GetAnswerAsync(
-        Question => '<some ai question>',  # the question to ask the LLM            
+        Question => '<some ai question>',  # the question to ask the LLM
         ObjectID => $ArticleID,            # if given, construct question from Article Subject+Body
                                            # results will be stored in this Articles AIResult DynamicField
         UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
@@ -122,13 +121,12 @@ sub GetAnswerAsync {
     return 1;
 }
 
-
 =head2 GetAnswer()
 
-Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this wull happen on a Daemon thread.
+Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this will happen on a Daemon thread.
 
-    my $Result = $OtoboAIObject->GetAnswerAsync(
-        Question => '<some ai question>',  # the question to ask the LLM            
+    my $Result = $OtoboAIObject->GetAnswer(
+        Question => '<some ai question>',  # the question to ask the LLM
         ObjectID => $ArticleID,            # if given, construct question from Article Subject+Body
                                            # results will be stored in this Articles AIResult DynamicField
         UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
@@ -225,7 +223,7 @@ sub GetAnswer {
         }
 
         my $Subject = $Article{Subject} // '';
-        my $Body    = $Article{Body} // '';
+        my $Body    = $Article{Body}    // '';
 
         $Question = $Subject . '. ' . $Body;
     }
@@ -280,7 +278,7 @@ sub GetAnswer {
     elsif ( $UserID && $Persist ) {
         my $CacheObject      = $Kernel::OM->Get('Kernel::System::Cache');
         my $MainObject       = $Kernel::OM->Get('Kernel::System::Main');
-        my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );;
+        my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );
         my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $QuestionMd5;
         my $TTL              = $Kernel::OM->Get('Kernel::Config')->Get('OtoboAIDashboard::Frontend::CacheTTL')->{Answer} || 24;
         $CacheObject->Set(
