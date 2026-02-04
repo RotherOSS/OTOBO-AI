@@ -292,6 +292,8 @@ sub MigrateTickets {
                 $QuestionArticle = \%Article;
             }
 
+            my @AnswerArticlesWithBody;
+
             ANSWER:
             for my $i ( 0 .. $#AnswerArticles ) {
                 my $ArticleBackend = $ArticleObject->BackendForArticle(
@@ -309,17 +311,17 @@ sub MigrateTickets {
                 # SelectionRule: Remove citations from agent articles
                 $Article{Body} =~ s/^\s*>.+?$//msg;
 
-                $AnswerArticles[$i] = \%Article;
+                push @AnswerArticlesWithBody, \%Article;
             }
 
-            next TICKETID if !@AnswerArticles;
+            next TICKETID if !@AnswerArticlesWithBody;
 
             $Handled++;
             $Imported++;
 
-            my $QuestionSubject = $QuestionArticle->{Subject} // '';
-            my $QuestionBody    = $QuestionArticle->{Body}    // '';
-            my $AnswerSubject   = $AnswerArticles[0]{Subject} // '';
+            my $QuestionSubject = $QuestionArticle->{Subject}         // '';
+            my $QuestionBody    = $QuestionArticle->{Body}            // '';
+            my $AnswerSubject   = $AnswerArticlesWithBody[0]{Subject} // '';
             push @ImportTicketsQA, {
                 "source_id"     => $TicketID,
                 "content_items" => [
@@ -329,7 +331,7 @@ sub MigrateTickets {
                     },
                     {
                         type => 'answer',
-                        text => $AnswerSubject . '. ' . $AnswerArticles[0]{Body},
+                        text => $AnswerSubject . '. ' . $AnswerArticlesWithBody[0]{Body},
                     },
                 ]
             };
@@ -342,7 +344,7 @@ sub MigrateTickets {
                             type => 'text',
                             text => ( $_->{Subject} // '' ) . '. ' . ( $_->{Body} // '' ),
                         }
-                    } @AnswerArticles
+                    } @AnswerArticlesWithBody
                 ]
             };
         }
