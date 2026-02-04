@@ -317,16 +317,20 @@ sub MigrateTickets {
             $Handled++;
             $Imported++;
 
+
+            my $QuestionSubject = $QuestionArticle->{Subject} // '';
+            my $QuestionBody    = $QuestionArticle->{Body} // '';
+            my $AnswerSubject   = $AnswerArticles[0]{Subject} // '';
             push @ImportTicketsQA, {
                 "source_id" => $TicketID,
                 "content_items" => [
                     {
                         type => 'question',
-                        text => $QuestionArticle->{Subject} . '. ' . $QuestionArticle->{Body},
+                        text => $QuestionSubject . '. ' . $QuestionBody,
                     },
                     {
                         type => 'answer',
-                        text => $AnswerArticles[0]{Subject} . '. ' . $AnswerArticles[0]{Body},
+                        text => $AnswerSubject . '. ' . $AnswerArticles[0]{Body},
                     },
                 ]
             };
@@ -337,7 +341,7 @@ sub MigrateTickets {
                     map {
                         {
                             type => 'text',
-                            text => $_->{Subject} . '. ' . $_->{Body},
+                            text => ($_->{Subject} // '') . '. ' . ($_->{Body} // ''),
                         }
                     } @AnswerArticles
                 ]
@@ -484,11 +488,11 @@ sub MigrateFAQs {
         );
 
         # scrub HTML
-        my $Question = $HTMLUtilsObject->ToAscii( String => $FAQ{Title} )
-            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field1} )
-            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field2} );
+        my $Question = $HTMLUtilsObject->ToAscii( String => $FAQ{Title} // '' )
+            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field1} // '' )
+            . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field2} // '' );
 
-        my $Answer = $HTMLUtilsObject->ToAscii( String => $FAQ{Field3} );
+        my $Answer = $HTMLUtilsObject->ToAscii( String => $FAQ{Field3} // '' );
 
         # prepare data item for invoker
         push @FAQData, {
@@ -596,7 +600,7 @@ sub MigrateDocs {
         $Count++;
 
         # slurp content of file
-        my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' );
+        my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' ) // '';
 
         push @Content, {
             "source_id" => $DocumentPath,
@@ -625,7 +629,7 @@ sub MigrateDocs {
             if(!$Result->{Success}) {
                 $Errors++;
                 $Self->Print(
-                    "<red>Error importing Documents: ".$Result->{ErrorMessage}."</red>\n"
+                    "<red>Error importing Document '$DocumentPath' : ".$Result->{ErrorMessage}."</red>\n"
                 );                
             }        
 

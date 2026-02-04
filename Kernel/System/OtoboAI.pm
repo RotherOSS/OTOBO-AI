@@ -224,7 +224,10 @@ sub GetAnswer {
             };
         }
 
-        $Question = $Article{Subject} . '. ' . $Article{Body};
+        my $Subject = $Article{Subject} // '';
+        my $Body    = $Article{Body} // '';
+
+        $Question = $Subject . '. ' . $Body;
     }
     else {
 
