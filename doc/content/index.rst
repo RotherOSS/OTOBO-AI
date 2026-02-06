@@ -101,6 +101,13 @@ Check ``Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField``
 Note that in case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
 
 
+Stripping Signatures
+========================================
+
+Enable the System Configuration setting ``OTOBOAI::StripSignatureRegex`` and set it to a Perl Regular Expression.
+Otobo will try to strip everything from Ticket Article bodies starting from the first match of that regex.
+
+The default value is **^--\n**.
 
 
 Fine Tuning with Sample Score Evaluation
@@ -248,6 +255,10 @@ OTOBOAI::DoScoringEvaluation
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Do an extra evaluation step by an extra LLM roundtrip and return a result score. Recommended for fine-tuning test, do not
 use in production.
+
+OTOBOAI::StripSignatureRegex
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Regex to strip Signatures from Article Bodies, if endabled.
 
 Daemon::SchedulerCronTaskManager::Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
