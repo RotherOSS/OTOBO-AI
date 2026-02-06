@@ -260,6 +260,11 @@ OTOBOAI::StripSignatureRegex
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Regex to strip Signatures from Article Bodies, if endabled.
 
+OTOBOAI::AllowedArticleSenderTypes
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Valid SenderTypes for Article selection when indexing and importing into AI.
+Valid values are "agent", "customer", and "system". By default this contains only customer and agent.
+
 Daemon::SchedulerCronTaskManager::Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

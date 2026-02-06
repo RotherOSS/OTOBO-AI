@@ -196,6 +196,8 @@ sub MigrateTickets {
     my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
     my $TicketRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::Chunks')             // {};
 
+    my $AllowedArticleSenderTypes = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AllowedArticleSenderTypes');
+
     # remove search parameters with empty arrays as they prevent search results entirely
     for my $ArrayParam (qw(Queues Services StateTypes Types)) {
         if ( !IsArrayRefWithData( $SearchRestrictions->{$ArrayParam} ) ) {
@@ -276,6 +278,20 @@ sub MigrateTickets {
 
                 if ( $TicketRestrictions->{OnlyVisibleForCustomer} ) {
                     next ARTICLE if $Article->{IsVisibleForCustomer} ne 1;
+                }
+
+                if ($AllowedArticleSenderTypes) {
+                    my $Allowed = 0;
+                    TYPES:
+                    for my $Type ( $AllowedArticleSenderTypes->@* ) {
+                        if ( $SenderLookup{$Type} == $Article->{SenderTypeID} ) {
+                            $Allowed = 1;
+                            last TYPES;
+                        }
+                    }
+                    if ( !$Allowed ) {
+                        next ARTICLE;
+                    }
                 }
 
                 push @AnswerArticles, $Article;

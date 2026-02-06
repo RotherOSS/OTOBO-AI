@@ -274,4 +274,16 @@
             <Item ValueType="String">^--$</Item>
         </Value>
     </Setting>
+
+    <Setting Name="OTOBOAI::AllowedArticleSenderTypes" Required="0" Valid="0">
+        <Description Translatable="1">Array of allowed ArticleSenderTypes to be indexed by OTOBO AI. Valid values are 'customer', 'agent', and 'system'.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Array>
+                <Item>agent</Item>
+                <Item>customer</Item>
+            </Array>
+        </Value>
+    </Setting>
+
 </otobo_config>
