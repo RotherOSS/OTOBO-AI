@@ -266,5 +266,12 @@
         <Value>
             <Item ValueType="Checkbox">0</Item>
         </Value>
-    </Setting>    
+    </Setting>
+    <Setting Name="OTOBOAI::StripSignatureRegex" Required="0" Valid="0">
+        <Description Translatable="1">Try to strip Signatures from Ticket Articles during import. The value is a Regular Expression - anything after this match will be stripped.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="String">^--\n</Item>
+        </Value>
+    </Setting>
 </otobo_config>

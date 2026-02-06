@@ -107,6 +107,13 @@ sub PreRun {
         }
     }
 
+    my $StripSignatureRegEx = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::StripSignatureRegex');
+    if ($StripSignatureRegEx) {
+
+        my $Regex = qr/$StripSignatureRegEx/m;
+        $Self->{StripSignatureRegEx} = $Regex;
+    }
+
     return;
 }
 
@@ -322,6 +329,11 @@ sub MigrateTickets {
             my $QuestionSubject = $QuestionArticle->{Subject}         // '';
             my $QuestionBody    = $QuestionArticle->{Body}            // '';
             my $AnswerSubject   = $AnswerArticlesWithBody[0]{Subject} // '';
+            my $AnswerBody      = $AnswerArticlesWithBody[0]{Body};
+
+            $QuestionBody = $Self->StripSignature( Body => $QuestionBody );
+            $AnswerBody   = $Self->StripSignature( Body => $AnswerBody );
+
             push @ImportTicketsQA, {
                 "source_id"     => $TicketID,
                 "content_items" => [
@@ -331,21 +343,27 @@ sub MigrateTickets {
                     },
                     {
                         type => 'answer',
-                        text => $AnswerSubject . '. ' . $AnswerArticlesWithBody[0]{Body},
+                        text => $AnswerSubject . '. ' . $AnswerBody,
                     },
                 ]
             };
 
+            my @ContentItems;
+            for my $AnswerArticleWithBody (@AnswerArticlesWithBody) {
+
+                my $Subject = $AnswerArticleWithBody->{Subject} // '';
+                my $Body    = $AnswerArticleWithBody->{Body}    // '';
+
+                $Body = $Self->StripSignature( Body => $Body );
+                push @ContentItems, {
+                    type => 'text',
+                    text => $Subject . '. ' . $Body,
+                };
+            }
+
             push @ImportTicketsAgentArticles, {
                 "source_id"     => $TicketID,
-                "content_items" => [
-                    map {
-                        {
-                            type => 'text',
-                            text => ( $_->{Subject} // '' ) . '. ' . ( $_->{Body} // '' ),
-                        }
-                    } @AnswerArticlesWithBody
-                ]
+                "content_items" => \@ContentItems,
             };
         }
 
@@ -734,6 +752,25 @@ sub _DocumentSearch {
     );
 
     return \@Files;
+}
+
+sub StripSignature {
+
+    my ( $Self, %Param ) = @_;
+
+    my $Body = $Param{Body};
+
+    my $RegEx = $Self->{StripSignatureRegEx};
+    return $Body if ( !$RegEx );
+
+    if ( $Body =~ /$RegEx/ ) {
+
+        return substr( $Body, 0, $-[0] );
+    }
+    else {
+
+        return $Body;
+    }
 }
 
 1;
