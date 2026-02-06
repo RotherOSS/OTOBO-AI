@@ -107,7 +107,7 @@ Stripping Signatures
 Enable the System Configuration setting ``OTOBOAI::StripSignatureRegex`` and set it to a Perl Regular Expression.
 Otobo will try to strip everything from Ticket Article bodies starting from the first match of that regex.
 
-The default value is **^--\n**.
+The default value is **^--$**.
 
 
 Fine Tuning with Sample Score Evaluation
