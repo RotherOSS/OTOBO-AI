@@ -54,16 +54,6 @@
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="OTOBOAI::Ticket::Chunks" Required="0" Valid="1">
-        <Description Translatable="1">Which articles to include for ticket chunk ingestion.</Description>
-        <Navigation>Core::OTOBOAI</Navigation>
-        <Value>
-            <Hash>
-                <Item Key="OnlyAgentArticles">1</Item>
-                <Item Key="OnlyVisibleForCustomer">1</Item>
-            </Hash>
-        </Value>
-    </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions" Required="0" Valid="1">
         <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
@@ -275,7 +265,7 @@
         </Value>
     </Setting>
 
-    <Setting Name="OTOBOAI::AllowedArticleSenderTypes" Required="0" Valid="0">
+    <Setting Name="OTOBOAI::AllowedArticleSenderTypes" Required="0" Valid="1">
         <Description Translatable="1">Array of allowed ArticleSenderTypes to be indexed by OTOBO AI. Valid values are 'customer', 'agent', and 'system'.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
@@ -283,6 +273,14 @@
                 <Item>agent</Item>
                 <Item>customer</Item>
             </Array>
+        </Value>
+    </Setting>
+
+    <Setting Name="OTOBOAI::OnlyVisibleForCustomer" Required="0" Valid="1">
+        <Description Translatable="1">Allow only Articles visible for Customer to be embedded for AI.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+                <Item ValueType="Checkbox">1</Item>
         </Value>
     </Setting>
 

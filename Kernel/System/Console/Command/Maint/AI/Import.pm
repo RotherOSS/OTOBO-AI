@@ -193,9 +193,8 @@ sub MigrateTickets {
     my $BatchSize = 100;
     my @TicketIDs;
 
-    my $SearchRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
-    my $TicketRestrictions = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::Chunks')             // {};
-
+    my $SearchRestrictions        = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
+    my $OnlyVisibleForCustomer    = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::OnlyVisibleForCustomer')     // 1;
     my $AllowedArticleSenderTypes = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AllowedArticleSenderTypes');
 
     # remove search parameters with empty arrays as they prevent search results entirely
@@ -271,15 +270,12 @@ sub MigrateTickets {
                 # SelectionRule: skip tickets where the customer sent info twice without any agent interference
                 next TICKETID if $Article->{SenderTypeID} eq $SenderLookup{customer} && !@AnswerArticles;
 
-                # SelectionRule: skip articles if they are not written by an agent or are not customer visible
-                if ( $TicketRestrictions->{OnlyAgentArticles} ) {
-                    next ARTICLE if $Article->{SenderTypeID} ne $SenderLookup{agent};
-                }
-
-                if ( $TicketRestrictions->{OnlyVisibleForCustomer} ) {
+                # SelectionRule: skip articles if they are not customer visible
+                if ($OnlyVisibleForCustomer) {
                     next ARTICLE if $Article->{IsVisibleForCustomer} ne 1;
                 }
 
+                # SelectionRule: skip articles if their sendertype is not on the whitelist (if enabled)
                 if ($AllowedArticleSenderTypes) {
                     my $Allowed = 0;
                     TYPES:

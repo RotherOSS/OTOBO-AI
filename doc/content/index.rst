@@ -243,10 +243,6 @@ OTOBOAI::Placeholder
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Define a string which is used as a placeholder while waiting for the AI answer.
 
-OTOBOAI::Ticket::Chunks
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Which articles to include for ticket chunk ingestion.
-
 OTOBOAI::Ticket::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Add search restrictions or params, to add not all tickets in the otobo ai vector database.
@@ -264,6 +260,10 @@ OTOBOAI::AllowedArticleSenderTypes
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Valid SenderTypes for Article selection when indexing and importing into AI.
 Valid values are "agent", "customer", and "system". By default this contains only customer and agent.
+
+OTOBOAI::OnlyVisibleForCustomer
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Allow only Articles visible for Customer to be embedded for AI
 
 Daemon::SchedulerCronTaskManager::Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
