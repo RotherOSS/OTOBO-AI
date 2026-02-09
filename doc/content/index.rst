@@ -107,8 +107,6 @@ Stripping Signatures
 Enable the System Configuration setting ``OTOBOAI::StripSignatureRegex`` and set it to a Perl Regular Expression.
 Otobo will try to strip everything from Ticket Article bodies starting from the first match of that regex.
 
-The default value is **^--$**.
-
 
 Fine Tuning with Sample Score Evaluation
 ========================================
@@ -258,8 +256,8 @@ Regex to strip Signatures from Article Bodies, if endabled.
 
 OTOBOAI::AllowedArticleSenderTypes
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Valid SenderTypes for Article selection when indexing and importing into AI.
-Valid values are "agent", "customer", and "system". By default this contains only customer and agent.
+Valid SenderTypes for Article selection when indexing and importing into AI. Valid values are "agent", "customer", and 
+"system". By default this contains only customer and agent.
 
 OTOBOAI::OnlyVisibleForCustomer
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
