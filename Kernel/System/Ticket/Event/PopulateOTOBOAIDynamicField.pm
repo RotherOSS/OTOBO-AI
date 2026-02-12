@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -103,6 +103,23 @@ sub Run {
     if ( IsArrayRefWithData( $Param{Config}{Queues} ) ) {
         return unless first { $_ eq $Param{Data}{OldTicketData}{Queue} } $Param{Config}{Queues}->@*;
     }
+
+    # check sendertype - only auto-populate customer articles
+    my %SenderLookup = map {
+        $_ => $ArticleObject->ArticleSenderTypeLookup( SenderType => $_ )
+    } qw/agent customer system/;
+
+    my $ArticleBackendObject = $ArticleObject->BackendForArticle(
+        TicketID  => $Param{Data}{TicketID},
+        ArticleID => $ArticleID,
+    );
+
+    my %Article = $ArticleBackendObject->ArticleGet(
+        TicketID  => $Param{Data}{TicketID},
+        ArticleID => $ArticleID,
+    );
+
+    return if ( $Article{SenderTypeID} != $SenderLookup{'customer'} );
 
     # loop protection: only execute this handler once for each article
     my $CacheKey = '_PopulateOTOBOAIDynamicField::AlreadyProcessed';
