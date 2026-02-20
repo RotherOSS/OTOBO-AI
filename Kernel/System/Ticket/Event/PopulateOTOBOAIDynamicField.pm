@@ -33,6 +33,7 @@ our @ObjectDependencies = (
     'Kernel::System::DynamicField::Backend',
     'Kernel::System::Log',
     'Kernel::System::OtoboAI',
+    'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
 );
 
@@ -61,7 +62,7 @@ sub Run {
     }
 
     # check needed param in data
-    for my $IDName (qw(TicketID OldTicketData)) {
+    for my $IDName (qw(TicketID)) {
         if ( !$Param{Data}{$IDName} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
@@ -99,9 +100,14 @@ sub Run {
         return;
     }
 
+    my %TicketNew = $Kernel::OM->Get('Kernel::System::Ticket')->TicketGet(
+        TicketID => $Param{Data}{TicketID},
+        UserID   => $Param{UserID},
+    );
+
     # check queue restriction
     if ( IsArrayRefWithData( $Param{Config}{Queues} ) ) {
-        return unless first { $_ eq $Param{Data}{OldTicketData}{Queue} } $Param{Config}{Queues}->@*;
+        return unless first { $_ eq $TicketNew{Queue} } $Param{Config}{Queues}->@*;
     }
 
     # check sendertype - only auto-populate customer articles
