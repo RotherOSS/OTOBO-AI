@@ -168,7 +168,7 @@
         </Value>
     </Setting>
     <Setting Name="Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField" Required="0" Valid="1">
-        <Description Translatable="1">Event module registration. For more performance you can define a trigger event (e. g. Event =&gt; TicketCreate). This is only possible if all Ticket dynamic fields need the same event.</Description>
+        <Description Translatable="1">Event module registration. For asynchronous LLM response collection, you can define trigger events (e.g., TicketCreate). Emitted events are validated against this string using a regular expression; multiple events may be specified, separated by an arbitrary delimiter. The Transition attribute determines when the event is executed: either exactly when it is emitted (0) or at the end of the entire action (1).</Description>
         <Navigation>Core::Event::Ticket</Navigation>
         <Value>
             <Hash>
