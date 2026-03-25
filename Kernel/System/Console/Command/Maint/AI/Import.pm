@@ -60,11 +60,16 @@ sub Configure {
     $Self->AddOption(
         Name        => 'reimport',
         Description =>
-            "Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged.",
+            "Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged for the target collections.",
         Required => 0,
         HasValue => 0,
-
-        #        ValueRegex => qr/^[tfd]+$/smx,
+    );
+    $Self->AddOption(
+        Name        => 'purge',
+        Description =>
+            "purge target collections).",
+        Required => 0,
+        HasValue => 0,
     );
     $Self->AddOption(
         Name        => 'sample-nth',
@@ -78,6 +83,14 @@ sub Configure {
         Name        => 'sample',
         Description =>
             "Specify a file path to write a sample.json file containing TicketIDs to sample. When specified, then severy sample-nth Ticket will not be imported, but added to the list of sample ids. The default for sample-nth is 10 to sample every 10th Ticket (10% sample size). Override with the --sample-nth parameter.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
+    );
+    $Self->AddOption(
+        Name        => 'reference',
+        Description =>
+            "Specify a file path to an existing sample.json file containing TicketIDs to reference. When specified, no new sample will be generated, but all TicketIDs from the reference sample file will be hold back again for scoring.",
         Required   => 0,
         HasValue   => 1,
         ValueRegex => qr/.*/smx,
@@ -152,29 +165,56 @@ sub Run {
     }
 
     my $Sample    = $Self->GetOption('sample');
+    my $Reference = $Self->GetOption('reference');
     my $SampleNth = $Self->GetOption('sample-nth') || 10;
 
     my $ReImport = $Self->GetOption('reimport');
+    my $Purge    = $Self->GetOption('purge');
 
-    if ($ReImport) {
-        $Self->Purge();
+    if ( $Reference && -e $Reference ) {
+
+        my $RefIDsJSON = file($Reference)->slurp;
+        $Self->{RefIDs} = from_json($RefIDsJSON);
     }
 
     my $Targets = $Self->GetOption('target') || "tdf";
 
     if ( $Targets =~ /t/ ) {
-        $Self->MigrateTickets(
-            Sample    => $Sample,
-            SampleNth => $SampleNth
-        );
+
+        if ( $ReImport || $Purge ) {
+            $Self->Purge( Collection => 'ticket_pairs' );
+            $Self->Purge( Collection => 'ticket_chunks' );
+        }
+
+        if ( !$Purge ) {
+            $Self->MigrateTickets(
+                Sample    => $Sample,
+                SampleNth => $SampleNth,
+                Reference => $Reference,
+            );
+        }
     }
 
     if ( $Targets =~ /f/ ) {
-        $Self->MigrateFAQs();
+
+        if ( $ReImport || $Purge ) {
+            $Self->Purge( Collection => 'faqs' );
+        }
+
+        if ( !$Purge ) {
+            $Self->MigrateFAQs();
+        }
     }
 
     if ( $Targets =~ /d/ ) {
-        $Self->MigrateDocs();
+
+        if ( $ReImport || $Purge ) {
+            $Self->Purge( Collection => 'docs' );
+        }
+
+        if ( !$Purge ) {
+            $Self->MigrateDocs();
+        }
     }
 
     return $Self->ExitCodeOk();
@@ -185,6 +225,7 @@ sub MigrateTickets {
 
     my $Sample    = $Param{Sample};
     my $SampleNth = $Param{SampleNth};
+    my $Reference = $Param{Reference};
 
     my $TicketObject    = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ArticleObject   = $Kernel::OM->Get('Kernel::System::Ticket::Article');
@@ -241,6 +282,12 @@ sub MigrateTickets {
             my @Articles = $ArticleObject->ArticleList(
                 TicketID => $TicketID,
             );
+
+            if ($Reference) {
+
+                my $IsPartOfSample = grep { $_ eq "$TicketID" } $Self->{RefIDs}->@*;
+                next TICKETID if ($IsPartOfSample);
+            }
 
             next TICKETID if !@Articles;
 
@@ -708,7 +755,9 @@ sub Purge {
         WebserviceID => $Self->{WebserviceID},
         Invoker      => 'Purge',
         Asynchronous => 0,
-        Data         => {},
+        Data         => {
+            Collection => $Param{Collection}
+        },
     );
 
     return IsHashRefWithData($Result)        &&

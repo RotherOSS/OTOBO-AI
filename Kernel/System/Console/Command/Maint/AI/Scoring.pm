@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -66,13 +66,12 @@ sub Configure {
         ValueRegex => qr/.*/smx,
     );
     $Self->AddOption(
-        Name        => 'verbose',
+        Name        => 'json',
         Description =>
-            "when scoring, report verbosely for each ticket processed.",
-        Required => 0,
-        HasValue => 0,
-
-        #   ValueRegex => qr/0|1/smx,
+            "when scoring, report verbosely for each ticket processed in the specified JSON file.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
     );
     $Self->AddOption(
         Name        => 'limit',
@@ -136,10 +135,10 @@ sub Run {
         }
     }
 
-    my $Sample  = $Self->GetOption('sample');
-    my $Output  = $Self->GetOption('result') || 10;
-    my $Verbose = $Self->GetOption('verbose');
-    my $Limit   = $Self->GetOption('limit');
+    my $Sample     = $Self->GetOption('sample');
+    my $Output     = $Self->GetOption('result') || 10;
+    my $JSONOutput = $Self->GetOption('json');
+    my $Limit      = $Self->GetOption('limit');
 
     my $JSON            = file($Sample)->slurp();
     my $SampleTicketIDs = decode_json($JSON);
@@ -147,7 +146,7 @@ sub Run {
     $Self->DoScoring(
         SampleTicketIDs => $SampleTicketIDs,
         OutputFile      => $Output,
-        Verbose         => $Verbose,
+        JSONOutput      => $JSONOutput,
         Limit           => $Limit || scalar $SampleTicketIDs->@*,
     );
 
@@ -163,25 +162,34 @@ sub DoScoring {
 
     my $OutputCSVFileHandle;
     my $SampleTicketIDs = $Param{SampleTicketIDs};
-    my $Verbose         = $Param{Verbose};
+    my $JSONOutput      = $Param{JSONOutput};
     my $Limit           = $Param{Limit};
 
     ## no critic(OTOBO::ProhibitOpen InputOutput::RequireBriefOpen)
     open( $OutputCSVFileHandle, '>', $Param{OutputFile} ) || die("failed to open file '$Param{OutputFile}'");
 
-    print $OutputCSVFileHandle "TicketID\tScore\r\n";
+    my $JSONOutputFileHandle;
+    if ($JSONOutput) {
+        open( $JSONOutputFileHandle, '>', $Param{JSONOutput} ) || die("failed to open file '$Param{JSONOutput}'");
+    }
 
-    my $TotalScore = 0.0;
+    my $Firstline  = 1;
     my $NumScores  = 0;
     my $SampleSize = scalar $SampleTicketIDs->@*;
 
-    if ($Verbose) {
-        $Self->Print("Sample Size: $SampleSize\n");
+    my $VerboseJSON = {
+        Data => [],
+    };
+
+    if ($JSONOutput) {
+        $VerboseJSON->{SampleSize} = $SampleSize;
     }
 
     my $Count = 0;
     TICKETID:
     for my $TicketID ( $SampleTicketIDs->@* ) {
+
+        my $VerboseJSONItem = {};
 
         last TICKETID if ( $Count >= $Limit );
         $Count++;
@@ -198,10 +206,11 @@ sub DoScoring {
 
         if ($ArticleID) {
 
-            if ($Verbose) {
+            $Self->Print("TicketID: $TicketID\n");
 
-                $Self->Print("<yellow>-----------------------------------------------</yellow>\n");
-                $Self->Print("TicketID: $TicketID\n");
+            if ($JSONOutput) {
+
+                $VerboseJSONItem->{TicketID} = $TicketID;
 
                 my $ArticleBackendObject = $ArticleObject->BackendForArticle(
                     TicketID  => $TicketID,
@@ -213,7 +222,7 @@ sub DoScoring {
                     ArticleID => $ArticleID,
                 );
 
-                $Self->Print( "Question: " . $Article{Subject} . "\r\n" . $Article{Body} . "\r\n" );
+                $VerboseJSONItem->{Question} = $Article{Subject} . "\r\n" . $Article{Body};
             }
 
             my $Result = $OtoboAIObject->GetAnswer(
@@ -222,16 +231,54 @@ sub DoScoring {
             );
 
             if ( IsHashRefWithData($Result) && $Result->{Success} == 1 ) {
-                if ($Verbose) {
+                if ($JSONOutput) {
 
-                    $Self->Print( "Answer: " . $Result->{Data}->{Answer} . "\r\nScore: " . $Result->{Data}->{Score} . "\r\n" );
+                    $VerboseJSONItem->{Answer} = $Result->{Data}->{Answer};
                 }
 
-                $TotalScore += $Result->{Data}->{Score};
                 $NumScores++;
+                my @LineItems = (
+                    $TicketID,
+                );
 
-                my $Line = $TicketID . "\t" . $Result->{Data}->{Score};
+                my $ScoreJSON = $Result->{Data}->{Score};
+                my $Scores    = from_json($ScoreJSON);
+                my $Reasoning = delete $Scores->{reasoning};
+
+                if ($JSONOutput) {
+
+                    $VerboseJSONItem->{Reasoning} = $Reasoning;
+                }
+
+                if ($Firstline) {
+
+                    my @Keys = sort keys $Scores->%*;
+                    my $Line = join ";", @Keys;
+
+                    print $OutputCSVFileHandle "TicketID;$Line\r\n";
+                    $Firstline = 0;
+                }
+
+                for my $Key ( sort keys $Scores->%* ) {
+
+                    my $Score = $Scores->{$Key};
+
+                    $Score =~ s/false/0/i;
+                    $Score =~ s/true/1/i;
+
+                    push @LineItems, $Score;
+
+                    if ($JSONOutput) {
+
+                        $VerboseJSONItem->{$Key} = $Score;
+                    }
+                }
+
+                my $Line = join ";", @LineItems;
+
                 print $OutputCSVFileHandle "$Line\r\n";
+
+                push $VerboseJSON->{Data}->@*, $VerboseJSONItem;
             }
             else {
                 $Self->Print( "<red>Error: " . $Result->{Error} . "</red>\n" );
@@ -241,12 +288,11 @@ sub DoScoring {
 
     close($OutputCSVFileHandle);
 
-    my $Score = 0;
-    if ( $NumScores > 0 ) {
-        $Score = $TotalScore / $NumScores;
+    if ($JSONOutput) {
+        $VerboseJSON->{Scored} = $NumScores;
+        print $JSONOutputFileHandle encode_json($VerboseJSON);
+        close($JSONOutputFileHandle);
     }
-
-    $Self->Print("<yellow>$NumScores Tickets out of $Count Ticket samples have been scored, and the overall score is: $Score</yellow>\n");
 
     return;
 }

@@ -42,10 +42,7 @@ In order to make use of this package you need to run the OTOBO AI Services docke
 Otobo-ai-services
 -----------------
 
-**Note:** *Preliminary documentation, this assumes you start the otobo-ai-services container from it's own docker-compose.yml, but this is likely to change*
-
 - Get the OTOBO AI services container from https://github.com/RotherOSS/otobo-ai-services/
-- switch to branch master
 - create a rags folder in the root directory
 - copy the rag_examples/tfd_rag1 folder into the rags folder
 - copy the `.env_example` file to `.env`
@@ -127,16 +124,26 @@ This will do a reimport of all sources (tickets, faqs, and docs) but will import
 and retain the remaining 10% of Tickets for sampling. For the sample, a JSON encoded list of TicketIDs will be written to the json file specified by the 
 sample parameter. This JSON file can then be fed multiple times into the ``Maint::AI::Scoring`` console command to evaluate the quality score.
 
+One can re-use an existing sample.json file like so:
+
+::
+
+   bin/otobo.Console.pl Maint::AI::Import --reimport --reference /opt/otobo/sample.json
+
+This will still do a re-import, but will hold back the exact same tickets for sampling. This is helpful for replicable test.
+
+
 To run a sample score evaluation, run:
 
 ::
 
-   bin/otobo.Console.pl Maint::AI::Scoring --verbose --limit 100 --sample /opt/otobo/sample.json --result /opt/otobo/scoring.csv
+   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample /opt/otobo/sample.json --result /opt/otobo/scoring.csv bin/otobo.Console.pl Maint::AI::Import --reimport --target t --reference /opt/otobo/sample.json
 
 
 This will read the first 100 TicketIDs from the sample.json file produced above, run each ticket through AI Answer generation and evaluate
-the quality score of the resulting answer. Output will be written as a simple CSV (tab separated) file containing two columns with the TicketIDs
-and the calculated quality score. Overall average quality score will be written to STDOUT also. The --verbose and --limit parameters are optional.
+the quality score of the resulting answer. Output will be written as a simple CSV (tab separated) file containing TicketIDs and the scores generated
+by the evaluation prompt. The --json and --limit parameters are optional. Specifying a verbose JSON file with the --json switch will write
+verbose output in JSON format to that file for manual inspection.
 
 
 Console Commands
@@ -178,6 +185,7 @@ Console Commands
     [--reimport]                   - Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged.
     [--sample-nth ...]             - Only relevant with --do-scoring, specifies the sample size. Take every nth num for sampling. Specifying 10 will take every tenth, resulting in a 10% sample size. Specify 5 to take every 5th which will give 20% Sampelsize. Specify 20 to take every 20th which will yield 5% sample size. The default is 10.
     [--sample ...]                 - Specify a file path to write a sample.json file containing TicketIDs to sample. When specified, then severy sample-nth Ticket will not be imported, but added to the list of sample ids. The default for sample-nth is 10 to sample every 10th Ticket (10% sample size). Override with the --sample-nth parameter.
+    [--reference ...]              - Specify a path to an existimg sample.json file and use that for holding back the sample
     [--help|h]                     - Display help for this command.
     [--no-ansi]                    - Do not perform ANSI terminal output coloring.
     [--quiet]                      - Suppress informative output, only retain error messages.
@@ -196,7 +204,7 @@ Console Commands
    Options:
     [--sample ...]                 - Specify wfile path to sample.json file with the TicketIDs to sample. This file can be produced by the 'Maint::AI::Import' console command using the --sample option.
     [--result ...]                 - Specify the file path for the scoring output should be written to in CSV (tab separated) format.
-    [--verbose]                    - when scoring, report verbosely for each ticket processed.
+    [--json]                       - when scoring, report verbosely for each ticket processed as JSON and write it to that file.
     [--limit ...]                  - when scoring, max number of ticket ids to take from sample.
     [--help|h]                     - Display help for this command.
     [--no-ansi]                    - Do not perform ANSI terminal output coloring.
