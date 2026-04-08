@@ -2,7 +2,7 @@
 # OTOBO is a web-based ticketing system for service organisations.
 # --
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-# Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+# Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -96,9 +96,8 @@ otobo-ai-docker container for an Answer.
 sub PrepareRequest {
     my ( $Self, %Param ) = @_;
 
-    my $Question = $Param{Data}{Question};
- 
-    my $DoScoringEvaluation = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DoScoringEvaluation')
+    my $Question  = $Param{Data}{Question};
+    my $DoScoring = $Param{Data}{DoScoring}
         ? $Kernel::OM->Get('Kernel::System::JSON')->True()
         : $Kernel::OM->Get('Kernel::System::JSON')->False();
 
@@ -117,7 +116,7 @@ sub PrepareRequest {
         Data    => {
             input => {
                 question   => $Question,
-                do_scoring => $DoScoringEvaluation,
+                do_scoring => $DoScoring,
             },
             config => {},
             kwargs => {},

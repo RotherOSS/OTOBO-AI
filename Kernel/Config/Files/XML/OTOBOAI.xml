@@ -250,13 +250,6 @@
             <Item ValueType="Checkbox">0</Item>
         </Value>
     </Setting>
-    <Setting Name="OTOBOAI::DoScoringEvaluation" Required="0" Valid="1">
-        <Description Translatable="1">By activating this option, otobo-ai will do an additional scoring of the LLM GetAnswer requests.</Description>
-        <Navigation>Core::OTOBOAI</Navigation>
-        <Value>
-            <Item ValueType="Checkbox">0</Item>
-        </Value>
-    </Setting>
     <Setting Name="OTOBOAI::StripSignatureRegex" Required="0" Valid="0">
         <Description Translatable="1">Try to strip Signatures from Ticket Articles during import. The value is a Regular Expression - anything after this match will be stripped.</Description>
         <Navigation>Core::OTOBOAI</Navigation>

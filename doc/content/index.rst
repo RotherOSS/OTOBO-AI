@@ -137,7 +137,7 @@ To run a sample score evaluation, run:
 
 ::
 
-   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample /opt/otobo/sample.json --result /opt/otobo/scoring.csv bin/otobo.Console.pl Maint::AI::Import --reimport --target t --reference /opt/otobo/sample.json
+   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample sample.json --result scoring.csv --json scoring.json
 
 
 This will read the first 100 TicketIDs from the sample.json file produced above, run each ticket through AI Answer generation and evaluate
@@ -252,11 +252,6 @@ Define a string which is used as a placeholder while waiting for the AI answer.
 OTOBOAI::Ticket::SearchRestrictions
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Add search restrictions or params, to add not all tickets in the otobo ai vector database.
-
-OTOBOAI::DoScoringEvaluation
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Do an extra evaluation step by an extra LLM roundtrip and return a result score. Recommended for fine-tuning test, do not
-use in production.
 
 OTOBOAI::StripSignatureRegex
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""

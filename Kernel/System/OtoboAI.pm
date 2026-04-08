@@ -132,6 +132,8 @@ Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this will 
         UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
         Persist  => 1|0,                   # optional, default is 1. Whether to persist Result in DF (with ObjectID) or
                                            # poplate the use specific cache key
+        DoScoring => 0|1,                  # ask LLM to do the extra evaluation step, used by Maint::AI::Scoring
+                                           # console command
     );
 
     # on success
@@ -162,6 +164,8 @@ sub GetAnswer {
         );
         return;
     }
+
+    my $DoScoring = $Param{DoScoring} // 0;
 
     my $ErrorMessage = '';
     my $Success      = 0;
@@ -237,7 +241,8 @@ sub GetAnswer {
         Invoker      => 'GetAnswer',
         Asynchronous => 0,
         Data         => {
-            Question => $Question,
+            Question  => $Question,
+            DoScoring => $DoScoring,
         }
     );
 

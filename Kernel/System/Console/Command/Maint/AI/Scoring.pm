@@ -226,8 +226,9 @@ sub DoScoring {
             }
 
             my $Result = $OtoboAIObject->GetAnswer(
-                ObjectID => $ArticleID,
-                Persist  => 0
+                ObjectID  => $ArticleID,
+                Persist   => 0,
+                DoScoring => 1,
             );
 
             if ( IsHashRefWithData($Result) && $Result->{Success} == 1 ) {

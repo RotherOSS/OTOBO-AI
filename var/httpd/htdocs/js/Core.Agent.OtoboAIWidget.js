@@ -2,7 +2,7 @@
 // OTOBO is a web-based ticketing system for service organisations.
 // --
 // Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
-// Copyright (C) 2019-2025 Rother OSS GmbH, https://otobo.io/
+// Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 // --
 // This program is free software: you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free Software
@@ -60,11 +60,6 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
 
         }
 
-        //document.getElementById("ComposeRequest").addEventListener("submit", function(event) {
-        //    event.preventDefault();
-        //    console.log("Form not sent");
-        //});
-
         function StartPolling () {
             var PollingInterval = Core.Config.Get('PollingInterval');
             var TimeoutInterval = Core.Config.Get('TimeoutInterval');
@@ -97,9 +92,7 @@ Core.Agent.OtoboAIWidget = (function (TargetNS) {
         }
 
         $('#SubmitQuestion').on('click', function () {
-            //if (!Core.Form.Validate.ValidateElement($('#Request'))) {
-            //    return(false);
-            //}
+
             if (!$('#Request').val().trim()) {
                 $('#Request').toggleClass('OtoboAIEmptyQuestionError', true);
                 return(false);
