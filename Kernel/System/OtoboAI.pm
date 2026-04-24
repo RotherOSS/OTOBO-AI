@@ -64,6 +64,13 @@ sub new {
     my $Self = {%Param};
     bless( $Self, $Type );
 
+    my $StripSignatureRegEx = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::StripSignatureRegex');
+    if ($StripSignatureRegEx) {
+
+        my $Regex = qr/$StripSignatureRegEx/m;
+        $Self->{StripSignatureRegEx} = $Regex;
+    }
+
     return $Self;
 }
 
@@ -229,6 +236,7 @@ sub GetAnswer {
         my $Subject = $Article{Subject} // '';
         my $Body    = $Article{Body}    // '';
 
+        $Body     = $Self->_StripSignature( Body => $Body );
         $Question = $Subject . '. ' . $Body;
     }
     else {
@@ -298,6 +306,25 @@ sub GetAnswer {
         Success => 1,
         Data    => $Result->{Data},
     };
+}
+
+sub _StripSignature {
+
+    my ( $Self, %Param ) = @_;
+
+    my $Body = $Param{Body};
+
+    my $RegEx = $Self->{StripSignatureRegEx};
+    return $Body if ( !$RegEx );
+
+    if ( $Body =~ /$RegEx/ ) {
+
+        return substr( $Body, 0, $-[0] );
+    }
+    else {
+
+        return $Body;
+    }
 }
 
 1;
