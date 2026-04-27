@@ -237,7 +237,7 @@ sub GetAnswer {
         my $Body    = $Article{Body}    // '';
 
         $Body     = $Self->_StripSignature( Body => $Body );
-        $Question = $Subject . '. ' . $Body;
+        $Question = "Subject: ". $Subject . '\n\n' . $Body;
     }
     else {
 

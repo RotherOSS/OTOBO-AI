@@ -39,6 +39,14 @@
 
         $Kernel::OM->Get($CodeModule)->CodeInstall();
     ]]></CodeInstall>
+    <CodeUpgrade Type="post"><![CDATA[
+
+        # create the package name
+        my $CodeModule = 'var::packagesetup::OTOBOAI';
+
+        $Kernel::OM->Get($CodeModule)->CodeUpgrade();
+    ]]></CodeUpgrade>
+
     <CodeUninstall Type="pre"><![CDATA[
 
         # create the package name

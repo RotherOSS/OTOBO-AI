@@ -254,7 +254,7 @@
         <Description Translatable="1">Try to strip Signatures from Ticket Articles during import. The value is a Regular Expression - anything after this match will be stripped.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
-            <Item ValueType="String">^--$</Item>
+            <Item ValueType="String">^--\s*$</Item>
         </Value>
     </Setting>
 

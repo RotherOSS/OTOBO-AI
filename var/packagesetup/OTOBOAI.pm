@@ -109,7 +109,7 @@ sub new {
         },
         Purge => {
             Command    => 'DELETE',
-            Controller => '/otobo-ai/embedding/purge',
+            Controller => '/otobo-ai/embedding/purge/:Collection',
         },
     };
 
@@ -194,7 +194,7 @@ sub CodeUpgrade {
 
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
     my $Webservice       = $WebserviceObject->WebserviceGet(
-        Name => 'OTOBOAI',
+        Name => 'OTOBO-AI',
     );
 
     if ( !$Webservice ) {
@@ -207,7 +207,7 @@ sub CodeUpgrade {
 
     # upgrade webservice
     $Webservice->{Config}{Requester}{Invoker} = $Self->{Invoker};
-    $Webservice->{Config}{Requester}{Transport}{InvokerControllerMapping} = $Self->{InvokerControllerMapping};
+    $Webservice->{Config}{Requester}{Transport}{Config}{InvokerControllerMapping} = $Self->{InvokerControllerMapping};
 
     my $Success = $WebserviceObject->WebserviceUpdate(
         %{$Webservice},
