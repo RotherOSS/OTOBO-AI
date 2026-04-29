@@ -44,9 +44,12 @@ sub Run {
 
     my $Subaction        = $ParamObject->GetParam( Param => 'Subaction' ) || '';
     my $Question         = $ParamObject->GetParam( Param => 'Question' )  || '';
-    my $QuestionMd5      = $MainObject->MD5sum( String => \$Question );
-    my $CacheKeyQuestion = 'OtoboAI-Custom-Response-' . $QuestionMd5;
-    my $CacheKeyRequest  = 'OtoboAI-Custom-Request-' . $Self->{UserID};
+
+    # attention MD5Sum can change utf8_flag of passed string ref
+    my $QuestionCopyForMD5Calc = $Question;
+    my $QuestionMd5            = $MainObject->MD5sum( String => \$QuestionCopyForMD5Calc );
+    my $CacheKeyQuestion       = 'OtoboAI-Custom-Response-' . $QuestionMd5;
+    my $CacheKeyRequest        = 'OtoboAI-Custom-Request-' . $Self->{UserID};
 
     my $JSON;
     if ( $Subaction eq "GetAIAnswer" ) {
