@@ -38,6 +38,7 @@ our @ObjectDependencies = (
     'Kernel::System::Log',
     'Kernel::System::Main',
     'Kernel::System::Ticket::Article',
+    'Kernel::System::Ticket',
 );
 
 =head1 NAME
@@ -177,6 +178,8 @@ sub GetAnswer {
     my $ErrorMessage = '';
     my $Success      = 0;
 
+    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+
     # check whether otobo AI is enabled and if not, activate it
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
@@ -206,15 +209,19 @@ sub GetAnswer {
     my $UserID   = $Param{UserID};
     my $Persist  = $Param{Persist} // 1;
     my $Question;
+    my $RAG = $Param{RAG} // $ConfigObject->Get('OTOBOAI::DefaultRAG');
 
     if ($ObjectID) {
 
+        my $TicketObject  = $Kernel::OM->Get('Kernel::System::Ticket');
         my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 
         my $ArticleID = $ObjectID;
         my $TicketID  = $ArticleObject->TicketIDLookup(
             ArticleID => $ArticleID,
         );
+
+        my %TicketData = $TicketObject->TicketGet( TicketID => $TicketID );
 
         my $ArticleBackendObject = $ArticleObject->BackendForArticle(
             TicketID  => $TicketID,
@@ -237,7 +244,10 @@ sub GetAnswer {
         my $Body    = $Article{Body}    // '';
 
         $Body     = $Self->_StripSignature( Body => $Body );
-        $Question = "Subject: ". $Subject . '\n\n' . $Body;
+        $Question = "Subject: " . $Subject . '\n\n' . $Body;
+
+        my $QueueToRAGMapping = $ConfigObject->Get('OTOBOAI::QueueToRAGMapping') // {};
+        $RAG = $QueueToRAGMapping->{ $TicketData{Queue} } // $ConfigObject->Get('OTOBOAI::DefaultRAG');
     }
     else {
 
@@ -251,6 +261,7 @@ sub GetAnswer {
         Data         => {
             Question  => $Question,
             DoScoring => $DoScoring,
+            RAG       => $RAG,
         }
     );
 

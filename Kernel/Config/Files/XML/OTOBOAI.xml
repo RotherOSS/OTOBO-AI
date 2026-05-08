@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
-    <Setting Name="OTOBOAI::Ticket::SearchRestrictions" Required="0" Valid="1">
+    <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0100-Default" Required="0" Valid="1">
         <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
@@ -8,6 +8,11 @@
                 <DefaultItem>
                     <Array></Array>
                 </DefaultItem>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Default</Item>
+                    </Array>
+                </Item>
                 <Item Key="Queues">
                     <Array>
                         <Item>Raw</Item>
@@ -54,11 +59,134 @@
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="OTOBOAI::FAQ::SearchRestrictions" Required="0" Valid="1">
+    <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
+        <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <DefaultItem>
+                    <Array></Array>
+                </DefaultItem>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom1</Item>
+                    </Array>
+                </Item>
+                <Item Key="Queues">
+                    <Array>
+                        <Item>Raw</Item>
+                    </Array>
+                </Item>
+                <Item Key="UseSubQueues">1</Item>
+                <Item Key="Types">
+                    <Array>
+                        <Item>Unclassified</Item>
+                    </Array>
+                </Item>
+                <Item Key="StateTypes">
+                    <Array>
+                        <Item>closed</Item>
+                        <Item>closed successful</Item>
+                    </Array>
+                </Item>
+                <Item Key="Services">
+                    <Array>
+                    </Array>
+                </Item>
+                <Item Key="TicketCloseTimeNewerMinutes">518400</Item>
+                <Item Key="TicketCloseTimeOlderMinutes">1440</Item>
+                <Item Key="ArchiveFlags">
+                    <Array>
+                        <Item>y</Item>
+                        <Item>n</Item>
+                    </Array>
+                </Item>
+<!--
+                <Item Key="DynamicField_FieldNameX">
+                    <Hash>
+                        <Item Key="Empty">0</Item>
+                        <Item Key="Equals">123</Item>
+                        <Item Key="Like">some value</Item>
+                        <Item Key="GreaterThan">2001-01-01 01:01:01</Item>
+                        <Item Key="GreaterThanEquals">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThan">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThanEquals">2001-01-01 01:01:01</Item>
+
+                    </Hash>
+                </Item>
+-->
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
+        <Description Translatable="1">Add search restrictions or params, to add not all tickets in the otobo ai vector database.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <DefaultItem>
+                    <Array></Array>
+                </DefaultItem>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom2</Item>
+                    </Array>
+                </Item>
+                <Item Key="Queues">
+                    <Array>
+                        <Item>Raw</Item>
+                    </Array>
+                </Item>
+                <Item Key="UseSubQueues">1</Item>
+                <Item Key="Types">
+                    <Array>
+                        <Item>Unclassified</Item>
+                    </Array>
+                </Item>
+                <Item Key="StateTypes">
+                    <Array>
+                        <Item>closed</Item>
+                        <Item>closed successful</Item>
+                    </Array>
+                </Item>
+                <Item Key="Services">
+                    <Array>
+                    </Array>
+                </Item>
+                <Item Key="TicketCloseTimeNewerMinutes">518400</Item>
+                <Item Key="TicketCloseTimeOlderMinutes">1440</Item>
+                <Item Key="ArchiveFlags">
+                    <Array>
+                        <Item>y</Item>
+                        <Item>n</Item>
+                    </Array>
+                </Item>
+<!--
+                <Item Key="DynamicField_FieldNameX">
+                    <Hash>
+                        <Item Key="Empty">0</Item>
+                        <Item Key="Equals">123</Item>
+                        <Item Key="Like">some value</Item>
+                        <Item Key="GreaterThan">2001-01-01 01:01:01</Item>
+                        <Item Key="GreaterThanEquals">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThan">2001-01-01 01:01:01</Item>
+                        <Item Key="SmallerThanEquals">2001-01-01 01:01:01</Item>
+
+                    </Hash>
+                </Item>
+-->
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0100-Default" Required="0" Valid="1">
         <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Default</Item>
+                    </Array>
+                </Item>
                 <Item Key="CategoryIDs">
                     <Array>
                         <Item>1</Item>
@@ -83,11 +211,114 @@
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="OTOBOAI::Document::SearchRestrictions" Required="0" Valid="1">
+    <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
+        <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom1</Item>
+                    </Array>
+                </Item>
+                <Item Key="CategoryIDs">
+                    <Array>
+                        <Item>1</Item>
+                        <Item>2</Item>
+                        <Item>3</Item>
+                    </Array>
+                </Item>
+                <Item Key="LanguageIDs">
+                    <Array>
+                        <Item>1</Item>
+                        <Item>2</Item>
+                    </Array>
+                </Item>
+                <Item Key="States">
+                    <Hash>
+                        <Item Key="1">internal</Item>
+                        <Item Key="2">external</Item>
+                        <Item Key="3">public</Item>
+                    </Hash>
+                </Item>
+                <Item Key="Approved">1</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
+        <Description Translatable="1">Which FAQ articles to include for FAQ ingestion.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom2</Item>
+                    </Array>
+                </Item>
+                <Item Key="CategoryIDs">
+                    <Array>
+                        <Item>1</Item>
+                        <Item>2</Item>
+                        <Item>3</Item>
+                    </Array>
+                </Item>
+                <Item Key="LanguageIDs">
+                    <Array>
+                        <Item>1</Item>
+                        <Item>2</Item>
+                    </Array>
+                </Item>
+                <Item Key="States">
+                    <Hash>
+                        <Item Key="1">internal</Item>
+                        <Item Key="2">external</Item>
+                        <Item Key="3">public</Item>
+                    </Hash>
+                </Item>
+                <Item Key="Approved">1</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::Document::SearchRestrictions###0100-Default" Required="0" Valid="1">
         <Description Translatable="1">Which documents to include for AI search ingestion.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Default</Item>
+                    </Array>
+                </Item>
+                <Item Key="NewerThanDays">300</Item>
+                <Item Key="DocumentPath">/opt/otobo/var/ai/doc</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
+        <Description Translatable="1">Which documents to include for AI search ingestion.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom1</Item>
+                    </Array>
+                </Item>
+                <Item Key="NewerThanDays">300</Item>
+                <Item Key="DocumentPath">/opt/otobo/var/ai/doc</Item>
+            </Hash>
+        </Value>
+    </Setting>
+    <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom2" Required="0" Valid="0">
+        <Description Translatable="1">Which documents to include for AI search ingestion.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Label">
+                    <Array>
+                        <Item>Custom2</Item>
+                    </Array>
+                </Item>
                 <Item Key="NewerThanDays">300</Item>
                 <Item Key="DocumentPath">/opt/otobo/var/ai/doc</Item>
             </Hash>
@@ -274,6 +505,33 @@
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
                 <Item ValueType="Checkbox">1</Item>
+        </Value>
+    </Setting>
+
+    <Setting Name="OTOBOAI::EnableUseCases" Required="0" Valid="1">
+        <Description Translatable="1">Enable using of multiple RAGs and dedicated, separated use cases.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+                <Item ValueType="Checkbox">1</Item>
+        </Value>
+    </Setting>
+
+    <Setting Name="OTOBOAI::QueueToRAGMapping" Required="0" Valid="1">
+        <Description Translatable="1">Determine the use-case specific RAG to invoke depending on Queuename.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+                <Hash>
+                    <Item Key="Raw">Default</Item>
+                    <Item Key="Postmaster">Default</Item>
+                </Hash>
+        </Value>
+    </Setting>
+
+    <Setting Name="OTOBOAI::DefaultRAG" Required="0" Valid="1">
+        <Description Translatable="1">Determine the use-case specific RAG to invoke depending on Queuename.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="String">tfd_rag1</Item>
         </Value>
     </Setting>
 

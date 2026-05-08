@@ -75,6 +75,7 @@ otobo-ai-docker container for an Answer.
     my $Result = $InvokerObject->PrepareRequest(
         Data => {                               # data payload
             Question  => $Question,
+            RAG       => $RAG,                  # the RAG endpoint, or undef for default
         },
     );
 
@@ -96,6 +97,7 @@ otobo-ai-docker container for an Answer.
 sub PrepareRequest {
     my ( $Self, %Param ) = @_;
 
+    my $RAG       = $Param{Data}{RAG} // $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DefaultRAG');
     my $Question  = $Param{Data}{Question};
     my $DoScoring = $Param{Data}{DoScoring}
         ? $Kernel::OM->Get('Kernel::System::JSON')->True()
@@ -118,6 +120,7 @@ sub PrepareRequest {
                 question   => $Question,
                 do_scoring => $DoScoring,
             },
+            RAG    => $RAG,
             config => {},
             kwargs => {},
         },

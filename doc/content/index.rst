@@ -49,6 +49,14 @@ Otobo-ai-services
 - edit the `.env` file and set the OTOBO_AI_API_KEY to something of your liking
 - start up container with `docker compose up -d`
 
+**Note:** When creating new rags by copying one of the example rag folders, make sure to adjust line 10 in graph.py:
+
+::
+
+   from src.rags.tfd_rag1.chains import rag_chain, eval_chain
+
+Here, rename 'src.rags.tfd_rag1.chains' and change the 'tfd_rag1' part to match the name of your new rag.
+
 Test LLM connectivity
 ---------------------
 
@@ -87,9 +95,9 @@ Example Screenshot:
 
 Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`. At minimum configure these two settings:
 
-- ``OTOBOAI::Ticket::SearchRestrictions`` - Hash of `TicketSearch <https://github.com/RotherOSS/otobo/blob/rel-11_0/Kernel/System/Ticket/TicketSearch.pm#L46>`_ Parameters.
+- ``OTOBOAI::Ticket::SearchRestrictions###0100-Default`` - Hash of `TicketSearch <https://github.com/RotherOSS/otobo/blob/rel-11_0/Kernel/System/Ticket/TicketSearch.pm#L46>`_ Parameters.
      Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::Ticket::SearchRestrictions' Key in Config.pm and provide the TicketSearch Hash in Code
-- ``OTOBOAI::FAQ::SearchRestrictions`` - Hash of `FAQSearch <https://github.com/RotherOSS/FAQ/blob/master/Kernel/System/FAQSearch.pm#L44>`_ Parameters.
+- ``OTOBOAI::FAQ::SearchRestrictions###0100-Default`` - Hash of `FAQSearch <https://github.com/RotherOSS/FAQ/blob/master/Kernel/System/FAQSearch.pm#L44>`_ Parameters.
      Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::FAQ::SearchRestrictions' Key in Config.pm and provide the FAQSearch Hash in Code
    
 The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
@@ -137,7 +145,7 @@ To run a sample score evaluation, run:
 
 ::
 
-   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample sample.json --result scoring.csv --json scoring.json
+   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample sample.json --result scoring.csv --json scoring.json --use-case Default
 
 
 This will read the first 100 TicketIDs from the sample.json file produced above, run each ticket through AI Answer generation and evaluate
@@ -164,6 +172,7 @@ Console Commands
     [--article-id ...]             - ArticleID
     [--ticket-id ...]              - TicketID
     [--question ...]               - Question
+    [..rag ...]                    - The rag to use, defaults to 'OTOBOAI::DefaultRAG' sysconfig setting
     [--help|h]                     - Display help for this command.
     [--no-ansi]                    - Do not perform ANSI terminal output coloring.
     [--quiet]                      - Suppress informative output, only retain error messages.
@@ -209,6 +218,7 @@ Console Commands
     [--help|h]                     - Display help for this command.
     [--no-ansi]                    - Do not perform ANSI terminal output coloring.
     [--quiet]                      - Suppress informative output, only retain error messages.
+    [--use-case]                   - Use case to use for sampling. Defaults to 'Default'.
 
 
 
@@ -220,24 +230,35 @@ Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Event module registration. For more performance you can define a trigger event (e. g. Event => TicketCreate). This is only possible if all Ticket dynamic fields need the same event.
 
+
 Core::OTOBOAI
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-OTOBOAI::AnswerTemplateRequestType
+OTOBOAI::FAQ::SearchRestrictions###0100-Default
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Define if fetching the AI answer on opening the Answer template should run synchronous or asynchronous.
+Which FAQ articles to include for FAQ ingestion.
 
-OTOBOAI::Document::SearchRestrictions
+OTOBOAI::Document::SearchRestrictions###0100-Default
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Which documents to include for AI search ingestion.
 
-OTOBOAI::DynamicFieldOTOBOAI
+OTOBOAI::Ticket::SearchRestrictions###0100-Default
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-This option defines the dynamic field in which an OTOBOAI answer is stored.
+Add search restrictions or params, to add not all tickets in the otobo ai vector database.
 
-OTOBOAI::FAQ::SearchRestrictions
+OTOBOAI::AllowedArticleSenderTypes
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Which FAQ articles to include for FAQ ingestion.
+Valid SenderTypes for Article selection when indexing and importing into AI. Valid values are "agent", "customer", and 
+"system". By default this contains only customer and agent.
+
+OTOBOAI::OnlyVisibleForCustomer
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Allow only Articles visible for Customer to be embedded for AI
+
+OTOBOAI::AnswerTemplateRequestType
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+Define if fetching the AI answer on opening the Answer template should run synchronous (blocking) or asynchronous 
+which requires browser reload while answer is pending.
 
 OTOBOAI::OverwritePreviousResponse
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -249,22 +270,14 @@ OTOBOAI::Placeholder
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Define a string which is used as a placeholder while waiting for the AI answer.
 
-OTOBOAI::Ticket::SearchRestrictions
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Add search restrictions or params, to add not all tickets in the otobo ai vector database.
-
 OTOBOAI::StripSignatureRegex
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Regex to strip Signatures from Article Bodies, if endabled.
 
-OTOBOAI::AllowedArticleSenderTypes
+OTOBOAI::DynamicFieldOTOBOAI
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Valid SenderTypes for Article selection when indexing and importing into AI. Valid values are "agent", "customer", and 
-"system". By default this contains only customer and agent.
+This option defines the dynamic field in which an OTOBOAI answer is stored.
 
-OTOBOAI::OnlyVisibleForCustomer
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Allow only Articles visible for Customer to be embedded for AI
 
 Daemon::SchedulerCronTaskManager::Task
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -273,7 +286,8 @@ Daemon::SchedulerCronTaskManager::Task###RebuildOtoboAIIndex
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 Rebuilds the Otobo AI Vector DB index.
 
-Frontend::Admin::ModuleRegistration
+
+Otobo AI Dashboard
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 DashboardBackend###0160-OTOBOAIDashboard

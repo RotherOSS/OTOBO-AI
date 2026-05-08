@@ -59,6 +59,13 @@ sub Configure {
         HasValue    => 1,
         ValueRegex  => qr/^.+$/smx,
     );
+    $Self->AddOption(
+        Name        => 'rag',
+        Description => "the rag to invoke, defaults to 'OTOBOAI::DefaultRAG' sysconfig setting.",
+        Required    => 0,
+        HasValue    => 1,
+        ValueRegex  => qr/^.+$/smx,
+    );
 
     return;
 }
@@ -105,12 +112,14 @@ sub Run {
 
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
     my $Result;
+    my $RAG = $Self->GetOption('rag');
 
     my $Question = $Self->GetOption('question');
     if ($Question) {
 
         $Result = $OtoboAIObject->GetAnswer(
             Question => $Question,
+            RAG      => $RAG,
         );
     }
     else {

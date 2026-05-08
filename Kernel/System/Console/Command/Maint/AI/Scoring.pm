@@ -82,6 +82,14 @@ sub Configure {
 
         ValueRegex => qr/^[0-9]+$/smx,
     );
+    $Self->AddOption(
+        Name        => 'use-case',
+        Description =>
+            "Use case to use for sampling. Defaults to 'Default'.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
+    );
 
     return;
 }
@@ -139,6 +147,7 @@ sub Run {
     my $Output     = $Self->GetOption('result') || 10;
     my $JSONOutput = $Self->GetOption('json');
     my $Limit      = $Self->GetOption('limit');
+    my $UseCase    = $Self->GetOption('use-case') // 'Default';
 
     my $JSON            = file($Sample)->slurp();
     my $SampleTicketIDs = decode_json($JSON);
@@ -147,7 +156,8 @@ sub Run {
         SampleTicketIDs => $SampleTicketIDs,
         OutputFile      => $Output,
         JSONOutput      => $JSONOutput,
-        Limit           => $Limit || scalar $SampleTicketIDs->@*,
+        Limit           => $Limit || scalar $SampleTicketIDs->{$UseCase}->@*,
+        UseCase         => $UseCase,
     );
 
     return $Self->ExitCodeOk();
@@ -164,6 +174,7 @@ sub DoScoring {
     my $SampleTicketIDs = $Param{SampleTicketIDs};
     my $JSONOutput      = $Param{JSONOutput};
     my $Limit           = $Param{Limit};
+    my $UseCase         = $Param{UseCase};
 
     ## no critic(OTOBO::ProhibitOpen InputOutput::RequireBriefOpen)
     open( $OutputCSVFileHandle, '>', $Param{OutputFile} ) || die("failed to open file '$Param{OutputFile}'");
@@ -175,7 +186,7 @@ sub DoScoring {
 
     my $Firstline  = 1;
     my $NumScores  = 0;
-    my $SampleSize = scalar $SampleTicketIDs->@*;
+    my $SampleSize = scalar $SampleTicketIDs->{$UseCase}->@*;
 
     my $VerboseJSON = {
         Data => [],
@@ -187,7 +198,7 @@ sub DoScoring {
 
     my $Count = 0;
     TICKETID:
-    for my $TicketID ( $SampleTicketIDs->@* ) {
+    for my $TicketID ( $SampleTicketIDs->{$UseCase}->@* ) {
 
         my $VerboseJSONItem = {};
 

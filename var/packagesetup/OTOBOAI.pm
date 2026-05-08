@@ -105,7 +105,7 @@ sub new {
         },
         GetAnswer => {
             Command    => 'POST',
-            Controller => '/otobo-ai/tfd_rag1/invoke',
+            Controller => '/otobo-ai/:RAG/invoke',
         },
         Purge => {
             Command    => 'DELETE',
