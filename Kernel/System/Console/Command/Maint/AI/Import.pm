@@ -96,6 +96,15 @@ sub Configure {
         HasValue   => 1,
         ValueRegex => qr/.*/smx,
     );
+    $Self->AddOption(
+        Name        => 'use-case',
+        Description =>
+            "The use-case name(s) to ingest data for. If left empty, all use cases will be ingested.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/.*/smx,
+        Multiple   => 1,
+    );
 
     return;
 }
@@ -171,6 +180,7 @@ sub Run {
 
     my $ReImport = $Self->GetOption('reimport');
     my $Purge    = $Self->GetOption('purge');
+    my $UseCases = $Self->GetOption('use-case');
 
     if ( $Reference && -e $Reference ) {
 
@@ -192,6 +202,7 @@ sub Run {
                 Sample    => $Sample,
                 SampleNth => $SampleNth,
                 Reference => $Reference,
+                UseCases  => $UseCases,
             );
         }
     }
@@ -203,7 +214,7 @@ sub Run {
         }
 
         if ( !$Purge ) {
-            $Self->MigrateFAQs();
+            $Self->MigrateFAQs( UseCases => $UseCases );
         }
     }
 
@@ -214,7 +225,7 @@ sub Run {
         }
 
         if ( !$Purge ) {
-            $Self->MigrateDocs();
+            $Self->MigrateDocs( UseCases => $UseCases );
         }
     }
 
@@ -227,6 +238,7 @@ sub MigrateTickets {
     my $Sample    = $Param{Sample};
     my $SampleNth = $Param{SampleNth};
     my $Reference = $Param{Reference};
+    my $UseCases  = $Param{UseCases};
 
     my $TicketObject    = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ArticleObject   = $Kernel::OM->Get('Kernel::System::Ticket::Article');
@@ -246,11 +258,21 @@ sub MigrateTickets {
 
     my %TicketSample;
 
+    my $RequestedUseCaseLabel;
+    if ( IsArrayRefWithData($UseCases) ) {
+        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
+    }
+
+    SEARCHRESTRICTION:
     for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
         my $UseCaseLabel       = join ' ', @UseCaseLabels;
+
+        if ($RequestedUseCaseLabel) {
+            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        }
 
         if ( !exists $TicketSample{$UseCaseLabel} ) {
             $TicketSample{$UseCaseLabel} = [];
@@ -535,6 +557,8 @@ sub MigrateTickets {
 sub MigrateFAQs {
     my ( $Self, %Param ) = @_;
 
+    my $UseCases = $Param{UseCases};
+
     # check whether FAQ package is installed
     my $PackageObject = $Kernel::OM->Get('Kernel::System::Package');
     my $IsInstalled   = $PackageObject->PackageIsInstalled(
@@ -556,13 +580,24 @@ sub MigrateFAQs {
     my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
     my $EnableUseCases  = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases') // 0;
 
+    my $RequestedUseCaseLabel;
+    if ( IsArrayRefWithData($UseCases) ) {
+        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
+    }
+
     # determine search restrictions for FAQSearch
     my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') // {};
 
+    SEARCHRESTRICTION:
     for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
+        my $UseCaseLabel       = join ' ', @UseCaseLabels;
+
+        if ($RequestedUseCaseLabel) {
+            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        }
 
         $Self->Print(
             "<yellow>Use Case: " . ( join ' ', @UseCaseLabels ) . "</yellow>\n"
@@ -704,6 +739,13 @@ sub MigrateFAQs {
 sub MigrateDocs {
     my ( $Self, %Param ) = @_;
 
+    my $UseCases = $Param{UseCases};
+
+    my $RequestedUseCaseLabel;
+    if ( IsArrayRefWithData($UseCases) ) {
+        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
+    }
+
     $Self->Print(
         "<green>Ingesting Documents ...</green>\n"
     );
@@ -715,10 +757,16 @@ sub MigrateDocs {
     my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
     my $EnableUseCases         = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')               // 0;
 
+    SEARCHRESTRICTION:
     for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
+        my $UseCaseLabel       = join ' ', @UseCaseLabels;
+
+        if ($RequestedUseCaseLabel) {
+            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        }
 
         $Self->Print(
             "<yellow>Use Case: " . ( join ' ', @UseCaseLabels ) . "</yellow>\n"

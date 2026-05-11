@@ -72,6 +72,11 @@ sub Run {
         }
     }
 
+    if ( $Param{Event} eq 'TicketQueueUpdate' ) {
+        print STDERR "PURGE\n";
+        $Self->_PurgeAIDynamicFields( TicketID => $Param{Data}{TicketID} );
+    }
+
     # get necessary objects
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
     my $ConfigObject  = $Kernel::OM->Get('Kernel::Config');
@@ -157,6 +162,7 @@ sub Run {
             UserID             => $Param{UserID},
         );
     }
+
     return if $CurrentValue;
 
     my $Placeholder = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Placeholder') || '<|waiting for AI answer|>';
@@ -176,6 +182,51 @@ sub Run {
     $ArticleObject->{$CacheKey}{$ArticleID} = 1;
 
     return 1;
+}
+
+sub _PurgeAIDynamicFields {
+
+    my ( $Self, %Param ) = @_;
+
+    my $ArticleObject             = $Kernel::OM->Get('Kernel::System::Ticket::Article');
+    my $ConfigObject              = $Kernel::OM->Get('Kernel::Config');
+    my $DynamicFieldBackendObject = $Kernel::OM->Get('Kernel::System::DynamicField::Backend');
+
+    my @Articles = $ArticleObject->ArticleList(
+        TicketID => $Param{TicketID},
+    );
+
+    my $DynamicFieldName = $ConfigObject->Get('OTOBOAI::DynamicFieldOTOBOAI') || 'OTOBOAI';
+    my $OTOBOAIDFConfig  = $Kernel::OM->Get('Kernel::System::DynamicField')->DynamicFieldGet(
+        Name => $DynamicFieldName,
+    );
+
+    for my $Article (@Articles) {
+
+        my $Success = $DynamicFieldBackendObject->ValueSet(
+            DynamicFieldConfig => $OTOBOAIDFConfig,
+            ObjectID           => $Article->{ArticleID},
+            Value              => undef,
+            DoWrite            => 1,
+            UserID             => 1,
+        );
+
+        if ( !$Success ) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'error',
+                Message  => "Failed to clear OTOBO AI DynamicField for Article $Article->{ArticleID}.",
+            );
+        }
+        else {
+
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'debug',
+                Message  => "Cleared OTOBO AI DynamicField for Article $Article->{ArticleID}.",
+            );
+        }
+    }
+
+    return;
 }
 
 1;

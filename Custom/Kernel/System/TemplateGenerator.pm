@@ -535,7 +535,8 @@ sub Template {
 
             my $RequestType = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AnswerTemplateRequestType') || 'Synchronous';
             if ( $RequestType eq 'Asynchronous' ) {
-                if ( !$OTOBOAIValue || $OTOBOAIValue eq $Placeholder ) {
+                # sure we want to start a new request if we have placeholder?
+                if ( !$OTOBOAIValue ) { #|| $OTOBOAIValue eq $Placeholder ) {
                     $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
                         ObjectID => $Param{ArticleID},
                     );
@@ -548,6 +549,7 @@ sub Template {
                             DoWrite            => 1,
                             UserID             => $Param{UserID},
                         );
+                        $OTOBOAIValue = $Placeholder;
                     }
                 }
             }
