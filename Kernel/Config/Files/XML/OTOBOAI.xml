@@ -10,7 +10,7 @@
                 </DefaultItem>
                 <Item Key="Label">
                     <Array>
-                        <Item>Default</Item>
+                        <Item>kunde1</Item>
                     </Array>
                 </Item>
                 <Item Key="Queues">
@@ -184,7 +184,7 @@
             <Hash>
                 <Item Key="Label">
                     <Array>
-                        <Item>Default</Item>
+                        <Item>kunde1</Item>
                     </Array>
                 </Item>
                 <Item Key="CategoryIDs">
@@ -286,7 +286,7 @@
             <Hash>
                 <Item Key="Label">
                     <Array>
-                        <Item>Default</Item>
+                        <Item>kunde1</Item>
                     </Array>
                 </Item>
                 <Item Key="NewerThanDays">300</Item>
@@ -551,8 +551,8 @@
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
                 <Hash>
-                    <Item Key="Raw">Default</Item>
-                    <Item Key="Postmaster">Default</Item>
+                    <Item Key="Raw">answer_v1</Item>
+                    <Item Key="Postmaster">answer_v1</Item>
                 </Hash>
         </Value>
     </Setting>
@@ -561,7 +561,7 @@
         <Description Translatable="1">Determine the use-case specific RAG to invoke depending on Queuename.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
-            <Item ValueType="String">tfd_rag1</Item>
+            <Item ValueType="String">answer_v1</Item>
         </Value>
     </Setting>
 
