@@ -8,7 +8,10 @@ Amen.
 
 Description
 ===========
-The OTOBO AI package is the OTOBO extension to interface with Large Language Model (LLM) for Retrieval-Augmented Generation (RAG).
+The OTOBO AI package is the OTOBO extension to interface with the otobo-ai-services for Retrieval-Augmented Generation (RAG).
+It allows for data ingestion into the RAG as well as fetching answers from the RAG and providing an answer template containing the LLM generated answer.
+
+See `the offical documentation <https://doc.otobo.org/manual/ai/11.0/en/content/index.html>`__ for more information.
 
 System requirements
 ===================
@@ -29,129 +32,84 @@ Usage
 =====
 This package adds support for storing Ticket, FAQ, and Document data in a Vector DB and using an LLM to generate Response Proposal via RAG.
 
-The whole OTOBO AI Solution consists of 3 Components:
+The whole OTOBO AI Solution consists of 3 components:
 
-- The OTBO AI Extension package (this module)
+- The OTOBO AI Extension package (this module)
 - The OTOBO AI Services docker container providing the Vector DB
 - A LLM for the actual RAG generation
 
+See `the offical documentation <https://doc.otobo.org/manual/ai/11.0/en/content/index.html>`__ for an overview.
+
+
 Setup
 -----
-In order to make use of this package you need to run the OTOBO AI Services docker container first. Please resort to the documentation if OTOBO AI Services for more details, but as a quick guide:
 
-Otobo-ai-services
------------------
-
-- Get the OTOBO AI services container from https://github.com/RotherOSS/otobo-ai-services/
-- create a rags folder in the root directory
-- copy the rag_examples/tfd_rag1 folder into the rags folder
-- copy the `.env_example` file to `.env`
-- edit the `.env` file and set the OTOBO_AI_API_KEY to something of your liking
-- start up container with `docker compose up -d`
-
-**Note:** When creating new rags by copying one of the example rag folders, make sure to adjust line 10 in graph.py:
-
-::
-
-   from src.rags.tfd_rag1.chains import rag_chain, eval_chain
-
-Here, rename 'src.rags.tfd_rag1.chains' and change the 'tfd_rag1' part to match the name of your new rag.
-
-Test LLM connectivity
----------------------
-
-Run this from the host where the otobo-ai-services container runs, and optionally also inside the container.
-
-::
-
-    curl -v http://ai.local.rother-oss.com:11434/api/generate -d '{ "model": "llama3.3:70b", "prompt": "Tell me about Shakespeare." }'
-
-You should see a stream of text chunks coming back from the LLM
+.. important:: Requirement:
+   In order to make use of this package you need to run the OTOBO AI Services docker container first.
+   Here: https://github.com/RotherOSS/otobo-ai-services
 
 
-Test otobo-ai-services web service
-----------------------------------
+Web Services
+^^^^^^^^^^^^
 
-::
-   
-   curl -v 'http://otobo-ai:8000/otobo-ai/tfd_rag1/invoke' -H'Authorization: apikey <OTOBO_AI_API_KEY>' 
-   -H 'Content-Type: application/json' -d '{ "input" : { "question": "Tell me about Shakespeare", "do_scoring" : true }, "config" : {}, "kwargs" : {} }'
+All communication with the otobo-ai-services container is done via web service calls.
 
-You should see `Weiterleiten an Kundenservice` returned as result, which is the default answer if no context available for thequestion.
+- Verify the AI Webservice invokers have been installed properly at - go to ``Admin UI -> Webservices -> Edit Web Service: OTOBO-AI``.
+- In order to add authentication navigate to ``Otobo as Requester -> Configure``.
+  Here, add a ``Common Header`` at the bottom of the page.
+  Set ``Header Name`` to ``Authorization`` and  ``Header Value`` to ``apikey <OTOBO_AI_API_KEY>``.
 
-
-Otobo-ai extension package
---------------------------
-
-- Install this package as usual via OTOBO Package Manager in the Admin UI.
-- Verify the AI Webservice invokers have been installed properly at - go to Admin UI -> Webservices -> Edit Web Service: OTOBO-AI
-- Add authentication by going to ‘Otobo as Requester’ -> Configure. Here, add a ‘Common Header’ at the bottom of the page. Set `Header Name` to 'Authorization'. Set `Header Value` to 'apikey <OTOBO_AI_API_KEY>'
-
-Example Screenshot:
+Example screenshot:
 
 .. image:: ../images/headers.png
 
-**Note:** The value for the Header is literally the string “apikey”, followed by a whitespace, followed by your custom API key.
+.. note::
+   The value for the header is literally the string ``apikey``, followed by a whitespace, followed by your custom API key.
 
-Review and modify the Ingestion Parameters for Tickets, FAQ and Docs in the System Configuration under `Core::OTOBOAI`. At minimum configure these two settings:
+Review and modify the ingestion parameters for tickets, FAQ and documents in the System Configuration under ``Core::OTOBOAI``.
+At least you have to configure these two settings:
 
-- ``OTOBOAI::Ticket::SearchRestrictions###0100-Default`` - Hash of `TicketSearch <https://github.com/RotherOSS/otobo/blob/rel-11_0/Kernel/System/Ticket/TicketSearch.pm#L46>`_ Parameters.
-     Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::Ticket::SearchRestrictions' Key in Config.pm and provide the TicketSearch Hash in Code
-- ``OTOBOAI::FAQ::SearchRestrictions###0100-Default`` - Hash of `FAQSearch <https://github.com/RotherOSS/FAQ/blob/master/Kernel/System/FAQSearch.pm#L44>`_ Parameters.
-     Sysconfig can be used for the most basic default Params. For more complicated setups create a 'OTOBOAI::FAQ::SearchRestrictions' Key in Config.pm and provide the FAQSearch Hash in Code
-   
-The package as well installs a ticket event module. This module triggers an asynchronous request to the LLM to provide content for a response template. Per default, the event is executed upon ArticleCreate, but the trigger is configurable via system configuration.
-Check ``Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField``
+- ``OTOBOAI::Ticket::SearchRestrictions###0100-Default`` - Hash of `TicketSearch <https://github.com/RotherOSS/otobo/blob/rel-11_0/Kernel/System/Ticket/TicketSearch.pm#L46>`_ parameters.
+     This Sysconfig can be used for the most basic default parameters.
+     For more complicated setups create a ``OTOBOAI::Ticket::SearchRestrictions`` key in ``Config.pm`` and provide the ``TicketSearch`` hash in code
+- ``OTOBOAI::FAQ::SearchRestrictions###0100-Default`` - Hash of `FAQSearch <https://github.com/RotherOSS/FAQ/blob/master/Kernel/System/FAQSearch.pm#L44>`_ parameters.
+     This Sysconfig can be used for the most basic default parmeters.
+     For more complicated setups create a ``OTOBOAI::FAQ::SearchRestrictions`` key in ``Config.pm`` and provide the ``FAQSearch`` hash in code.
 
-Note that in case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
+The package installs a ticket event module, as well.
+This module triggers an asynchronous request to the otobo-ai-services to provide content for a response template.
+By default, the event is executed upon the ``ArticleCreate`` event, but the trigger is configurable via system configuration (check ``Ticket::EventModulePost###8000-PopulateOTOBOAIDynamicField``).
 
-
-Stripping Signatures
-========================================
-
-Enable the System Configuration setting ``OTOBOAI::StripSignatureRegex`` and set it to a Perl Regular Expression.
-Otobo will try to strip everything from Ticket Article bodies starting from the first match of that regex.
-
-
-Fine Tuning with Sample Score Evaluation
-========================================
-
-The Console Commands ``Maint::AI::Import`` and ``Maint::AI::Scoring`` can be used to do quality fine-tuning by using a sample set of tickets 
-and evaluation the Quality score of the Sample. This allows to repeat samples runs to run multiple times, with different prompts. Quality Score
-is a floating point number in the range from zero (0) to one (1).
+.. note::
+   In case of an event which does not pass an article id, an attempt is made to retrieve the latest customer article of the ticket as base for the request.
 
 
-To use Sampling/Scoring, you need to create a Ticket Sample subset first:
+Test otobo-ai-services web service
+"""""""""""""""""""""""""""""""""""
+
+In order to call the default RAG endpoint of the otobo-ai-services container, you can use the following curl command:
 
 ::
 
-   bin/otobo.Console.pl Maint::AI::Import --reimport --sample /opt/otobo/sample.json
+   curl -v 'http://otobo-ai:8000/otobo-ai/default/invoke' -H'Authorization: apikey <OTOBO_AI_API_KEY>'
+   -H 'Content-Type: application/json' -d '{ "input" : { "question": "Tell me about Shakespeare", "do_scoring" : true }, "config" : {}, "kwargs" : {} }'
+
+Obtaining an answer from the RAG endpoint confirms that the otobo-ai-services container is running and properly configured to receive requests.
 
 
-This will do a reimport of all sources (tickets, faqs, and docs) but will import only 90% of importable tickets into the AI vector-database
-and retain the remaining 10% of Tickets for sampling. For the sample, a JSON encoded list of TicketIDs will be written to the json file specified by the 
-sample parameter. This JSON file can then be fed multiple times into the ``Maint::AI::Scoring`` console command to evaluate the quality score.
 
-One can re-use an existing sample.json file like so:
+Answer Template
+^^^^^^^^^^^^^^^
 
-::
+In order to access the generated answer and reply to customer, this package provides an answer template ``OTOBOAI Answer Template`` which can be used in the agent interface.
+The actual generated answer is stored in a dynamic field, which can be added to the template output.
+It can be included by notification tag ``<OTOBO_AIAnswer_OTOBOAI>``.
+You may create multiple answer templates with different output and use them for different purposes, e.g., one for customer communication and one for internal use only with more technical details.
+Assign it to the queues relevant.
 
-   bin/otobo.Console.pl Maint::AI::Import --reimport --reference /opt/otobo/sample.json
+.. note::
+   The name of the field may be configured via system configuration (check ``OTOBOAI::DynamicFieldOTOBOAI``).
 
-This will still do a re-import, but will hold back the exact same tickets for sampling. This is helpful for replicable test.
-
-
-To run a sample score evaluation, run:
-
-::
-
-   bin/otobo.Console.pl Maint::AI::Scoring --limit 100 --sample sample.json --result scoring.csv --json scoring.json --use-case Default
-
-
-This will read the first 100 TicketIDs from the sample.json file produced above, run each ticket through AI Answer generation and evaluate
-the quality score of the resulting answer. Output will be written as a simple CSV (tab separated) file containing TicketIDs and the scores generated
-by the evaluation prompt. The --json and --limit parameters are optional. Specifying a verbose JSON file with the --json switch will write
-verbose output in JSON format to that file for manual inspection.
 
 
 Console Commands
@@ -162,12 +120,12 @@ Console Commands
 ::
 
    bin/otobo.Console.pl Maint::AI::GetAnswer --help
-   
-   Retrieve an AI generated Answer from the otobo-ai-services container.
-   
+
+   Retrieve an AI generated answer from the otobo-ai-services container.
+
    Usage:
     otobo.Console.pl Maint::AI::GetAnswer [--article-id ...] [--ticket-id ...] [--question ...]
-   
+
    Options:
     [--article-id ...]             - ArticleID
     [--ticket-id ...]              - TicketID
@@ -183,12 +141,12 @@ Console Commands
 ::
 
    bin/otobo.Console.pl Maint::AI::Import --help
-   
+
    Import existing tickets and faq articles to the AI vector database.
-   
+
    Usage:
     otobo.Console.pl Maint::AI::Import [--target ...] [--reimport] [--sample-nth ...] [--sample ...]
-   
+
    Options:
     [--target ...]                 - Specify which objects will be migrated. t: Tickets; f: FAQ articles; d: documents. If not specified all sources will be handled.
     [--reimport]                   - Do a re-import, which means the AI vectorstore and fulltext postgres DBs will be purged.
@@ -204,12 +162,12 @@ Console Commands
 ::
 
    bin/otobo.Console.pl Maint::AI::Scoring --help
-   
+
    Do a quality evaluation and write the coring result into a file
-   
+
    Usage:
     otobo.Console.pl Maint::AI::Scoring [--sample ...] [--result ...] [--verbose] [--limit ...]
-   
+
    Options:
     [--sample ...]                 - Specify wfile path to sample.json file with the TicketIDs to sample. This file can be produced by the 'Maint::AI::Import' console command using the --sample option.
     [--result ...]                 - Specify the file path for the scoring output should be written to in CSV (tab separated) format.
@@ -248,7 +206,7 @@ Add search restrictions or params, to add not all tickets in the otobo ai vector
 
 OTOBOAI::AllowedArticleSenderTypes
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Valid SenderTypes for Article selection when indexing and importing into AI. Valid values are "agent", "customer", and 
+Valid SenderTypes for Article selection when indexing and importing into AI. Valid values are "agent", "customer", and
 "system". By default this contains only customer and agent.
 
 OTOBOAI::OnlyVisibleForCustomer
@@ -257,7 +215,7 @@ Allow only Articles visible for Customer to be embedded for AI
 
 OTOBOAI::AnswerTemplateRequestType
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-Define if fetching the AI answer on opening the Answer template should run synchronous (blocking) or asynchronous 
+Define if fetching the AI answer on opening the Answer template should run synchronous (blocking) or asynchronous
 which requires browser reload while answer is pending.
 
 OTOBOAI::OverwritePreviousResponse
