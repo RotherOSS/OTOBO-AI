@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - 1b2b9b4a41de83976e45aaac1aa63a801cce2cdd - Kernel/System/TemplateGenerator.pm
+# $origin: otobo - ada85dafd597ad986588fd356523cedda4d39d27 - Kernel/System/TemplateGenerator.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -39,6 +39,7 @@ our @ObjectDependencies = (
     'Kernel::System::CustomerUser',
     'Kernel::System::DynamicField',
     'Kernel::System::DynamicField::Backend',
+    'Kernel::System::EmailAddress',
     'Kernel::System::Encode',
     'Kernel::System::HTMLUtils',
     'Kernel::System::Log',
@@ -319,13 +320,16 @@ sub Sender {
         }
     }
 
+    # get needed objects
+    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+
     # get sender attributes
     my %Address = $Kernel::OM->Get('Kernel::System::Queue')->GetSystemAddress(
         QueueID => $Param{QueueID},
     );
 
-    # get config object
-    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+    # This is the not quoted real name
+    my $Phrase = $Address{Phrase};
 
     # check config for agent real name
     my $UseAgentRealName = $ConfigObject->Get('Ticket::DefineEmailFrom');
@@ -343,8 +347,8 @@ sub Sender {
             # check for user data
             if ( $UserData{UserFullname} ) {
 
-                # rewrite RealName
-                $Address{RealName} = "$UserData{UserFullname}";
+                # rewrite the phrase, no need to care about quoting
+                $Phrase = $UserData{UserFullname};
             }
         }
 
@@ -354,17 +358,21 @@ sub Sender {
             # check for user data
             if ( $UserData{UserFullname} ) {
 
-                # rewrite RealName
-                my $Separator = ' ' . $ConfigObject->Get('Ticket::DefineEmailFromSeparator')
-                    || '';
-                $Address{RealName} = $UserData{UserFullname} . $Separator . ' ' . $Address{RealName};
+                # prepend the user name and the separator, e.g. 'via', to the real name
+                my $Separator = $ConfigObject->Get('Ticket::DefineEmailFromSeparator');
+                $Phrase = "$UserData{UserFullname} $Separator $Phrase";
             }
         }
     }
 
-    # Format sender realname and address compliant to RFC 5322. This is relevant when the real name contain commas
+    # Format sender real name and address compliant to RFC 5322. This is relevant when the real name contain commas
     # or other special symbols.
-    return Mail::Address->new( $Address{RealName}, $Address{Email} )->format();
+    my $EmailAddressObject = $Kernel::OM->Get('Kernel::System::EmailAddress');
+
+    return $EmailAddressObject->Format(
+        RealName => $Phrase,
+        Address  => $Address{Email},
+    );
 }
 
 =head2 Template()
@@ -696,20 +704,29 @@ sub GenericAgentArticle {
 
 =head2 Attributes()
 
-generate attributes
+modifies inplace the passed in C<Data> hash reference and returns the enriched data.
 
-    my %Attributes = $TemplateGeneratorObject->Attributes(
-        TicketID   => 123,
-        ArticleID  => 123,
-        ResponseID => 123
-        UserID     => 123,
-        Action     => 'Forward', # Possible values are Reply and Forward, Reply is default.
+    my %Data = (
+        Subject => 'What do you want to talk about?'
     );
 
-returns
-    StandardResponse
-    Salutation
-    Signature
+    my %EnrichedData = $TemplateGeneratoObject->Attributes(
+        TicketID   => 123,
+        Data       => \%Data,    # $Data{Subject} is used as input for finding the new subject
+        UserID     => 123,
+        Action     => 'Forward', # Relevant for the subject.
+                                 # Possible values are 'Reply' and 'Forward', 'Reply' is eventually the default.
+    );
+
+Returns the modified hash reference as key value pairs. The potentially added or changed item are:
+
+=over 4
+
+=item Subject
+
+=item From
+
+=back
 
 =cut
 
@@ -723,6 +740,7 @@ sub Attributes {
                 Priority => 'error',
                 Message  => "Need $_!"
             );
+
             return;
         }
     }
@@ -730,7 +748,7 @@ sub Attributes {
     # get ticket object
     my $TicketObject = $Kernel::OM->Get('Kernel::System::Ticket');
 
-    # get queue
+    # get ticket data, including the queue id
     my %Ticket = $TicketObject->TicketGet(
         TicketID      => $Param{TicketID},
         DynamicFields => 0,
@@ -740,7 +758,7 @@ sub Attributes {
     $Param{Data}->{Subject} = $TicketObject->TicketSubjectBuild(
         TicketNumber => $Ticket{TicketNumber},
         Subject      => $Param{Data}->{Subject} || '',
-        Action       => $Param{Action}          || '',
+        Action       => $Param{Action}          || '',    # TicketSubjectBuild() falls back to the default 'Reply'
     );
 
     # get sender address
@@ -749,7 +767,7 @@ sub Attributes {
         UserID  => $Param{UserID},
     );
 
-    return %{ $Param{Data} };
+    return $Param{Data}->%*;
 }
 
 =head2 AutoResponse()
@@ -938,7 +956,7 @@ sub AutoResponse {
         );
 
         $AutoResponse{SenderAddress}  = $Address{Name};
-        $AutoResponse{SenderRealname} = $Address{Realname};
+        $AutoResponse{SenderRealname} = $Address{Realname};    # note that SystemAddress() does not capitalize the 'n'
     }
 
     # get sender attributes based on queue
@@ -949,7 +967,7 @@ sub AutoResponse {
         );
 
         $AutoResponse{SenderAddress}  = $Address{Email};
-        $AutoResponse{SenderRealname} = $Address{RealName};
+        $AutoResponse{SenderRealname} = $Address{Phrase};
     }
 
     # add urls and verify to be full html document
@@ -2003,7 +2021,7 @@ sub _Replace {
 
         if ( $DataType eq 'OTOBO_CUSTOMER_' ) {
 
-            # get and prepare realname
+            # get and prepare real name
             $Tag = $Start . 'OTOBO_CUSTOMER_REALNAME';
             if ( $Param{Text} =~ /$Tag$End/i ) {
 
