@@ -2,8 +2,8 @@
 <otobo_package version="1.0">
     <Name>OTOBO-AI</Name>
     <!-- nofilter(TidyAll::Plugin::OTOBO::SOPM::RequiredElements) -->
-    <Version>11.0.0</Version>
-    <Framework>11.0.x</Framework>
+    <Version>11.1.0</Version>
+    <Framework>11.1.x</Framework>
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>

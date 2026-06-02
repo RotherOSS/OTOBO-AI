@@ -11,14 +11,14 @@ Description
 The OTOBO AI package is the OTOBO extension to interface with the otobo-ai-services for Retrieval-Augmented Generation (RAG).
 It allows for data ingestion into the RAG as well as fetching answers from the RAG and providing an answer template containing the LLM generated answer.
 
-See `the offical documentation <https://doc.otobo.org/manual/ai/11.0/en/content/index.html>`__ for more information.
+See `the offical documentation <https://doc.otobo.org/manual/ai/11.1/en/content/index.html>`__ for more information.
 
 System requirements
 ===================
 
 Framework
 ---------
-OTOBO 11.0.x
+OTOBO 11.1.x
 
 Packages
 --------
@@ -38,7 +38,7 @@ The whole OTOBO AI Solution consists of 3 components:
 - The OTOBO AI Services docker container providing the Vector DB
 - A LLM for the actual RAG generation
 
-See `the offical documentation <https://doc.otobo.org/manual/ai/11.0/en/content/index.html>`__ for an overview.
+See `the offical documentation <https://doc.otobo.org/manual/ai/11.1/en/content/index.html>`__ for an overview.
 
 
 Setup
