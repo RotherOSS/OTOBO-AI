@@ -42,8 +42,8 @@ sub Run {
     my $OtoboAIObject = $Kernel::OM->Get('Kernel::System::OtoboAI');
     my $MainObject    = $Kernel::OM->Get('Kernel::System::Main');
 
-    my $Subaction        = $ParamObject->GetParam( Param => 'Subaction' ) || '';
-    my $Question         = $ParamObject->GetParam( Param => 'Question' )  || '';
+    my $Subaction = $ParamObject->GetParam( Param => 'Subaction' ) || '';
+    my $Question  = $ParamObject->GetParam( Param => 'Question' )  || '';
 
     # attention MD5Sum can change utf8_flag of passed string ref
     my $QuestionCopyForMD5Calc = $Question;
