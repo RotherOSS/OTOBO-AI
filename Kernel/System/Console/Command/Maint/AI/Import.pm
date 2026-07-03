@@ -264,7 +264,7 @@ sub MigrateTickets {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
 
         my $IncludeUseCase = 0;
-        if( $UseCases && scalar $UseCases->@*) {
+        if ( $UseCases && scalar $UseCases->@* ) {
 
             $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
         }
@@ -592,7 +592,7 @@ sub MigrateFAQs {
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
 
         my $IncludeUseCase = 0;
-        if( $UseCases && scalar $UseCases->@*) {
+        if ( $UseCases && scalar $UseCases->@* ) {
 
             $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
         }
@@ -762,7 +762,7 @@ sub MigrateDocs {
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
 
         my $IncludeUseCase = 0;
-        if( $UseCases && scalar $UseCases->@*) {
+        if ( $UseCases && scalar $UseCases->@* ) {
 
             $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
         }
