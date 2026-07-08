@@ -4,7 +4,7 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - 1b2b9b4a41de83976e45aaac1aa63a801cce2cdd - Kernel/System/TemplateGenerator.pm
+# $origin: otobo - 8c7dfc2c7640699c8e02c0bab72813a4a7b8345a - Kernel/System/TemplateGenerator.pm
 # --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
@@ -20,6 +20,7 @@ package Kernel::System::TemplateGenerator;
 
 ## nofilter(TidyAll::Plugin::OTOBO::Perl::LayoutObject)
 
+use v5.24;
 use strict;
 use warnings;
 
@@ -79,8 +80,7 @@ sub new {
     my ( $Type, %Param ) = @_;
 
     # allocate new hash for object
-    my $Self = {};
-    bless( $Self, $Type );
+    my $Self = bless {}, $Type;
 
     $Self->{RichText} = $Kernel::OM->Get('Kernel::Config')->Get('Frontend::RichText');
 
@@ -107,11 +107,11 @@ sub Salutation {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(TicketID Data UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(TicketID Data UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
             return;
         }
@@ -204,12 +204,13 @@ sub Signature {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(Data UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(Data UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
+
             return;
         }
     }
@@ -291,8 +292,8 @@ sub Signature {
 generate sender address (FROM string) for emails
 
     my $Sender = $TemplateGeneratorObject->Sender(
-        QueueID    => 123,
-        UserID     => 123,
+        QueueID => 123,
+        UserID  => 123,
     );
 
 returns:
@@ -309,12 +310,13 @@ sub Sender {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw( UserID QueueID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw( UserID QueueID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
+
             return;
         }
     }
@@ -362,7 +364,7 @@ sub Sender {
         }
     }
 
-    # Format sender realname and address compliant to RFC 5322. This is relevant when the real name contain commas
+    # Format sender real name and address compliant to RFC 5322. This is relevant when the real name contain commas
     # or other special symbols.
     return Mail::Address->new( $Address{RealName}, $Address{Email} )->format();
 }
@@ -372,7 +374,7 @@ sub Sender {
 generate template
 
     my $Template = $TemplateGeneratorObject->Template(
-        TemplateID => 123
+        TemplateID => 123,
         TicketID   => 123,                  # Optional
         Data       => $ArticleHashRef,      # Optional
         UserID     => 123,
@@ -380,7 +382,7 @@ generate template
 
 Returns:
 
-    $Template =>  'Some text';
+    $Template = 'Some text';
 
 =cut
 
@@ -388,17 +390,20 @@ sub Template {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(TemplateID UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(TemplateID UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
+
             return;
         }
     }
 
-    my %Template = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateGet(
+    my $StandardTemplateObject = $Kernel::OM->Get('Kernel::System::StandardTemplate');
+
+    my %Template = $StandardTemplateObject->StandardTemplateGet(
         ID => $Param{TemplateID},
     );
 
@@ -600,10 +605,10 @@ sub Template {
 generate internal or external notes
 
     my $GenericAgentArticle = $TemplateGeneratorObject->GenericAgentArticle(
-        Notification    => $NotificationDataHashRef,
-        TicketID        => 123,
-        UserID          => 123,
-        Data            => $ArticleHashRef,             # Optional
+        Notification => $NotificationDataHashRef,
+        TicketID     => 123,
+        UserID       => 123,
+        Data         => $ArticleHashRef,             # Optional
     );
 
 =cut
@@ -612,11 +617,11 @@ sub GenericAgentArticle {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(TicketID Notification UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(TicketID Notification UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
             return;
         }
@@ -696,20 +701,29 @@ sub GenericAgentArticle {
 
 =head2 Attributes()
 
-generate attributes
+modifies inplace the passed in C<Data> hash reference and returns the enriched data.
 
-    my %Attributes = $TemplateGeneratorObject->Attributes(
-        TicketID   => 123,
-        ArticleID  => 123,
-        ResponseID => 123
-        UserID     => 123,
-        Action     => 'Forward', # Possible values are Reply and Forward, Reply is default.
+    my %Data = (
+        Subject => 'What do you want to talk about?'
     );
 
-returns
-    StandardResponse
-    Salutation
-    Signature
+    my %EnrichedData = $TemplateGeneratoObject->Attributes(
+        TicketID   => 123,
+        Data       => \%Data,    # $Data{Subject} is used as input for finding the new subject
+        UserID     => 123,
+        Action     => 'Forward', # Relevant for the subject.
+                                 # Possible values are 'Reply' and 'Forward', 'Reply' is eventually the default.
+    );
+
+Returns the modified hash reference as key value pairs. The potentially added or changed item are:
+
+=over 4
+
+=item Subject
+
+=item From
+
+=back
 
 =cut
 
@@ -717,12 +731,13 @@ sub Attributes {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(TicketID Data UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(TicketID Data UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
+
             return;
         }
     }
@@ -730,7 +745,7 @@ sub Attributes {
     # get ticket object
     my $TicketObject = $Kernel::OM->Get('Kernel::System::Ticket');
 
-    # get queue
+    # get ticket data, including the queue id
     my %Ticket = $TicketObject->TicketGet(
         TicketID      => $Param{TicketID},
         DynamicFields => 0,
@@ -740,7 +755,7 @@ sub Attributes {
     $Param{Data}->{Subject} = $TicketObject->TicketSubjectBuild(
         TicketNumber => $Ticket{TicketNumber},
         Subject      => $Param{Data}->{Subject} || '',
-        Action       => $Param{Action}          || '',
+        Action       => $Param{Action}          || '',    # TicketSubjectBuild() falls back to the default 'Reply'
     );
 
     # get sender address
@@ -749,7 +764,7 @@ sub Attributes {
         UserID  => $Param{UserID},
     );
 
-    return %{ $Param{Data} };
+    return $Param{Data}->%*;
 }
 
 =head2 AutoResponse()
@@ -786,12 +801,13 @@ sub AutoResponse {
     my ( $Self, %Param ) = @_;
 
     # check needed stuff
-    for (qw(TicketID AutoResponseType OrigHeader UserID)) {
-        if ( !$Param{$_} ) {
+    for my $Needed (qw(TicketID AutoResponseType OrigHeader UserID)) {
+        if ( !$Param{$Needed} ) {
             $Kernel::OM->Get('Kernel::System::Log')->Log(
                 Priority => 'error',
-                Message  => "Need $_!"
+                Message  => "Need $Needed!"
             );
+
             return;
         }
     }
@@ -832,11 +848,11 @@ sub AutoResponse {
     if (@ArticleList) {
         my %Article = $ArticleObject->BackendForArticle( %{ $ArticleList[0] } )->ArticleGet( %{ $ArticleList[0] } );
 
-        for (qw(From To Cc Subject Body)) {
-            if ( !$Param{OrigHeader}->{$_} ) {
-                $Param{OrigHeader}->{$_} = $Article{$_} || '';
+        for my $Key (qw(From To Cc Subject Body)) {
+            if ( !$Param{OrigHeader}->{$Key} ) {
+                $Param{OrigHeader}->{$Key} = $Article{$Key} || '';
             }
-            chomp $Param{OrigHeader}->{$_};
+            chomp $Param{OrigHeader}->{$Key};
         }
     }
 
@@ -861,9 +877,9 @@ sub AutoResponse {
     }
 
     # fill up required attributes
-    for (qw(Subject Body)) {
-        if ( !$Param{OrigHeader}->{$_} ) {
-            $Param{OrigHeader}->{$_} = "No $_";
+    for my $Key (qw(Subject Body)) {
+        if ( !$Param{OrigHeader}->{$Key} ) {
+            $Param{OrigHeader}->{$Key} = "No $Key";
         }
     }
 
@@ -938,7 +954,7 @@ sub AutoResponse {
         );
 
         $AutoResponse{SenderAddress}  = $Address{Name};
-        $AutoResponse{SenderRealname} = $Address{Realname};
+        $AutoResponse{SenderRealname} = $Address{Realname};    # note that SystemAddress() does not capitalize the 'n'
     }
 
     # get sender attributes based on queue
@@ -1267,6 +1283,10 @@ sub NotificationEvent {
 
 =begin Internal:
 
+=head2 _Replace()
+
+replace the placeholders in the text
+
 =cut
 
 sub _Replace {
@@ -1279,6 +1299,7 @@ sub _Replace {
                 Priority => 'error',
                 Message  => "Need $_!"
             );
+
             return;
         }
     }
@@ -1294,6 +1315,7 @@ sub _Replace {
         my $MailToHref        = $1;
         my $MailToHrefContent = $2;
 
+        # Nested s///egx!
         $MailToHrefContent =~ s{
             ((?:subject|body)=)(.+?)("|&)
         }
@@ -1302,7 +1324,7 @@ sub _Replace {
             my $SubjectOrBodyContent = $2;
             my $SubjectOrBodySuffix  = $3;
 
-            my $SubjectOrBodyContentUnescaped = uri_unescape $SubjectOrBodyContent;
+            my $SubjectOrBodyContentUnescaped = uri_unescape($SubjectOrBodyContent);
 
             my $SubjectOrBodyContentReplaced = $Self->_Replace(
                 %Param,
@@ -1310,7 +1332,7 @@ sub _Replace {
                 RichText => 0,
             );
 
-            my $SubjectOrBodyContentEscaped = uri_escape_utf8 $SubjectOrBodyContentReplaced;
+            my $SubjectOrBodyContentEscaped = uri_escape_utf8($SubjectOrBodyContentReplaced);
 
             $SubjectOrBodyPrefix . $SubjectOrBodyContentEscaped . $SubjectOrBodySuffix;
         }egx;
@@ -1318,17 +1340,15 @@ sub _Replace {
         $MailToHref . $MailToHrefContent;
     }egx;
 
-    my $Start = '<';
-    my $End   = '>';
+    my ( $Start, $End ) = ( '<', '>' );
     if ( $Param{RichText} ) {
-        $Start = '&lt;';
-        $End   = '&gt;';
+        ( $Start, $End ) = ( '&lt;', '&gt;' );
         $Param{Text} =~ s/(\n|\r)//g;
     }
 
     my %Ticket;
     if ( $Param{TicketData} ) {
-        %Ticket = %{ $Param{TicketData} };
+        %Ticket = $Param{TicketData}->%*;
     }
 
     my $CustomerUserObject = $Kernel::OM->Get('Kernel::System::CustomerUser');
@@ -1471,8 +1491,14 @@ sub _Replace {
 
     # Replace config options.
     my $Tag = $Start . 'OTOBO_CONFIG_';
-    $Param{Text} =~ s{$Tag(.+?)$End}{
-        my $Key   = $1;
+    $Param{Text} =~ s{
+        $Tag
+            # the key for the config
+            (?<key>.+?)
+        $End
+    }
+    {
+        my $Key   = $+{key};
         my $Value = $ConfigObject->Get($Key) // '';
 
         # Mask sensitive config options.
@@ -1501,6 +1527,7 @@ sub _Replace {
         );
     }
 
+    # modify $Param{Text}
     my $HashGlobalReplace = sub {
         my ( $Tag, %H ) = @_;
 
@@ -1522,6 +1549,7 @@ sub _Replace {
             KEY:
             for my $Key (qw( email note )) {
                 my $Value = $H{$Key};
+
                 next KEY if defined($Value);
 
                 $H{$Key} = $H{'body'};
@@ -1529,7 +1557,17 @@ sub _Replace {
             }
         }
 
-        $Param{Text} =~ s/(?:$Tag)($Keys)$End/$H{ lc $1 }/ieg;
+        $Param{Text} =~ s{
+            # grouping required here, as we might have alternations
+            (?:$Tag)
+                # case insensitiv keys
+                (?<key>$Keys)
+            $End
+        }
+        {
+            my $Key = $+{key};
+            $H{ lc $Key }
+        }xieg;
     };
 
     # get recipient data and replace it with <OTOBO_...
@@ -1874,7 +1912,7 @@ sub _Replace {
 
             ATTRIBUTE:
             for my $Attribute ( sort keys %Data ) {
-                next ATTRIBUTE if !$Data{$Attribute};
+                next ATTRIBUTE unless $Data{$Attribute};
 
                 $Data{$Attribute} = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
                     String => $Data{$Attribute},
@@ -1891,40 +1929,59 @@ sub _Replace {
             # prepare body (insert old email) <OTOBO_CUSTOMER_EMAIL[n]>, <OTOBO_CUSTOMER_NOTE[n]>
             #   <OTOBO_CUSTOMER_BODY[n]>, <OTOBO_AGENT_EMAIL[n]>..., <OTOBO_COMMENT>
 
-            # Changed this to a 'while' to allow the same key/tag multiple times and different number of lines.
-            while (
-                $Param{Text} =~ /$Start(?:$DataType(EMAIL|NOTE|BODY)\[(.+?)\])$End/
-                ||
-                $Param{Text} =~ /$Start(?:OTOBO_COMMENT(\[(.+?)\])?)$End/
-                )
+            # Handle the case where the number of included lines can be specified.
+            # The same key can occur multiple times, possibly with a different number of lines.
+            # The last customer mail is used for <OTOBO_COMMENT> or <OTOBO_COMMENT[123]>
+            # as the loop replaces the customer mail first.
+            $Param{Text} =~ s{
+                $Start
+                    (?:
+                        # e.g. OTOBO_COMMENT[13], OTOBO_AGENT_BODY[3], OTOBO_CUSTOMER_BODY[0]
+                        (?:
+                            (?:
+                                OTOBO_COMMENT
+                                |
+                                ${DataType}(?:EMAIL|NOTE|BODY)
+                            )
+                            \[(?<cnt>.+?)\]
+                        )
+                        |
+                        # a special case as OTOBO_COMMENT without quantifier is handled nowhere else
+                        OTOBO_COMMENT
+                    )
+                $End
+            }
             {
+                # for <OTOBO_COMMENT> truncate per default a long mail at 2500
+                # <OTOBO_CUSTOMER_BODY[0] would also yield 2500 lines
+                my $NumHeadLines = $+{cnt} || 2500;
 
-                my $Line       = $2 || 2500;
-                my $NewOldBody = '';
-                my @Body       = split( /\n/, $Data{Body} );
+                my $NewOldBody   = '';
+                my @Body         = split /\n/, $Data{Body};
+                my $NumBodyLines = scalar @Body;
 
-                for my $Counter ( 0 .. $Line - 1 ) {
+                COUNTER:
+                for my $Counter ( 0 .. $NumHeadLines - 1 ) {
 
-                    # 2002-06-14 patch of Pablo Ruiz Garcia
-                    # http://lists.otobo.org/pipermail/dev/2002-June/000012.html
-                    if ( $#Body >= $Counter ) {
+                    # do not go beyond the complete body
+                    last COUNTER if $Counter >= $NumBodyLines;
 
-                        # add no quote char, do it later by using DocumentCleanup()
-                        if ( $Param{RichText} ) {
-                            $NewOldBody .= $Body[$Counter];
-                        }
-
-                        # add "> " as quote char
-                        else {
-                            $NewOldBody .= "> $Body[$Counter]";
-                        }
-
-                        # add new line
-                        if ( $Counter < ( $Line - 1 ) ) {
-                            $NewOldBody .= "\n";
-                        }
+                    # add no quote char, do it later by using DocumentCleanup()
+                    if ( $Param{RichText} ) {
+                        $NewOldBody .= $Body[$Counter];
                     }
-                    $Counter++;
+
+                    # add "> " as quote char
+                    else {
+                        $NewOldBody .= "> $Body[$Counter]";
+                    }
+
+                    # add new line, unless we are at the last included line
+                    # not sure why the last line has a newline when the
+                    # the body has less lines than the specified line count
+                    if ( $Counter < ( $NumHeadLines - 1 ) ) {
+                        $NewOldBody .= "\n";
+                    }
                 }
 
                 chomp $NewOldBody;
@@ -1944,10 +2001,9 @@ sub _Replace {
                     );
                 }
 
-                # replace tag
-                $Param{Text}
-                    =~ s/$Start(?:(?:$DataType(EMAIL|NOTE|BODY)\[(.+?)\]|(?:OTOBO_COMMENT(\[(.+?)\])?)))$End/$NewOldBody/;
-            }
+                # the replacement
+                $NewOldBody
+            }xeg;    # a single pass over the macros in $Param{Text}
 
             # replace <OTOBO_CUSTOMER_SUBJECT[]>  and  <OTOBO_AGENT_SUBJECT[]> tags
             $Tag = "$Start$DataType" . 'SUBJECT';
@@ -1966,6 +2022,7 @@ sub _Replace {
             if ( $DataType eq 'OTOBO_CUSTOMER_' ) {
 
                 # Get <OTOBO_EMAIL_DATE[]> from body and replace with received date.
+                # TODO: Clarify, as it rather looks like the current date is used.
                 # This tag will be able to use with supported OTOBO time zones
                 #   ( e.g. <OTOBO_EMAIL_DATE[Europe/Berlin]>, <OTOBO_EMAIL_DATE[Asia/Tokyo]>,
                 #   <OTOBO_EMAIL_DATE[America/Denver]> , ...).
@@ -1975,35 +2032,49 @@ sub _Replace {
 
                 my $DateTimeObject = $Kernel::OM->Create('Kernel::System::DateTime');
                 my $SystemTimeZone = $DateTimeObject->OTOBOTimeZoneGet();
-                while ( $Param{Text} =~ /$Tag\[(.+?)\]$End/g ) {
-                    my $TimeZone      = $1;
-                    my $TimeZoneValid = $DateTimeObject->IsTimeZoneValid( TimeZone => $TimeZone );
-                    if ($TimeZoneValid) {
-                        $DateTimeObject->ToTimeZone( TimeZone => $TimeZone );
+
+                $Param{Text} =~ s{
+                    $Start
+                        OTOBO_EMAIL_DATE
+                        # the time zone is optional
+                        (?:
+                            \[(?<tz>.+?)\]
+                        )?
+                    $End
+                }
+                {
+                    my $TimeZone = $+{tz};
+
+                    if ( $TimeZone ) {
+                        my $TimeZoneValid = $DateTimeObject->IsTimeZoneValid( TimeZone => $TimeZone );
+                        if ($TimeZoneValid) {
+                            $DateTimeObject->ToTimeZone( TimeZone => $TimeZone );
+                        }
+                        else {
+
+                            # stay at the system time zone
+                            $TimeZone = $SystemTimeZone;
+                        }
+
                     }
                     else {
                         $TimeZone = $SystemTimeZone;
+                        $DateTimeObject->ToTimeZone( TimeZone => $TimeZone );
                     }
 
+                    # construct the replacement
                     my $EmailDate = $DateTimeObject->Format( Format => '%A, %B %e, %Y at %T ' );
                     $EmailDate .= "($TimeZone)";
-                    $Param{Text} =~ s/$Tag\[$1\]$End/$EmailDate/g;
-                }
 
-                if ( $Param{Text} =~ /$Tag$End/g ) {
-                    my $TimeZone = $SystemTimeZone;
-                    $DateTimeObject->ToTimeZone( TimeZone => $TimeZone );
-
-                    my $EmailDate = $DateTimeObject->Format( Format => '%A, %B %e, %Y at %T ' );
-                    $EmailDate .= "($TimeZone)";
-                    $Param{Text} =~ s/$Tag$End/$EmailDate/g;
-                }
+                    # the replacement
+                    $EmailDate;
+                }xeg;    # a single pass over the macros in $Param{Text}
             }
         }
 
         if ( $DataType eq 'OTOBO_CUSTOMER_' ) {
 
-            # get and prepare realname
+            # get and prepare real name
             $Tag = $Start . 'OTOBO_CUSTOMER_REALNAME';
             if ( $Param{Text} =~ /$Tag$End/i ) {
 
@@ -2078,7 +2149,9 @@ sub _Replace {
         $HashGlobalReplace->( "$Tag|$Tag2", %CustomerUser );
     }
 
-    # cleanup all not needed <OTOBO_CUSTOMER_DATA_ tags
+    # Clean up all not needed '<OTOBO_CUSTOMER_' and '<OTOBO_CUSTOMER_DATA_' tags.
+    # Note that this includes the tags which became part of the replace text
+    # because they were present in the macro values.
     $Param{Text} =~ s/(?:$Tag|$Tag2).+?$End/-/gi;
 
     # cleanup all not needed <OTOBO_AGENT_ tags
@@ -2090,10 +2163,11 @@ sub _Replace {
 
 =head2 _RemoveUnSupportedTag()
 
-cleanup all not supported tags
+clean up all not supported tags. The not supported tags are replaced
+with the minus character '-'.
 
     my $Text = $TemplateGeneratorObject->_RemoveUnSupportedTag(
-        Text => $SomeTextWithTags,
+        Text                 => $SomeTextWithTags,
         ListOfUnSupportedTag => \@ListOfUnSupportedTag,
     );
 
@@ -2128,7 +2202,6 @@ sub _RemoveUnSupportedTag {
     $Param{Text} =~ s/$NotSupportedTag/-/gi;
 
     return $Param{Text};
-
 }
 
 =head2 _MaskSensitiveValue()
@@ -2141,7 +2214,7 @@ Mask sensitive value, i.e. a password, a security token, etc.
         IsConfig => 1,                  # (optional) Whether the value is a config option, default: 0.
     );
 
-Returns masked value, in case the key is matched:
+Returns masked value in case the key is matched:
 
    $MaskedValue = 'xxx';
 
