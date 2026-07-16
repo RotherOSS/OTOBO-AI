@@ -37,9 +37,7 @@ use parent qw(Kernel::System::Console::BaseCommand);
 our @ObjectDependencies = (
     'Kernel::Config',
     'Kernel::GenericInterface::Requester',
-    'Kernel::System::FAQ',
     'Kernel::System::GenericInterface::Webservice',
-    'Kernel::System::HTMLUtils',
     'Kernel::System::Package',
     'Kernel::System::OtoboAI::Import',
 );
@@ -182,9 +180,9 @@ sub Run {
 
     my $Targets = $Self->GetOption('target') || "tdf";
 
-    if ( $Targets =~ /t/ ) {
+    my $ImportObject = $Kernel::OM->Get('Kernel::System::OtoboAI::Import');
 
-        my $ImportObject = $Kernel::OM->Get('Kernel::System::OtoboAI::Import');
+    if ( $Targets =~ /t/ ) {
 
         if ( $ReImport || $Purge ) {
             $ImportObject->PurgeTickets();
@@ -204,11 +202,14 @@ sub Run {
     if ( $Targets =~ /f/ ) {
 
         if ( $ReImport || $Purge ) {
-            $Self->Purge( Collection => 'faqs' );
+            $ImportObject->PurgeFAQs();
         }
 
         if ( !$Purge ) {
-            $Self->MigrateFAQs( UseCases => $UseCases );
+            $ImportObject->MigrateFAQs(
+                UseCases => $UseCases,
+                Console  => $Self,
+            );
         }
     }
 
@@ -224,189 +225,6 @@ sub Run {
     }
 
     return $Self->ExitCodeOk();
-}
-
-sub MigrateFAQs {
-    my ( $Self, %Param ) = @_;
-
-    my $UseCases = $Param{UseCases};
-
-    # check whether FAQ package is installed
-    my $PackageObject = $Kernel::OM->Get('Kernel::System::Package');
-    my $IsInstalled   = $PackageObject->PackageIsInstalled(
-        Name => 'FAQ',
-    );
-    if ( !$IsInstalled ) {
-        $Self->Print("<yellow>Skipping FAQ articles (FAQ not installed)...</yellow>\n");
-
-        return 1;
-    }
-
-    $Self->Print(
-        "<green>Ingesting FAQs ...</green>\n"
-    );
-
-    # prepare the import
-    my $FAQObject       = $Kernel::OM->Get('Kernel::System::FAQ');
-    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
-    my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
-    my $EnableUseCases  = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases') // 0;
-
-    # determine search restrictions for FAQSearch
-    my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') // {};
-
-    SEARCHRESTRICTION:
-    for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
-    {
-        my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
-        my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
-
-        my $IncludeUseCase = 0;
-        if ( $UseCases && scalar $UseCases->@* ) {
-
-            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
-        }
-        else {
-            $IncludeUseCase = 1;
-        }
-
-        next SEARCHRESTRICTION if $IncludeUseCase == 0;
-
-        $Self->Print(
-            "<yellow>Use Case: $SearchRestrictionsKey</yellow>\n"
-        );
-
-        my @FAQIDs = $FAQObject->FAQSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-            %{$SearchRestrictions},
-        );
-
-        # iterate over the faqs
-        my $Count     = 0;
-        my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#FAQIDs / 10 ) ) )[1];
-        my $Percent1  = ( sort { $a <=> $b } ( 1,  int( $#FAQIDs / 100 ) ) )[1];
-
-        if ( $#FAQIDs > 100 ) {
-            $Self->Print(
-                "<yellow>FAQ article are transferred. This can take several hours, depending on the number of faq article.</yellow>\n"
-            );
-        }
-
-        my $Errors = 0;
-        my @FAQData;
-
-        FAQID:
-        for my $FAQID (@FAQIDs) {
-
-            $Count++;
-
-            my %FAQ = $FAQObject->FAQGet(
-                ItemID        => $FAQID,
-                ItemFields    => 1,        # Optional, default 0. To include the item field content for this
-                                           # FAQ item on the return structure.
-                DynamicFields => 0,        # Optional, default 0. To include the dynamic fields for this
-                                           # FAQ item on the return structure.
-                UserID        => 1,
-            );
-
-            # scrub HTML
-            my $Question = $HTMLUtilsObject->ToAscii( String => $FAQ{Title} // '' )
-                . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field1} // '' )
-                . ". " . $HTMLUtilsObject->ToAscii( String => $FAQ{Field2} // '' );
-
-            my $Answer = $HTMLUtilsObject->ToAscii( String => $FAQ{Field3} // '' );
-
-            # prepare data item for invoker
-
-            my $Data = {
-                "source_id"     => "$FAQID",
-                "content_items" => [
-                    {
-                        type => 'question',
-                        text => $Question,
-                    },
-                    {
-                        type => 'answer',
-                        text => $Answer,
-                    }
-                ]
-            };
-
-            if ($EnableUseCases) {
-                $Data->{labels} = \@UseCaseLabels;
-            }
-
-            push @FAQData, $Data;
-
-            # bacthes of 10 FAQs
-            if ( $Count % 10 == 0 ) {
-
-                # ingest
-                my $Result = $RequesterObject->Run(
-                    WebserviceID => $Self->{WebserviceID},
-                    Invoker      => 'IngestMany',
-                    Asynchronous => 0,
-                    Data         => {
-                        Type    => 'faqs',
-                        Content => \@FAQData,
-                    },
-                );
-
-                if ( !$Result->{Success} ) {
-                    $Errors++;
-                    $Self->Print(
-                        "<red>Error importing FAQs: " . $Result->{ErrorMessage} . "</red>\n"
-                    );
-                }
-
-                @FAQData = ();
-            }
-
-            # show progress and potentially sleep
-            if ( $Count % $Percent10 == 0 ) {
-                my $Percent = int( $Count / ( $#FAQIDs / 100 ) );
-                $Self->Print(
-                    "<yellow>$Count</yellow> of <yellow>$#FAQIDs</yellow> processed (<yellow>$Percent %</yellow> done).\n"
-                );
-            }
-            elsif ( $#FAQIDs > 50 && $Count % $Percent1 == 0 ) {
-                $Self->Print('. ');
-                select()->flush();    # show the dot immediately
-            }
-        }
-
-        # ingest leftovers
-        if ( scalar @FAQData ) {
-
-            my $Result = $RequesterObject->Run(
-                WebserviceID => $Self->{WebserviceID},
-                Invoker      => 'IngestMany',
-                Asynchronous => 0,
-                Data         => {
-                    Type    => 'faqs',
-                    Content => \@FAQData,
-                },
-            );
-
-            if ( !$Result->{Success} ) {
-                $Errors++;
-                $Self->Print(
-                    "<red>Error importing FAQs: " . $Result->{ErrorMessage} . "</red>\n"
-                );
-            }
-        }
-
-        if ($Errors) {
-            $Self->Print("<yellow>FAQ transfer complete. $Errors error(s) occurred!</yellow>\n");
-        }
-        else {
-            $Self->Print("<green>FAQ transfer complete. Transferred $Count FAQ items.</green>\n");
-        }
-    }
-    return 1;
 }
 
 sub MigrateDocs {
