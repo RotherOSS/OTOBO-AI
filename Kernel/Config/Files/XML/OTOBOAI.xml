@@ -453,6 +453,16 @@
             </Hash>
         </Value>
     </Setting>
+    <Setting Name="FAQ::EventModulePost###8300-OTOBOAIIncrementalSynchronization" Required="0" Valid="0">
+        <Description Translatable="1">Event module registration. Whenever an FAQ item is created or updated, it should be reimported into the vector DB.</Description>
+        <Navigation>Core::Event::Ticket</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Module">Kernel::System::FAQ::Event::OTOBOAIIncrementalSynchronization</Item>
+                <Item Key="Event">FAQCreate|FAQUpdate|FAQDelete</Item>
+            </Hash>
+        </Value>
+    </Setting>
     <Setting Name="Frontend::Module###AdminDynamicFieldTextAreaAI" Required="0" Valid="1">
         <Description Translatable="1">Frontend module registration for the agent interface.</Description>
         <Navigation>Frontend::Admin::ModuleRegistration</Navigation>
