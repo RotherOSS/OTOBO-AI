@@ -10,11 +10,14 @@
     <Description Lang="en">Otobo AI Interface package to connect to Otobo AI Services.</Description>
     <Filelist>
         <File Permission="660" Location="Custom/Kernel/System/TemplateGenerator.pm" />
+        <File Permission="660" Location="Custom/Kernel/System/AuthSession/FS.pm" />
+        <File Permission="660" Location="Custom/Kernel/System/AuthSession/DB.pm" />
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAIDashboard.xml" />
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAI.xml" />
         <File Permission="660" Location="Kernel/Language/de_OTOBOAI.pm" />
         <File Permission="660" Location="Kernel/Modules/AdminDynamicFieldTextAreaAI.pm" />
         <File Permission="660" Location="Kernel/Modules/OtoboAIDashboard.pm" />
+        <File Permission="660" Location="Kernel/Modules/AgentTicketRobotoChat.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Dashboard/OtoboAIDashboard.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AdminDynamicFieldTextAreaAI.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/DynamicField/Agent/TextAreaAI.tt" />
