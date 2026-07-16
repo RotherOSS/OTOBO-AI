@@ -17,7 +17,7 @@
         <File Permission="660" Location="Kernel/Language/de_OTOBOAI.pm" />
         <File Permission="660" Location="Kernel/Modules/AdminDynamicFieldTextAreaAI.pm" />
         <File Permission="660" Location="Kernel/Modules/OtoboAIDashboard.pm" />
-        <File Permission="660" Location="Kernel/Modules/AgentTicketRobotoChat.pm" />
+        <File Permission="660" Location="Kernel/Modules/AgentTicketAIChat.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Dashboard/OtoboAIDashboard.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AdminDynamicFieldTextAreaAI.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/DynamicField/Agent/TextAreaAI.tt" />

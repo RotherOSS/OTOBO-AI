@@ -14,7 +14,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # --
 
-package Kernel::Modules::AgentTicketRobotoChat;
+package Kernel::Modules::AgentTicketAIChat;
 
 use strict;
 use warnings;
