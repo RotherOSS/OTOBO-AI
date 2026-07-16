@@ -38,19 +38,22 @@ sub Run {
 
     my $ConfigObject      = $Kernel::OM->Get('Kernel::Config');
     my $AuthSessionObject = $Kernel::OM->Get('Kernel::System::AuthSession');
+    my $UserObject        = $Kernel::OM->Get('Kernel::System::User');
     my $ParamObject       = $Kernel::OM->Get('Kernel::System::Web::Request');
 
     my $MCPEndpoint = $ConfigObject->Get('OTOBOAI::MCP::Endpoint');
     my $TicketID    = $ParamObject->GetParam( Param => 'TicketID' );
 
+    my %UserData = $UserObject->GetUserData( UserID => $Self->{UserID} );
+
     my $RemoteIP = $Self->GetMCPRemoteAddr( MCPEndpoint => $MCPEndpoint );
 
     my $SessionID = $AuthSessionObject->CreateSessionID(
-        UserLogin     => $Self->{UserLogin},
-        UserEmail     => $Self->{UserEmail},
-        UserType      => 'User',
-        SessionSource => 'GenericInterface',
-        RemoteAddr    => $RemoteIP,
+        %UserData,
+        UserLastRequest => $Kernel::OM->Create('Kernel::System::DateTime')->ToEpoch(),
+        UserType        => 'User',
+        SessionSource   => 'GenericInterface',
+        RemoteAddr      => $RemoteIP,
     );
 
     if ( !$SessionID ) {
