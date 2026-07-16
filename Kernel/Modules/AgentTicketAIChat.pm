@@ -38,8 +38,10 @@ sub Run {
 
     my $ConfigObject      = $Kernel::OM->Get('Kernel::Config');
     my $AuthSessionObject = $Kernel::OM->Get('Kernel::System::AuthSession');
+    my $ParamObject       = $Kernel::OM->Get('Kernel::System::Web::Request');
 
     my $MCPEndpoint = $ConfigObject->Get('OTOBOAI::MCP::Endpoint');
+    my $TicketID    = $ParamObject->GetParam( Param => 'TicketID' );
 
     my $RemoteIP = $Self->GetMCPRemoteAddr( MCPEndpoint => $MCPEndpoint );
 
@@ -55,7 +57,10 @@ sub Run {
         return "ERROR getting SID";
     }
 
-    my $ChatURL = $ConfigObject->Get('OTOBOAI::Chat::Endpoint') . $SessionID;
+    my $ChatURL = $ConfigObject->Get('OTOBOAI::Chat::Endpoint');
+
+    $ChatURL =~ s/\{\{OTOBO_SID\}\}/$SessionID/;
+    $ChatURL =~ s/\{\{TICKET_ID\}\}/$TicketID/;
 
     return "<script>window.location='$ChatURL';</script>";
 }
