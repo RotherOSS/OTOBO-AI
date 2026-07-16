@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use LWP::UserAgent;
+use URI::Escape qw(uri_escape_utf8);
 
 our $ObjectManagerDisabled = 1;
 
@@ -59,6 +60,8 @@ sub Run {
     if ( !$SessionID ) {
         return "ERROR getting SID";
     }
+
+    $SessionID = uri_escape_utf8($SessionID);
 
     my $ChatURL = $ConfigObject->Get('OTOBOAI::Chat::Endpoint');
 
