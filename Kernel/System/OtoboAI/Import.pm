@@ -20,6 +20,7 @@ use strict;
 use warnings;
 
 use Path::Class    qw(file);
+use File::Find     qw(find);
 use File::Basename qw(dirname);
 use JSON           qw(encode_json from_json);
 use Storable       qw(dclone);
@@ -752,6 +753,172 @@ sub MigrateFAQs {
     return 1;
 }
 
+=head2 MigrateDocs()
+
+Synchronize the OTOBO-AI vector DB with one or more documents for one or more use-cases.
+
+returns 1 if successful or undef otherwise
+
+    my $Success = $Object->MigrateDocs(
+        UseCases => [                 # optional, consider only these use-cases for migration
+            'default',
+            'sales',
+        ],
+        Console => $ConsoleObject,    # optional, give realtime status updates on the migration process (assumes print to STDOUT)
+    );
+
+=cut
+
+sub MigrateDocs {
+    my ( $Self, %Param ) = @_;
+
+    $Self->InitImport();
+
+    my $UseCases = $Param{UseCases};
+    my $Console  = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
+
+    if ($Console) {
+        $Console->Print("<green>Ingesting Documents ...</green>\n");
+    }
+
+    # prepare the import
+    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
+
+    # determine search restrictions for document search
+    my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
+    my $EnableUseCases         = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')               // 0;
+
+    SEARCHRESTRICTION:
+    for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
+    {
+        my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
+        my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
+
+        my $IncludeUseCase = 0;
+        if ( $UseCases && scalar $UseCases->@* ) {
+
+            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
+        }
+        else {
+            $IncludeUseCase = 1;
+        }
+
+        next SEARCHRESTRICTION if $IncludeUseCase == 0;
+
+        if ($Console) {
+            $Console->Print("<yellow>Use Case: $SearchRestrictionsKey</yellow>\n");
+        }
+
+        my $DocumentPaths = $Self->_DocumentSearch(
+            %$SearchRestrictions,
+            Console => $Console,
+        );
+
+        my @Content;
+        my $Count  = 0;
+        my $Errors = 0;
+
+        DOCUMENT:
+        for my $DocumentPath (@$DocumentPaths) {
+
+            $Count++;
+
+            # slurp content of file
+            my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' ) // '';
+
+            my $Data = {
+                "source_id"     => $DocumentPath,
+                "content_items" => [
+                    {
+                        type => 'text',
+                        text => $FileContent,
+                    }
+                ]
+            };
+
+            if ($EnableUseCases) {
+                $Data->{labels} = \@UseCaseLabels;
+            }
+
+            push @Content, $Data;
+
+            # ingest in batches of 10
+            if ( $Count % 10 == 0 ) {
+
+                # ingest
+                my $Result = $RequesterObject->Run(
+                    WebserviceID => $Self->{WebserviceID},
+                    Invoker      => 'IngestMany',
+                    Asynchronous => 0,
+                    Data         => {
+                        Type    => 'docs',
+                        Content => \@Content,
+                    },
+                );
+
+                if ( !$Result->{Success} ) {
+                    $Errors++;
+
+                    $Kernel::OM->Get('Kernel::System::Log')->Log(
+                        Priority => 'error',
+                        Message  => "Error importing Document '$DocumentPath': " . $Result->{ErrorMessage},
+                    );
+
+                    if ($Console) {
+                        $Console->Print( "<red>Error importing Document '$DocumentPath': " . $Result->{ErrorMessage} . "</red>\n" );
+                    }
+                }
+
+                @Content = ();
+            }
+        }
+
+        # ingest leftovers
+        if (@Content) {
+
+            my $Result = $RequesterObject->Run(
+                WebserviceID => $Self->{WebserviceID},
+                Invoker      => 'IngestMany',
+                Asynchronous => 0,
+                Data         => {
+                    Type    => 'docs',
+                    Content => \@Content,
+                },
+            );
+
+            if ( !$Result->{Success} ) {
+                $Errors++;
+
+                $Kernel::OM->Get('Kernel::System::Log')->Log(
+                    Priority => 'error',
+                    Message  => 'Error importing Documents: ' . $Result->{ErrorMessage},
+                );
+
+                if ($Console) {
+                    $Console->Print( "<red>Error importing Documents: " . $Result->{ErrorMessage} . "</red>\n" );
+                }
+            }
+        }
+
+        if ($Errors) {
+            $Kernel::OM->Get('Kernel::System::Log')->Log(
+                Priority => 'error',
+                Message  => 'Document transfer complete. ' . $Errors . ' error(s) occurred!',
+            );
+
+            if ($Console) {
+                $Console->Print("<yellow>Document transfer complete. $Errors error(s) occurred!</yellow>\n");
+            }
+        }
+        else {
+            if ($Console) {
+                $Console->Print("<green>Document transfer complete. Transferred $Count Document items.</green>\n");
+            }
+        }
+    }
+    return 1;
+}
+
 =head2 PurgeTickets()
 
 Purges the OTOBO-AI vector DB of one or more Tickets.
@@ -815,6 +982,24 @@ sub PurgeFAQs {
     return $Result;
 }
 
+=head2 PurgeDocs()
+
+Purges the OTOBO-AI vector DB of all Document items.
+
+returns 1 if successful or undef otherwise
+
+    my $Success = $Object->PurgeDocs();
+
+=cut
+
+sub PurgeDocs {
+    my ( $Self, %Param ) = @_;
+
+    $Self->InitImport();
+
+    return $Self->_Purge( Collection => 'docs' );
+}
+
 sub _Purge {
     my ( $Self, %Param ) = @_;
 
@@ -833,6 +1018,58 @@ sub _Purge {
         $Result->{Success}                   &&
         IsHashRefWithData( $Result->{Data} ) &&
         $Result->{Data}{success};
+}
+
+sub _DocumentSearch {
+
+    my ( $Self, %Param ) = @_;
+
+    my $DocumentRoot  = $Param{DocumentPath};
+    my $NewerThanDays = $Param{NewerThanDays};
+    my $Console       = $Param{Console};
+
+    if ( !-d $DocumentRoot ) {
+        if ($Console) {
+            $Console->Print("<yellow>Skipping Documents (Document folder '$DocumentRoot' does not exist)...</yellow>\n");
+        }
+        return;
+    }
+
+    my $SecondsPerDay = 60 * 60 * 24;
+
+    # glob files recursively starting in $DocumentRoot
+    my @Files;
+    find(
+        {
+            wanted => sub {
+
+                # only handle files, not directories
+                if ( !-d $_ ) {
+
+                    if ($NewerThanDays) {
+
+                        # last write time stamp
+                        my ($WriteTime) = ( stat($_) )[9];
+
+                        # if last write time is NewerThanDays
+                        if ( ( time() - $WriteTime ) < ( $NewerThanDays * $SecondsPerDay ) ) {
+
+                            # add this file to result set
+                            push @Files, $_;
+                        }
+                    }
+                    else {
+                        # add this file to result set
+                        push @Files, $_;
+                    }
+                }
+            },
+            no_chdir => 1
+        },
+        $DocumentRoot
+    );
+
+    return \@Files;
 }
 
 sub StripSignature {
