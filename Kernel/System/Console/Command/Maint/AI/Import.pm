@@ -19,12 +19,9 @@ package Kernel::System::Console::Command::Maint::AI::Import;
 use strict;
 use warnings;
 
-use Path::Class qw(file);
-use File::Find  qw(find);
 use LWP::UserAgent;
 use File::Basename        qw(basename dirname);
 use HTTP::Request::Common qw{ POST };
-use Storable qw(dclone);
 
 use Kernel::System::VariableCheck qw(:all);
 
@@ -32,13 +29,7 @@ use parent qw(Kernel::System::Console::BaseCommand);
 
 ## nofilter(TidyAll::Plugin::OTOBO::Perl::ForeachToFor)
 
-# Inform the object manager about the hard dependencies.
-# This module must be discarded when one of the hard dependencies has been discarded.
 our @ObjectDependencies = (
-    'Kernel::Config',
-    'Kernel::GenericInterface::Requester',
-    'Kernel::System::GenericInterface::Webservice',
-    'Kernel::System::Package',
     'Kernel::System::OtoboAI::Import',
 );
 
@@ -105,70 +96,8 @@ sub Configure {
     return;
 }
 
-sub PreRun {
-    my ( $Self, %Param ) = @_;
-
-    my $Sample = $Self->GetOption('sample');
-    if ($Sample) {
-
-        my $FullPath = $Sample;
-
-        if ( -d $Sample ) {
-            $FullPath .= "/sample.json";
-        }
-
-        $Self->{SamplePath} = $FullPath;
-
-        my $SampleDir = dirname($FullPath);
-        if ( !-d $SampleDir ) {
-            $Self->Print("<red>do-sample parameter needs a valid path to an output file, but parent path $SampleDir does not exist.</red>\n");
-            die;
-        }
-    }
-
-    my $StripSignatureRegEx = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::StripSignatureRegex');
-    if ($StripSignatureRegEx) {
-
-        my $Regex = qr/$StripSignatureRegEx/m;
-        $Self->{StripSignatureRegEx} = $Regex;
-    }
-
-    return;
-}
-
 sub Run {
     my ( $Self, %Param ) = @_;
-
-    # check whether the AI web service is enabled and if not, activate it
-    my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
-
-    my $AIWebservice = $WebserviceObject->WebserviceGet(
-        Name => 'OTOBO-AI',
-    );
-
-    if ( !$AIWebservice ) {
-        $Self->Print("<red>OTOBO-AI webservice not found! Unable to continue.</red>\n");
-        die;
-    }
-
-    # Set the webservice id
-    $Self->{WebserviceID} = $AIWebservice->{ID};
-
-    if ( $AIWebservice->{ValidID} != 1 ) {
-        $Self->Print(
-            "<yellow>OTOBO-AI webservice is now activated. If you don't want to keep it enabled, please disable it manually in the admin interface, after the import is complete.</yellow>\n"
-        );
-        my $Success = $WebserviceObject->WebserviceUpdate(
-            %{$AIWebservice},
-            ValidID => 1,
-            UserID  => 1,
-        );
-
-        if ( !$Success ) {
-            $Self->Print("<red>OTOBO-AI webservice could not be activated! Unable to continue.</red>\n");
-            die;
-        }
-    }
 
     my $Sample    = $Self->GetOption('sample');
     my $Reference = $Self->GetOption('reference');
@@ -216,228 +145,18 @@ sub Run {
     if ( $Targets =~ /d/ ) {
 
         if ( $ReImport || $Purge ) {
-            $Self->Purge( Collection => 'docs' );
+            $ImportObject->PurgeDocs();
         }
 
         if ( !$Purge ) {
-            $Self->MigrateDocs( UseCases => $UseCases );
+            $ImportObject->MigrateDocs(
+                UseCases => $UseCases,
+                Console  => $Self,
+            );
         }
     }
 
     return $Self->ExitCodeOk();
-}
-
-sub MigrateDocs {
-    my ( $Self, %Param ) = @_;
-
-    my $UseCases = $Param{UseCases};
-
-    $Self->Print(
-        "<green>Ingesting Documents ...</green>\n"
-    );
-
-    # prepare the import
-    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
-
-    # determine search restrictions for document search
-    my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
-    my $EnableUseCases         = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')               // 0;
-
-    SEARCHRESTRICTION:
-    for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
-    {
-        my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
-        my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
-
-        my $IncludeUseCase = 0;
-        if ( $UseCases && scalar $UseCases->@* ) {
-
-            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
-        }
-        else {
-            $IncludeUseCase = 1;
-        }
-
-        next SEARCHRESTRICTION if $IncludeUseCase == 0;
-
-        $Self->Print(
-            "<yellow>Use Case: $SearchRestrictionsKey</yellow>\n"
-        );
-
-        my $DocumentPaths = $Self->_DocumentSearch(
-            %$SearchRestrictions,
-        );
-
-        my @Content;
-        my $Count = 0;
-        my $Errors;
-
-        DOCUMENT:
-        foreach my $DocumentPath (@$DocumentPaths) {
-
-            $Count++;
-
-            # slurp content of file
-            my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' ) // '';
-
-            my $Data = {
-                "source_id"     => $DocumentPath,
-                "content_items" => [
-                    {
-                        type => 'text',
-                        text => $FileContent,
-                    }
-                ]
-            };
-
-            if ($EnableUseCases) {
-                $Data->{labels} = \@UseCaseLabels;
-            }
-
-            push @Content, $Data;
-
-            # ingest in batches of 10
-            if ( $Count % 10 ) {
-
-                # ingest
-                my $Result = $RequesterObject->Run(
-                    WebserviceID => $Self->{WebserviceID},
-                    Invoker      => 'IngestMany',
-                    Asynchronous => 0,
-                    Data         => {
-                        Type    => 'docs',
-                        Content => \@Content,
-                    },
-                );
-
-                if ( !$Result->{Success} ) {
-                    $Errors++;
-                    $Self->Print(
-                        "<red>Error importing Document '$DocumentPath' : " . $Result->{ErrorMessage} . "</red>\n"
-                    );
-                }
-
-                @Content = ();
-            }
-        }
-
-        # ingest leftovers
-        if ( scalar @Content ) {
-
-            my $Result = $RequesterObject->Run(
-                WebserviceID => $Self->{WebserviceID},
-                Invoker      => 'IngestMany',
-                Asynchronous => 0,
-                Data         => {
-                    Type    => 'docs',
-                    Content => \@Content,
-                },
-            );
-
-            if ( !$Result->{Success} ) {
-                $Errors++;
-                $Self->Print(
-                    "<red>Error importing Documents: " . $Result->{ErrorMessage} . "</red>\n"
-                );
-            }
-        }
-
-        if ($Errors) {
-            $Self->Print("<yellow>Document transfer complete. $Errors error(s) occurred!</yellow>\n");
-        }
-        else {
-            $Self->Print("<green>Document transfer complete. Transferred $Count Document items.</green>\n");
-        }
-    }
-    return 1;
-}
-
-sub Purge {
-    my ( $Self, %Param ) = @_;
-
-    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
-
-    my $Result = $RequesterObject->Run(
-        WebserviceID => $Self->{WebserviceID},
-        Invoker      => 'Purge',
-        Asynchronous => 0,
-        Data         => {
-            Collection => $Param{Collection}
-        },
-    );
-
-    return IsHashRefWithData($Result)        &&
-        $Result->{Success}                   &&
-        IsHashRefWithData( $Result->{Data} ) &&
-        $Result->{Data}{success};
-}
-
-sub _DocumentSearch {
-
-    my ( $Self, %Param ) = @_;
-
-    my $DocumentRoot  = $Param{DocumentPath};
-    my $NewerThanDays = $Param{NewerThanDays};
-
-    if ( !-d $DocumentRoot ) {
-        $Self->Print("<yellow>Skipping Documents (Document folder '$DocumentRoot' does not exist)...</yellow>\n");
-        return;
-    }
-
-    my $SecondsPerDay = 60 * 60 * 24;
-
-    # glob files recursively starting in $DocumentRoot
-    my @Files;
-    find(
-        {
-            wanted => sub {
-
-                # only handle files, not directories
-                if ( !-d $_ ) {
-
-                    if ($NewerThanDays) {
-
-                        # last write time stamp
-                        my ($WriteTime) = ( stat($_) )[9];
-
-                        # if last write time is NewerThanDays
-                        if ( ( time() - $WriteTime ) < ( $NewerThanDays * $SecondsPerDay ) ) {
-
-                            # add this file to result set
-                            push @Files, $_;
-                        }
-                    }
-                    else {
-                        # add this file to result set
-                        push @Files, $_;
-                    }
-                }
-            },
-            no_chdir => 1
-        },
-        $DocumentRoot
-    );
-
-    return \@Files;
-}
-
-sub StripSignature {
-
-    my ( $Self, %Param ) = @_;
-
-    my $Body = $Param{Body};
-
-    my $RegEx = $Self->{StripSignatureRegEx};
-    return $Body if ( !$RegEx );
-
-    if ( $Body =~ /$RegEx/ ) {
-
-        return substr( $Body, 0, $-[0] );
-    }
-    else {
-
-        return $Body;
-    }
 }
 
 1;
