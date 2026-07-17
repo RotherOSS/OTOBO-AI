@@ -19,15 +19,7 @@ package Kernel::System::Console::Command::Maint::AI::Import;
 use strict;
 use warnings;
 
-use LWP::UserAgent;
-use File::Basename        qw(basename dirname);
-use HTTP::Request::Common qw{ POST };
-
-use Kernel::System::VariableCheck qw(:all);
-
 use parent qw(Kernel::System::Console::BaseCommand);
-
-## nofilter(TidyAll::Plugin::OTOBO::Perl::ForeachToFor)
 
 our @ObjectDependencies = (
     'Kernel::System::OtoboAI::Import',
