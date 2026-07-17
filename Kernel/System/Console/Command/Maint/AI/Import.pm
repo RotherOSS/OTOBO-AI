@@ -24,7 +24,6 @@ use File::Find  qw(find);
 use LWP::UserAgent;
 use File::Basename        qw(basename dirname);
 use HTTP::Request::Common qw{ POST };
-use JSON;
 use Storable qw(dclone);
 
 use Kernel::System::VariableCheck qw(:all);
@@ -42,8 +41,7 @@ our @ObjectDependencies = (
     'Kernel::System::GenericInterface::Webservice',
     'Kernel::System::HTMLUtils',
     'Kernel::System::Package',
-    'Kernel::System::Ticket',
-    'Kernel::System::Ticket::Article',
+    'Kernel::System::OtoboAI::Import',
 );
 
 sub Configure {
@@ -182,27 +180,23 @@ sub Run {
     my $Purge    = $Self->GetOption('purge');
     my $UseCases = $Self->GetOption('use-case');
 
-    if ( $Reference && -e $Reference ) {
-
-        my $RefIDsJSON = file($Reference)->slurp;
-        $Self->{RefIDs} = from_json($RefIDsJSON);
-    }
-
     my $Targets = $Self->GetOption('target') || "tdf";
 
     if ( $Targets =~ /t/ ) {
 
+        my $ImportObject = $Kernel::OM->Get('Kernel::System::OtoboAI::Import');
+
         if ( $ReImport || $Purge ) {
-            $Self->Purge( Collection => 'ticket_pairs' );
-            $Self->Purge( Collection => 'ticket_chunks' );
+            $ImportObject->PurgeTickets();
         }
 
         if ( !$Purge ) {
-            $Self->MigrateTickets(
+            $ImportObject->MigrateTickets(
                 Sample    => $Sample,
                 SampleNth => $SampleNth,
                 Reference => $Reference,
                 UseCases  => $UseCases,
+                Console   => $Self,
             );
         }
     }
@@ -230,330 +224,6 @@ sub Run {
     }
 
     return $Self->ExitCodeOk();
-}
-
-sub MigrateTickets {
-    my ( $Self, %Param ) = @_;
-
-    my $Sample    = $Param{Sample};
-    my $SampleNth = $Param{SampleNth};
-    my $Reference = $Param{Reference};
-    my $UseCases  = $Param{UseCases};
-
-    my $TicketObject    = $Kernel::OM->Get('Kernel::System::Ticket');
-    my $ArticleObject   = $Kernel::OM->Get('Kernel::System::Ticket::Article');
-    my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
-
-    my $BatchSize = 100;
-    my @TicketIDs;
-
-    my $OnlyVisibleForCustomer    = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::OnlyVisibleForCustomer') // 1;
-    my $AllowedArticleSenderTypes = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AllowedArticleSenderTypes');
-    my $EnableUseCases            = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')             // 0;
-    my $SearchRestrictionsHash    = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
-
-    $Self->Print(
-        "<green>Ingesting Tickets ...</green>\n"
-    );
-
-    my %TicketSample;
-
-    SEARCHRESTRICTION:
-    for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
-    {
-        my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
-
-        my $IncludeUseCase = 0;
-        if ( $UseCases && scalar $UseCases->@* ) {
-
-            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
-        }
-        else {
-            $IncludeUseCase = 1;
-        }
-
-        next SEARCHRESTRICTION if $IncludeUseCase == 0;
-
-        my @UseCaseLabels = ( delete $SearchRestrictions->{Label} )->@*;
-
-        if ( !exists $TicketSample{$SearchRestrictionsKey} ) {
-            $TicketSample{$SearchRestrictionsKey} = [];
-        }
-
-        $Self->Print(
-            "<yellow>Use Case: $SearchRestrictionsKey.</yellow>\n"
-        );
-
-        # remove search parameters with empty arrays as they prevent search results entirely
-        for my $ArrayParam (qw(Queues Services StateTypes Types)) {
-            if ( !IsArrayRefWithData( $SearchRestrictions->{$ArrayParam} ) ) {
-                delete $SearchRestrictions->{$ArrayParam};
-            }
-        }
-
-        @TicketIDs = $TicketObject->TicketSearch(
-            Result     => 'ARRAY',
-            Limit      => 100_000_000,
-            UserID     => 1,
-            Permission => 'ro',
-            %{$SearchRestrictions},
-        );
-
-        my $Errors    = 0;
-        my $Count     = 0;
-        my $Imported  = 0;
-        my $Handled   = 0;
-        my $Percent10 = ( sort { $a <=> $b } ( 10, int( $#TicketIDs / 10 ) ) )[1];
-        my $Percent1  = ( sort { $a <=> $b } ( 1,  int( $#TicketIDs / 100 ) ) )[1];
-
-        $Self->Print(
-            "<yellow>" . ( scalar @TicketIDs ) . " Tickets are considered for transfer. This can take several hours, depending on the number of tickets.</yellow>\n"
-        );
-
-        BATCH:
-        while ( $Count < scalar @TicketIDs ) {
-            my $Until = $Count + $BatchSize - 1;
-            if ( $Until > $#TicketIDs ) {
-                $Until = $#TicketIDs;
-            }
-            my @Batch = @TicketIDs[ $Count .. $Until ];
-
-            my @ImportTicketsQA;
-            my @ImportTicketsAgentArticles;
-
-            TICKETID:
-            for my $TicketID (@Batch) {
-
-                # show progress
-                if ( ++$Count % $Percent10 == 0 ) {
-                    my $Percent = int( $Count / ( $#TicketIDs / 100 ) );
-                    $Self->Print(
-                        "<yellow>$Count</yellow> of <yellow>$#TicketIDs</yellow> processed (<yellow>$Percent %</yellow> done. $Handled Tickets handled, $Imported Tickets imported).\n"
-                    );
-                }
-                elsif ( $#TicketIDs > 50 && $Count % $Percent1 == 0 ) {
-                    $Self->Print('. ');
-                    select()->flush();    # show the dot immediately
-                }
-
-                my @Articles = $ArticleObject->ArticleList(
-                    TicketID => $TicketID,
-                );
-
-                if ($Reference) {
-
-                    my $IsPartOfSample = grep { $_ eq "$TicketID" } $Self->{RefIDs}->{$SearchRestrictionsKey}->@*;
-                    next TICKETID if ($IsPartOfSample);
-                }
-
-                next TICKETID if !@Articles;
-
-                my %SenderLookup = map { $_ => $ArticleObject->ArticleSenderTypeLookup( SenderType => $_ ) } qw/agent customer/;
-
-                # SelectionRule: only consider tickets started by a customer
-                next TICKETID if $Articles[0]{SenderTypeID} ne $SenderLookup{customer};
-
-                my $QuestionArticle = shift @Articles;
-                my @AnswerArticles;
-
-                if ($Sample) {
-
-                    # keep 10% sample of tickets for testing and do NOT import them
-
-                    if ( $Handled % $SampleNth == 0 ) {
-
-                        $Handled++;
-                        push $TicketSample{$SearchRestrictionsKey}->@*, $TicketID;
-                        next TICKETID;
-                    }
-                }
-
-                ARTICLE:
-                for my $Article (@Articles) {
-
-                    # SelectionRule: skip tickets where the customer sent info twice without any agent interference
-                    next TICKETID if $Article->{SenderTypeID} eq $SenderLookup{customer} && !@AnswerArticles;
-
-                    # SelectionRule: skip articles if they are not customer visible
-                    if ($OnlyVisibleForCustomer) {
-                        next ARTICLE if $Article->{IsVisibleForCustomer} ne 1;
-                    }
-
-                    # SelectionRule: skip articles if their sendertype is not on the whitelist (if enabled)
-                    if ($AllowedArticleSenderTypes) {
-                        my $Allowed = 0;
-                        TYPES:
-                        for my $Type ( $AllowedArticleSenderTypes->@* ) {
-                            if ( $SenderLookup{$Type} == $Article->{SenderTypeID} ) {
-                                $Allowed = 1;
-                                last TYPES;
-                            }
-                        }
-                        if ( !$Allowed ) {
-                            next ARTICLE;
-                        }
-                    }
-
-                    push @AnswerArticles, $Article;
-                }
-
-                next TICKETID if !@AnswerArticles;
-
-                {
-                    my $ArticleBackend = $ArticleObject->BackendForArticle(
-                        TicketID  => $TicketID,
-                        ArticleID => $QuestionArticle->{ArticleID},
-                    );
-
-                    my %Article = $ArticleBackend->ArticleGet(
-                        TicketID  => $TicketID,
-                        ArticleID => $QuestionArticle->{ArticleID},
-                    );
-
-                    next TICKETID if !$Article{Body};
-
-                    $QuestionArticle = \%Article;
-                }
-
-                my @AnswerArticlesWithBody;
-
-                ANSWER:
-                for my $i ( 0 .. $#AnswerArticles ) {
-                    my $ArticleBackend = $ArticleObject->BackendForArticle(
-                        TicketID  => $TicketID,
-                        ArticleID => $AnswerArticles[$i]{ArticleID},
-                    );
-
-                    my %Article = $ArticleBackend->ArticleGet(
-                        TicketID  => $TicketID,
-                        ArticleID => $AnswerArticles[$i]{ArticleID},
-                    );
-
-                    next ANSWER if !$Article{Body};
-
-                    # SelectionRule: Remove citations from agent articles
-                    $Article{Body} =~ s/^\s*>.+?$//msg;
-
-                    push @AnswerArticlesWithBody, \%Article;
-                }
-
-                next TICKETID if !@AnswerArticlesWithBody;
-
-                $Handled++;
-                $Imported++;
-
-                my $QuestionSubject = $QuestionArticle->{Subject}         // '';
-                my $QuestionBody    = $QuestionArticle->{Body}            // '';
-                my $AnswerSubject   = $AnswerArticlesWithBody[0]{Subject} // '';
-                my $AnswerBody      = $AnswerArticlesWithBody[0]{Body};
-
-                $QuestionBody = $Self->StripSignature( Body => $QuestionBody );
-                $AnswerBody   = $Self->StripSignature( Body => $AnswerBody );
-
-                my $ImportQATicket = {
-                    "source_id"     => $TicketID,
-                    "content_items" => [
-                        {
-                            type => 'question',
-                            text => $QuestionSubject . '. ' . $QuestionBody,
-                        },
-                        {
-                            type => 'answer',
-                            text => $AnswerSubject . '. ' . $AnswerBody,
-                        },
-                    ]
-                };
-
-                if ($EnableUseCases) {
-                    $ImportQATicket->{labels} = \@UseCaseLabels;
-                }
-
-                push @ImportTicketsQA, $ImportQATicket;
-
-                my @ContentItems;
-                for my $AnswerArticleWithBody (@AnswerArticlesWithBody) {
-
-                    my $Subject = $AnswerArticleWithBody->{Subject} // '';
-                    my $Body    = $AnswerArticleWithBody->{Body}    // '';
-
-                    $Body = $Self->StripSignature( Body => $Body );
-                    push @ContentItems, {
-                        type => 'text',
-                        text => $Subject . '. ' . $Body,
-                    };
-                }
-
-                my $ImportAgentArticles = {
-                    "source_id"     => $TicketID,
-                    "content_items" => \@ContentItems,
-                };
-
-                if ($EnableUseCases) {
-                    $ImportAgentArticles->{labels} = \@UseCaseLabels;
-                }
-
-                push @ImportTicketsAgentArticles, $ImportAgentArticles;
-            }
-
-            my $Result;
-            if (@ImportTicketsQA) {
-
-                # Ingest Q/A articles
-                $Result = $RequesterObject->Run(
-                    WebserviceID => $Self->{WebserviceID},
-                    Invoker      => 'IngestMany',
-                    Asynchronous => 0,
-                    Data         => {
-                        Type    => 'ticket_pairs',      # currently supported: faq, documentation, ticket_pairs, ticket_chunks
-                        Content => \@ImportTicketsQA,
-                    },
-                );
-
-                if ( !$Result->{Success} ) {
-                    $Errors++;
-                    $Self->Print(
-                        "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n"
-                    );
-                }
-            }
-
-            if (@ImportTicketsAgentArticles) {
-
-                # Ingest agent articles
-                $Result = $RequesterObject->Run(
-                    WebserviceID => $Self->{WebserviceID},
-                    Invoker      => 'IngestMany',
-                    Asynchronous => 0,
-                    Data         => {
-                        Type    => 'ticket_chunks',
-                        Content => \@ImportTicketsAgentArticles,
-                    },
-                );
-
-                if ( !$Result->{Success} ) {
-                    $Errors++;
-                    $Self->Print(
-                        "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n"
-                    );
-                }
-            }
-        }
-
-        if ($Errors) {
-            $Self->Print("<yellow>Ticket transfer complete. $Errors error(s) occurred!</yellow>\n");
-        }
-        else {
-            $Self->Print("<green>Ticket transfer complete. Considered $Count tickets, of wich $Imported where imported.</green>\n");
-        }
-    }
-
-    if ($Sample) {
-
-        my $JSON = encode_json( \%TicketSample );
-        file( $Self->{SamplePath} )->spew($JSON);
-    }
-
-    return 1;
 }
 
 sub MigrateFAQs {
