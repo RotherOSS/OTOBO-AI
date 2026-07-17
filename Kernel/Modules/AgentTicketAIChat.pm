@@ -19,7 +19,7 @@ package Kernel::Modules::AgentTicketAIChat;
 use strict;
 use warnings;
 
-use LWP::UserAgent;
+use Net::DNS;
 use URI::Escape qw(uri_escape_utf8);
 
 our $ObjectManagerDisabled = 1;
@@ -41,14 +41,27 @@ sub Run {
     my $AuthSessionObject = $Kernel::OM->Get('Kernel::System::AuthSession');
     my $UserObject        = $Kernel::OM->Get('Kernel::System::User');
     my $ParamObject       = $Kernel::OM->Get('Kernel::System::Web::Request');
+    my $LayoutObject      = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
 
-    my $MCPEndpoint = $ConfigObject->Get('OTOBOAI::MCP::Endpoint');
-    my $TicketID    = $ParamObject->GetParam( Param => 'TicketID' );
-
+    # fetch data
+    my $MCPHost  = $ConfigObject->Get('OTOBOAI::MCP::Host');
+    my $ChatURL  = $ConfigObject->Get('OTOBOAI::Chat::Endpoint');
+    my $CheckIP  = $ConfigObject->Get('SessionCheckRemoteIP');
+    my $TicketID = $ParamObject->GetParam( Param => 'TicketID' );
     my %UserData = $UserObject->GetUserData( UserID => $Self->{UserID} );
 
-    my $RemoteIP = $Self->GetMCPRemoteAddr( MCPEndpoint => $MCPEndpoint );
+    # determine remote IP of mcp server to bind session to
+    my $RemoteIP = 'none';
 
+    if ($CheckIP) {
+
+        $RemoteIP = $Self->GetMCPRemoteAddr( MCP => $MCPHost );
+        if ( !$RemoteIP ) {
+            return $LayoutObject->FatalError( Message => "Cannot resolve IP address of MCP. Unable to create a chat session." );
+        }
+    }
+
+    # create mcp bound webservice session
     my $SessionID = $AuthSessionObject->CreateSessionID(
         %UserData,
         UserLastRequest => $Kernel::OM->Create('Kernel::System::DateTime')->ToEpoch(),
@@ -56,41 +69,46 @@ sub Run {
         SessionSource   => 'GenericInterface',
         RemoteAddr      => $RemoteIP,
     );
-
     if ( !$SessionID ) {
-        return "ERROR getting SID";
+        return $LayoutObject->FatalError( Message => "Cannot create new chat session." );
     }
 
+    # assemble redirect URL
     $SessionID = uri_escape_utf8($SessionID);
-
-    my $ChatURL = $ConfigObject->Get('OTOBOAI::Chat::Endpoint');
-
     $ChatURL =~ s/\{\{OTOBO_SID\}\}/$SessionID/;
     $ChatURL =~ s/\{\{TICKET_ID\}\}/$TicketID/;
 
-    return "<script>window.location='$ChatURL';</script>";
+    # redirect to chat
+    $LayoutObject->Redirect(
+        ExtURL => $ChatURL,
+    );
+
+    return;
 }
 
 sub GetMCPRemoteAddr {
 
     my ( $Self, %Param ) = @_;
 
-    # TODO: SysConf
-    my $MCPEndpoint = $Param{MCPEndpoint};
+    my $MCP = $Param{'MCP'} || 'mcp';
 
-    my $UA = LWP::UserAgent->new;
-    $UA->agent("Otobo/11");
+    my $Resolver = Net::DNS::Resolver->new;
+    $Resolver->tcp_timeout(10);
+    $Resolver->udp_timeout(10);
 
-    my $Req = HTTP::Request->new(
-        GET => $MCPEndpoint,
-        [ 'Accept' => 'text/event-stream' ]
-    );
-    my $Res = $UA->request($Req);
+    my $Result = $Resolver->search($MCP);
+    return if !$Result;
 
-    my $RemoteIP = $Res->header('client-peer');
-    $RemoteIP =~ s/:[^:]*$//;
+    RECORD:
+    for my $Record ( $Result->answer ) {
 
-    return $RemoteIP;
+        if ( $Record->can('address') ) {
+
+            return $Record->address;
+        }
+    }
+
+    return;
 }
 
 1;
