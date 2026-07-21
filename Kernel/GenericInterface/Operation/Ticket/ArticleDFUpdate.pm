@@ -329,7 +329,7 @@ sub Run {
         Data    => {
             TicketID  => $TicketID,
             ArticleID => $ArticleID,
-            Sucess    => 1,
+            Success   => 1,
         }
     };
 }
