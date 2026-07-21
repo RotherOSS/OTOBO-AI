@@ -96,6 +96,12 @@ sub new {
             ],
             Type => 'OTOBOAI::Purge',
         },
+        DeleteByID => {
+            Description => 'Purge a single item the otobo-ai vector store.',
+            Events      => [
+            ],
+            Type => 'OTOBOAI::Purge',
+        },
     };
 
     $Self->{InvokerControllerMapping} = {
@@ -110,6 +116,35 @@ sub new {
         Purge => {
             Command    => 'DELETE',
             Controller => '/otobo-ai/embedding/purge/:Collection',
+        },
+        DeleteByID => {
+            Command    => 'POST',
+            Controller => '/otobo-ai/embedding/delete',
+        },
+    };
+
+    $Self->{Operation} = {
+
+        ArticleDFUpdate => {
+            Description       => 'ArticleDFUpdate',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::ArticleDFUpdate'
+        },
+        TicketGet => {
+            Description       => 'Retrieve a Ticket',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::TicketGet',
+        }
+    };
+
+    $Self->{RouteOperationMapping} = {
+        ArticleDFUpdate => {
+            RequestMethod => ['PUT'],
+            Route         => '/Ticket/:TicketID/Article/DF'
+        },
+        TicketGet => {
+            RequestMethod => ['GET'],
+            Route         => '/Ticket/:TicketID',
         },
     };
 
@@ -145,8 +180,16 @@ sub CodeInstall {
             },
             Description => '',
             Provider    => {
+                Operation => $Self->{Operation},
                 Transport => {
-                    Type => '',
+                    Config => {
+                        AdditionalHeaders     => undef,
+                        KeepAlive             => '',
+                        MaxLength             => '100000',
+                        OutboundHeaders       => {},
+                        RouteOperationMapping => $Self->{RouteOperationMapping},
+                    },
+                    Type => 'HTTP::REST',
                 },
             },
             RemoteSystem => '',
@@ -206,8 +249,43 @@ sub CodeUpgrade {
     }
 
     # upgrade webservice
-    $Webservice->{Config}{Requester}{Invoker} = $Self->{Invoker};
-    $Webservice->{Config}{Requester}{Transport}{Config}{InvokerControllerMapping} = $Self->{InvokerControllerMapping};
+    $Webservice->{Config} = {
+
+        # Webservice Config
+        Debugger => {
+            DebugThreshold => 'error',
+            TestMode       => '0',
+        },
+        Description => '',
+        Provider    => {
+            Operation => $Self->{Operation},
+            Transport => {
+                Config => {
+                    AdditionalHeaders     => undef,
+                    KeepAlive             => '',
+                    MaxLength             => '100000',
+                    OutboundHeaders       => {},
+                    RouteOperationMapping => $Self->{RouteOperationMapping},
+                },
+                Type => 'HTTP::REST',
+            },
+        },
+        RemoteSystem => '',
+        Requester    => {
+            Invoker   => $Self->{Invoker},
+            Transport => {
+                Config => {
+                    DefaultCommand           => 'POST',
+                    Host                     => 'http://otobo-ai:8000',
+                    InvokerControllerMapping => $Self->{InvokerControllerMapping},
+                    Timeout                  => '300',
+                },
+                Type => 'HTTP::REST',
+            },
+        }
+
+        # EO Webservice Config
+    };
 
     my $Success = $WebserviceObject->WebserviceUpdate(
         %{$Webservice},
