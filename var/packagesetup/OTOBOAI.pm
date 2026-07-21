@@ -134,6 +134,11 @@ sub new {
             Description       => 'Retrieve a Ticket',
             IncludeTicketData => '0',
             Type              => 'Ticket::TicketGet',
+        },
+        TicketUpdate => {
+            Description       => 'Update a Ticket',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::TicketUpdate',
         }
     };
 
@@ -144,6 +149,10 @@ sub new {
         },
         TicketGet => {
             RequestMethod => ['GET'],
+            Route         => '/Ticket/:TicketID',
+        },
+        TicketUpdate => {
+            RequestMethod => ['PUT'],
             Route         => '/Ticket/:TicketID',
         },
     };

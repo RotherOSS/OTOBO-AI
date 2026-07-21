@@ -308,6 +308,7 @@ sub Run {
                                                              # must be linked to, e. g. TicketID
             Value              => $DynamicField->{Value},    # Value to store, depends on backend type
             UserID             => $UserID,
+            DoWrite            => 1,                         # specific to OTOBOAI DF
         );
 
         if ( !$Success ) {
