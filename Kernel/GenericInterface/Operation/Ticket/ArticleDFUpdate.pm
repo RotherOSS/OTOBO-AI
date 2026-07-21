@@ -80,7 +80,6 @@ the updated ArticleID.
         Data => {
             UserLogin         => 'some agent login',                            # UserLogin or CustomerUserLogin or SessionID is
                                                                                 #   required
-            CustomerUserLogin => 'some customer login',
             SessionID         => 123,
 
             Password  => 'some password',                                       # if UserLogin or customerUserLogin is sent then
