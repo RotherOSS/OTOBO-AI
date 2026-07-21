@@ -2,7 +2,7 @@
 <otobo_package version="1.0">
     <Name>OTOBO-AI</Name>
     <!-- nofilter(TidyAll::Plugin::OTOBO::SOPM::RequiredElements) -->
-    <Version>11.0.17.4</Version>
+    <Version>11.0.17.8</Version>
     <Framework>11.0.x</Framework>
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
@@ -19,6 +19,7 @@
         <File Permission="660" Location="Kernel/Modules/AdminDynamicFieldTextAreaAI.pm" />
         <File Permission="660" Location="Kernel/Modules/OtoboAIDashboard.pm" />
         <File Permission="660" Location="Kernel/Modules/AgentTicketAIChat.pm" />
+        <File Permission="660" Location="Kernel/Output/HTML/ArticleAction/AgentTicketAIChat.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Dashboard/OtoboAIDashboard.pm" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/AdminDynamicFieldTextAreaAI.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/DynamicField/Agent/TextAreaAI.tt" />

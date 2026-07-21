@@ -35,6 +35,7 @@ our @ObjectDependencies = (
     'Kernel::System::Queue',
     'Kernel::System::StandardTemplate',
     'Kernel::System::Valid',
+    'Kernel::System::SysConfig',
 );
 
 =head1 NAME
@@ -221,16 +222,18 @@ sub CodeInstall {
         UserID  => 1,
     );
 
-    if ($ID) {
-        return 1;
-    }
-    else {
+    if ( !$ID ) {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
             Priority => 'error',
             Message  => "Could not install the OTOBOAI webservice!",
         );
         return;
     }
+
+    $Self->_UpdateArticleActions( Channel => 'Email' );
+    $Self->_UpdateArticleActions( Channel => 'Phone' );
+
+    return 1;
 }
 
 =head2 CodeUpgrade()
@@ -308,6 +311,10 @@ sub CodeUpgrade {
         );
         return;
     }
+
+    $Self->_UpdateArticleActions( Channel => 'Email' );
+    $Self->_UpdateArticleActions( Channel => 'Phone' );
+
     return 1;
 }
 
@@ -526,6 +533,59 @@ sub _DeleteAIAnswerTemplate {
     }
 
     return 1;
+}
+
+sub _UpdateArticleActions {
+
+    my ( $Self, %Param ) = @_;
+    my $Channel = $Param{Channel};
+
+    my $SysConfigObject = $Kernel::OM->Get('Kernel::System::SysConfig');
+
+    my %Setting = $SysConfigObject->SettingGet(
+        Name     => "Ticket::Frontend::Article::Actions###$Channel",    # (required) Setting name
+        Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
+    );
+
+    my $EffectiveValue = $Setting{EffectiveValue};
+
+    if ( !$EffectiveValue->{AgentTicketAIChat} ) {
+
+        my $ExclusiveLockGUID = $SysConfigObject->SettingLock(
+            LockAll => 1,
+            Force   => 1,    # (optional) Force locking (do not check if it's already locked by another user). Default: 0.
+            UserID  => 1,    # (required)
+        );
+
+        $EffectiveValue->{AgentTicketAIChat} = {
+            'Prio'   => '1007',
+            'Module' => 'Kernel::Output::HTML::ArticleAction::AgentTicketAIChat',
+            'Valid'  => '1'
+        };
+
+        my %Result = $SysConfigObject->SettingUpdate(
+            Name              => "Ticket::Frontend::Article::Actions###$Channel",    # (required) setting name
+            IsValid           => 1,                                                  # (optional) 1 or 0, modified 0
+            EffectiveValue    => $EffectiveValue,                                    # (optional) only needed when IsValid is turned on
+            ExclusiveLockGUID => $ExclusiveLockGUID,
+            UserID            => 1,                                                  # (required) UserID
+            NoValidation      => 1,                                                  # (optional) no value type validation.
+        );
+
+        $SysConfigObject->SettingUnlock(
+            UnlockAll => 1,
+        );
+
+        $SysConfigObject->ConfigurationDeploy(
+            Comments    => "otobo-ai package install",
+            AllSettings => 1,
+            Force       => 1,
+            UserID      => 1,
+        );
+
+    }
+
+    return;
 }
 
 1;
