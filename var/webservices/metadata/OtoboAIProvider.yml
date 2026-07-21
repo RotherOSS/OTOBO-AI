@@ -1,0 +1,68 @@
+--- 
+components:
+
+  schemas:
+    ArticleDFUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+        - type: object
+          properties:
+            DynamicField:
+              $ref : '#/components/schemas/DynamicFields'
+            TicketID:
+              description: The TicketID to update
+              type: string
+            ArticleID:
+              description: The ArticleID to update
+              type: string
+          required:
+            - TicketID
+
+    ArticleDFUpdateResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            TicketID:
+              type: string
+            ArticleID:
+              type: string
+            Success:
+              type: string
+
+
+Ticket::ArticleDFUpdate: 
+  QueryParams: {}
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              TicketID: 1
+              DynamicField:
+              - Name: MyDynamicFieldName
+                Value: SomeValue
+          WithArticleID:
+            value:
+              TicketID: 1
+              ArticleID: 18
+              DynamicField:
+              - Name: MyDynamicFieldName
+                Value: SomeValue
+        schema:
+          $ref : '#/components/schemas/ArticleDFUpdateRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            foo:
+              value:
+                ArticleID: 7
+                TicketID: 7
+                Sucess : 1
+          schema:
+            $ref : '#/components/schemas/ArticleDFUpdateResponse'
+      description: 200 response
