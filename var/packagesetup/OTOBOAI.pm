@@ -568,6 +568,8 @@ sub _UpdateArticleActions {
         Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
     );
 
+    return if !%Setting;
+
     my $EffectiveValue = $Setting{EffectiveValue};
 
     if ( !$EffectiveValue->{AgentTicketAIChat} ) {
@@ -619,7 +621,10 @@ sub _CleanupArticleActions {
     my %Setting = $SysConfigObject->SettingGet(
         Name     => "Ticket::Frontend::Article::Actions###$Channel",    # (required) Setting name
         Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
+        NoLog    => 1,
     );
+
+    return if !%Setting;
 
     my $EffectiveValue = $Setting{EffectiveValue};
 
