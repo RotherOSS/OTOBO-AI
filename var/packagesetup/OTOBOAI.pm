@@ -329,6 +329,9 @@ run the code uninstall part
 sub CodeUninstall {
     my ( $Self, %Param ) = @_;
 
+    $Self->_CleanupArticleActions( Channel => 'Phone' );
+    $Self->_CleanupArticleActions( Channel => 'Email' );
+
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
     my $Webservice = $WebserviceObject->WebserviceGet(
@@ -562,6 +565,55 @@ sub _UpdateArticleActions {
             'Module' => 'Kernel::Output::HTML::ArticleAction::AgentTicketAIChat',
             'Valid'  => '1'
         };
+
+        my %Result = $SysConfigObject->SettingUpdate(
+            Name              => "Ticket::Frontend::Article::Actions###$Channel",    # (required) setting name
+            IsValid           => 1,                                                  # (optional) 1 or 0, modified 0
+            EffectiveValue    => $EffectiveValue,                                    # (optional) only needed when IsValid is turned on
+            ExclusiveLockGUID => $ExclusiveLockGUID,
+            UserID            => 1,                                                  # (required) UserID
+            NoValidation      => 1,                                                  # (optional) no value type validation.
+        );
+
+        $SysConfigObject->SettingUnlock(
+            UnlockAll => 1,
+        );
+
+        $SysConfigObject->ConfigurationDeploy(
+            Comments    => "otobo-ai package install",
+            AllSettings => 1,
+            Force       => 1,
+            UserID      => 1,
+        );
+
+    }
+
+    return;
+}
+
+sub _CleanupArticleActions {
+
+    my ( $Self, %Param ) = @_;
+    my $Channel = $Param{Channel};
+
+    my $SysConfigObject = $Kernel::OM->Get('Kernel::System::SysConfig');
+
+    my %Setting = $SysConfigObject->SettingGet(
+        Name     => "Ticket::Frontend::Article::Actions###$Channel",    # (required) Setting name
+        Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
+    );
+
+    my $EffectiveValue = $Setting{EffectiveValue};
+
+    if ( $EffectiveValue->{AgentTicketAIChat} ) {
+
+        my $ExclusiveLockGUID = $SysConfigObject->SettingLock(
+            LockAll => 1,
+            Force   => 1,    # (optional) Force locking (do not check if it's already locked by another user). Default: 0.
+            UserID  => 1,    # (required)
+        );
+
+        delete $EffectiveValue->{AgentTicketAIChat};
 
         my %Result = $SysConfigObject->SettingUpdate(
             Name              => "Ticket::Frontend::Article::Actions###$Channel",    # (required) setting name
