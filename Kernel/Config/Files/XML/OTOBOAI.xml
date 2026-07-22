@@ -443,7 +443,7 @@
             </Hash>
         </Value>
     </Setting>
-    <Setting Name="Ticket::EventModulePost###8300-OTOBOAIIncrementalSynchronization" Required="0" Valid="1">
+    <Setting Name="Ticket::EventModulePost###8300-OTOBOAIIncrementalSynchronization" Required="0" Valid="0">
         <Description Translatable="1">Event module registration. Whenever a Ticket is updated, e.g. by receiving new articles or changing state, it should be reimported into the vector DB.</Description>
         <Navigation>Core::Event::Ticket</Navigation>
         <Value>
