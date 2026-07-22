@@ -36,6 +36,7 @@ our @ObjectDependencies = (
     'Kernel::System::StandardTemplate',
     'Kernel::System::Valid',
     'Kernel::System::SysConfig',
+    'Kernel::System::Main',
 );
 
 =head1 NAME
@@ -542,6 +543,23 @@ sub _UpdateArticleActions {
 
     my ( $Self, %Param ) = @_;
     my $Channel = $Param{Channel};
+
+    # we only do this on rel-11.0
+    # for rel-11_1 we can just use XML
+
+    my $ConfigObject = $Kernel::OM->Get('Kernel::Config');
+    my $MainObject   = $Kernel::OM->Get('Kernel::System::Main');
+
+    my $ReleaseInfo = $MainObject->GetReleaseInfo(
+        Directory => $ConfigObject->Get('Home'),
+        Filename  => 'RELEASE',
+    );
+
+    my $Version = $ReleaseInfo->{Version};
+    if ( $Version !~ /^11\.0/ ) {
+
+        return $Self->_CleanupArticleActions( Channel => $Channel );
+    }
 
     my $SysConfigObject = $Kernel::OM->Get('Kernel::System::SysConfig');
 
