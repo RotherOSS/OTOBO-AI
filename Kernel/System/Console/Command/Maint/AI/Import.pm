@@ -258,28 +258,30 @@ sub MigrateTickets {
 
     my %TicketSample;
 
-    my $RequestedUseCaseLabel;
-    if ( IsArrayRefWithData($UseCases) ) {
-        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
-    }
-
     SEARCHRESTRICTION:
     for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
-        my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
-        my $UseCaseLabel       = join ' ', @UseCaseLabels;
 
-        if ($RequestedUseCaseLabel) {
-            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        my $IncludeUseCase = 0;
+        if ( $UseCases && scalar $UseCases->@* ) {
+
+            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
+        }
+        else {
+            $IncludeUseCase = 1;
         }
 
-        if ( !exists $TicketSample{$UseCaseLabel} ) {
-            $TicketSample{$UseCaseLabel} = [];
+        next SEARCHRESTRICTION if $IncludeUseCase == 0;
+
+        my @UseCaseLabels = ( delete $SearchRestrictions->{Label} )->@*;
+
+        if ( !exists $TicketSample{$SearchRestrictionsKey} ) {
+            $TicketSample{$SearchRestrictionsKey} = [];
         }
 
         $Self->Print(
-            "<yellow>Use Case: $UseCaseLabel.</yellow>\n"
+            "<yellow>Use Case: $SearchRestrictionsKey.</yellow>\n"
         );
 
         # remove search parameters with empty arrays as they prevent search results entirely
@@ -340,7 +342,7 @@ sub MigrateTickets {
 
                 if ($Reference) {
 
-                    my $IsPartOfSample = grep { $_ eq "$TicketID" } $Self->{RefIDs}->{$UseCaseLabel}->@*;
+                    my $IsPartOfSample = grep { $_ eq "$TicketID" } $Self->{RefIDs}->{$SearchRestrictionsKey}->@*;
                     next TICKETID if ($IsPartOfSample);
                 }
 
@@ -361,7 +363,7 @@ sub MigrateTickets {
                     if ( $Handled % $SampleNth == 0 ) {
 
                         $Handled++;
-                        push $TicketSample{$UseCaseLabel}->@*, $TicketID;
+                        push $TicketSample{$SearchRestrictionsKey}->@*, $TicketID;
                         next TICKETID;
                     }
                 }
@@ -580,11 +582,6 @@ sub MigrateFAQs {
     my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
     my $EnableUseCases  = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases') // 0;
 
-    my $RequestedUseCaseLabel;
-    if ( IsArrayRefWithData($UseCases) ) {
-        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
-    }
-
     # determine search restrictions for FAQSearch
     my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') // {};
 
@@ -593,14 +590,20 @@ sub MigrateFAQs {
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
-        my $UseCaseLabel       = join ' ', @UseCaseLabels;
 
-        if ($RequestedUseCaseLabel) {
-            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        my $IncludeUseCase = 0;
+        if ( $UseCases && scalar $UseCases->@* ) {
+
+            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
+        }
+        else {
+            $IncludeUseCase = 1;
         }
 
+        next SEARCHRESTRICTION if $IncludeUseCase == 0;
+
         $Self->Print(
-            "<yellow>Use Case: " . ( join ' ', @UseCaseLabels ) . "</yellow>\n"
+            "<yellow>Use Case: $SearchRestrictionsKey</yellow>\n"
         );
 
         my @FAQIDs = $FAQObject->FAQSearch(
@@ -741,11 +744,6 @@ sub MigrateDocs {
 
     my $UseCases = $Param{UseCases};
 
-    my $RequestedUseCaseLabel;
-    if ( IsArrayRefWithData($UseCases) ) {
-        $RequestedUseCaseLabel = join ' ', $UseCases->@*;
-    }
-
     $Self->Print(
         "<green>Ingesting Documents ...</green>\n"
     );
@@ -762,14 +760,20 @@ sub MigrateDocs {
     {
         my $SearchRestrictions = dclone( $SearchRestrictionsHash->{$SearchRestrictionsKey} );
         my @UseCaseLabels      = ( delete $SearchRestrictions->{Label} )->@*;
-        my $UseCaseLabel       = join ' ', @UseCaseLabels;
 
-        if ($RequestedUseCaseLabel) {
-            next SEARCHRESTRICTION if $UseCaseLabel ne $RequestedUseCaseLabel;
+        my $IncludeUseCase = 0;
+        if ( $UseCases && scalar $UseCases->@* ) {
+
+            $IncludeUseCase = grep { $_ eq $SearchRestrictionsKey } $UseCases->@*;
+        }
+        else {
+            $IncludeUseCase = 1;
         }
 
+        next SEARCHRESTRICTION if $IncludeUseCase == 0;
+
         $Self->Print(
-            "<yellow>Use Case: " . ( join ' ', @UseCaseLabels ) . "</yellow>\n"
+            "<yellow>Use Case: $SearchRestrictionsKey</yellow>\n"
         );
 
         my $DocumentPaths = $Self->_DocumentSearch(

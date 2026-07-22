@@ -35,6 +35,7 @@ our @ObjectDependencies = (
     'Kernel::System::Queue',
     'Kernel::System::StandardTemplate',
     'Kernel::System::Valid',
+    'Kernel::System::SysConfig',
 );
 
 =head1 NAME
@@ -96,6 +97,12 @@ sub new {
             ],
             Type => 'OTOBOAI::Purge',
         },
+        DeleteByID => {
+            Description => 'Purge a single item the otobo-ai vector store.',
+            Events      => [
+            ],
+            Type => 'OTOBOAI::Purge',
+        },
     };
 
     $Self->{InvokerControllerMapping} = {
@@ -110,6 +117,44 @@ sub new {
         Purge => {
             Command    => 'DELETE',
             Controller => '/otobo-ai/embedding/purge/:Collection',
+        },
+        DeleteByID => {
+            Command    => 'POST',
+            Controller => '/otobo-ai/embedding/delete',
+        },
+    };
+
+    $Self->{Operation} = {
+
+        ArticleDFUpdate => {
+            Description       => 'ArticleDFUpdate',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::ArticleDFUpdate'
+        },
+        TicketGet => {
+            Description       => 'Retrieve a Ticket',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::TicketGet',
+        },
+        TicketUpdate => {
+            Description       => 'Update a Ticket',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::TicketUpdate',
+        }
+    };
+
+    $Self->{RouteOperationMapping} = {
+        ArticleDFUpdate => {
+            RequestMethod => ['PUT'],
+            Route         => '/Ticket/:TicketID/Article/DF'
+        },
+        TicketGet => {
+            RequestMethod => ['GET'],
+            Route         => '/Ticket/:TicketID',
+        },
+        TicketUpdate => {
+            RequestMethod => ['PUT'],
+            Route         => '/Ticket/:TicketID',
         },
     };
 
@@ -145,8 +190,16 @@ sub CodeInstall {
             },
             Description => '',
             Provider    => {
+                Operation => $Self->{Operation},
                 Transport => {
-                    Type => '',
+                    Config => {
+                        AdditionalHeaders     => undef,
+                        KeepAlive             => '',
+                        MaxLength             => '100000',
+                        OutboundHeaders       => {},
+                        RouteOperationMapping => $Self->{RouteOperationMapping},
+                    },
+                    Type => 'HTTP::REST',
                 },
             },
             RemoteSystem => '',
@@ -169,16 +222,18 @@ sub CodeInstall {
         UserID  => 1,
     );
 
-    if ($ID) {
-        return 1;
-    }
-    else {
+    if ( !$ID ) {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
             Priority => 'error',
             Message  => "Could not install the OTOBOAI webservice!",
         );
         return;
     }
+
+    $Self->_UpdateArticleActions( Channel => 'Email' );
+    $Self->_UpdateArticleActions( Channel => 'Phone' );
+
+    return 1;
 }
 
 =head2 CodeUpgrade()
@@ -206,8 +261,43 @@ sub CodeUpgrade {
     }
 
     # upgrade webservice
-    $Webservice->{Config}{Requester}{Invoker} = $Self->{Invoker};
-    $Webservice->{Config}{Requester}{Transport}{Config}{InvokerControllerMapping} = $Self->{InvokerControllerMapping};
+    $Webservice->{Config} = {
+
+        # Webservice Config
+        Debugger => {
+            DebugThreshold => 'error',
+            TestMode       => '0',
+        },
+        Description => '',
+        Provider    => {
+            Operation => $Self->{Operation},
+            Transport => {
+                Config => {
+                    AdditionalHeaders     => undef,
+                    KeepAlive             => '',
+                    MaxLength             => '100000',
+                    OutboundHeaders       => {},
+                    RouteOperationMapping => $Self->{RouteOperationMapping},
+                },
+                Type => 'HTTP::REST',
+            },
+        },
+        RemoteSystem => '',
+        Requester    => {
+            Invoker   => $Self->{Invoker},
+            Transport => {
+                Config => {
+                    DefaultCommand           => 'POST',
+                    Host                     => 'http://otobo-ai:8000',
+                    InvokerControllerMapping => $Self->{InvokerControllerMapping},
+                    Timeout                  => '300',
+                },
+                Type => 'HTTP::REST',
+            },
+        }
+
+        # EO Webservice Config
+    };
 
     my $Success = $WebserviceObject->WebserviceUpdate(
         %{$Webservice},
@@ -221,6 +311,10 @@ sub CodeUpgrade {
         );
         return;
     }
+
+    $Self->_UpdateArticleActions( Channel => 'Email' );
+    $Self->_UpdateArticleActions( Channel => 'Phone' );
+
     return 1;
 }
 
@@ -234,6 +328,9 @@ run the code uninstall part
 
 sub CodeUninstall {
     my ( $Self, %Param ) = @_;
+
+    $Self->_CleanupArticleActions( Channel => 'Phone' );
+    $Self->_CleanupArticleActions( Channel => 'Email' );
 
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
@@ -439,6 +536,108 @@ sub _DeleteAIAnswerTemplate {
     }
 
     return 1;
+}
+
+sub _UpdateArticleActions {
+
+    my ( $Self, %Param ) = @_;
+    my $Channel = $Param{Channel};
+
+    my $SysConfigObject = $Kernel::OM->Get('Kernel::System::SysConfig');
+
+    my %Setting = $SysConfigObject->SettingGet(
+        Name     => "Ticket::Frontend::Article::Actions###$Channel",    # (required) Setting name
+        Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
+    );
+
+    my $EffectiveValue = $Setting{EffectiveValue};
+
+    if ( !$EffectiveValue->{AgentTicketAIChat} ) {
+
+        my $ExclusiveLockGUID = $SysConfigObject->SettingLock(
+            LockAll => 1,
+            Force   => 1,    # (optional) Force locking (do not check if it's already locked by another user). Default: 0.
+            UserID  => 1,    # (required)
+        );
+
+        $EffectiveValue->{AgentTicketAIChat} = {
+            'Prio'   => '1007',
+            'Module' => 'Kernel::Output::HTML::ArticleAction::AgentTicketAIChat',
+            'Valid'  => '1'
+        };
+
+        my %Result = $SysConfigObject->SettingUpdate(
+            Name              => "Ticket::Frontend::Article::Actions###$Channel",    # (required) setting name
+            IsValid           => 1,                                                  # (optional) 1 or 0, modified 0
+            EffectiveValue    => $EffectiveValue,                                    # (optional) only needed when IsValid is turned on
+            ExclusiveLockGUID => $ExclusiveLockGUID,
+            UserID            => 1,                                                  # (required) UserID
+            NoValidation      => 1,                                                  # (optional) no value type validation.
+        );
+
+        $SysConfigObject->SettingUnlock(
+            UnlockAll => 1,
+        );
+
+        $SysConfigObject->ConfigurationDeploy(
+            Comments    => "otobo-ai package install",
+            AllSettings => 1,
+            Force       => 1,
+            UserID      => 1,
+        );
+
+    }
+
+    return;
+}
+
+sub _CleanupArticleActions {
+
+    my ( $Self, %Param ) = @_;
+    my $Channel = $Param{Channel};
+
+    my $SysConfigObject = $Kernel::OM->Get('Kernel::System::SysConfig');
+
+    my %Setting = $SysConfigObject->SettingGet(
+        Name     => "Ticket::Frontend::Article::Actions###$Channel",    # (required) Setting name
+        Deployed => 1,                                                  # (optional) Get deployed setting value. Default 0.
+    );
+
+    my $EffectiveValue = $Setting{EffectiveValue};
+
+    if ( $EffectiveValue->{AgentTicketAIChat} ) {
+
+        my $ExclusiveLockGUID = $SysConfigObject->SettingLock(
+            LockAll => 1,
+            Force   => 1,    # (optional) Force locking (do not check if it's already locked by another user). Default: 0.
+            UserID  => 1,    # (required)
+        );
+
+        delete $EffectiveValue->{AgentTicketAIChat};
+
+        my %Result = $SysConfigObject->SettingUpdate(
+            Name              => "Ticket::Frontend::Article::Actions###$Channel",    # (required) setting name
+            IsValid           => 1,                                                  # (optional) 1 or 0, modified 0
+            EffectiveValue    => $EffectiveValue,                                    # (optional) only needed when IsValid is turned on
+            ExclusiveLockGUID => $ExclusiveLockGUID,
+            UserID            => 1,                                                  # (required) UserID
+            NoValidation      => 1,                                                  # (optional) no value type validation.
+        );
+
+        $SysConfigObject->SettingUnlock(
+            UnlockAll => 1,
+        );
+
+        $SysConfigObject->ConfigurationDeploy(
+            Comments    => "otobo-ai package install",
+            AllSettings => 1,
+            Force       => 1,
+            UserID      => 1,
+        );
+
+    }
+
+    return;
 }
 
 1;

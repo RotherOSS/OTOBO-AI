@@ -443,6 +443,21 @@
             </Hash>
         </Value>
     </Setting>
+    <Setting Name="Ticket::EventModulePost###8300-OTOBOAIIncrementalSynchronization" Required="0" Valid="1">
+        <Description Translatable="1">Event module registration. Whenever a Ticket is updated, e.g. by receiving new articles or changing state, it should be reimported into the vector DB.</Description>
+        <Navigation>Core::Event::Ticket</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Module">Kernel::System::Ticket::Event::OTOBOAIIncrementalSynchronization</Item>
+                <Item Key="Event">ArticleCreate|Ticket.*Update</Item>
+                <Item Key="Transaction">1</Item>
+                <Item Key="Queues">
+                    <Array>
+                    </Array>
+                </Item>
+            </Hash>
+        </Value>
+    </Setting>
     <Setting Name="Frontend::Module###AdminDynamicFieldTextAreaAI" Required="0" Valid="1">
         <Description Translatable="1">Frontend module registration for the agent interface.</Description>
         <Navigation>Frontend::Admin::ModuleRegistration</Navigation>
@@ -562,6 +577,86 @@
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">default</Item>
+        </Value>
+    </Setting>
+
+    <Setting Name="Ticket::Frontend::MenuModule###452-AIChat" Required="0" Valid="0">
+        <Description Translatable="1">Open the OTOBO AI Chat.</Description>
+        <Navigation>Frontend::Agent::View::TicketZoom::MenuModule</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Module">Kernel::Output::HTML::TicketMenu::Generic</Item>
+                <Item Key="Name" Translatable="1">AI Chat</Item>
+                <Item Key="Description" Translatable="1">Chat with AI about this ticket.</Item>
+                <Item Key="Action">AgentTicketAIChat</Item>
+                <Item Key="Link">Action=AgentTicketAIChat;TicketID=[% Data.TicketID | html %]</Item>
+                <Item Key="Target"></Item>
+                <Item Key="PopupType">TicketAction</Item>
+            </Hash>
+        </Value>
+    </Setting>
+
+    <Setting Name="Frontend::Module###AgentTicketAIChat" Required="0" Valid="1">
+        <Description Translatable="1">Frontend module registration for the agent interface.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration</Navigation>
+        <Value>
+            <Item ValueType="FrontendRegistration">
+                <Hash>
+                    <Item Key="GroupRo">
+                        <Array>
+                        </Array>
+                    </Item>
+                    <Item Key="Group">
+                        <Array>
+                        </Array>
+                    </Item>
+                    <Item Key="Description" Translatable="1">This module is part of the agent area of OTOBO.</Item>
+                    <Item Key="Title" Translatable="1">AI Chat Launcher</Item>
+                    <Item Key="NavBarName"></Item>
+                </Hash>
+            </Item>
+        </Value>
+    </Setting>
+    <!--
+    <Setting Name="Loader::Module::AgentTicketAIChat###003-OTOBOAI" Required="0" Valid="1">
+        <Description Translatable="1">Loader module registration for the agent interface.</Description>
+        <Navigation>Frontend::Agent::ModuleRegistration::Loader</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="JavaScript">
+                    <Array>
+                    </Array>
+                </Item>
+            </Hash>
+        </Value>
+    </Setting>
+-->
+
+    <Setting Name="OTOBOAI::MCP::Host" Required="0" Valid="1">
+        <Description Translatable="1">The hostname of MCP, eg 'mcp' when running in Docker.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="String">mcp</Item>
+        </Value>
+    </Setting>
+
+    <Setting Name="OTOBOAI::Chat::Endpoint" Required="0" Valid="1">
+        <Description Translatable="1">The endpoint url of the OpenWebUI Chat.</Description>
+        <Navigation>Core::OTOBOAI</Navigation>
+        <Value>
+            <Item ValueType="String">https://arnold.myotobo.com:9000/?model=beta-generate-2&amp;q=Hallo%2C%20merke%20dir%20diese%20Daten%3A%20otobo_sid%3D{{OTOBO_SID}}+und+ticket_id%3D{{TICKET_ID}}</Item>
+        </Value>
+    </Setting>
+
+    <Setting Name="GenericInterface::Operation::Module###Ticket::ArticleDFUpdate" Required="0" Valid="1">
+        <Description Translatable="1">GenericInterface module registration for the operation layer.</Description>
+        <Navigation>GenericInterface::Operation::ModuleRegistration</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Name">ArticleDFUpdate</Item>
+                <Item Key="Controller">Ticket</Item>
+                <Item Key="ConfigDialog">AdminGenericInterfaceOperationDefault</Item>
+            </Hash>
         </Value>
     </Setting>
 
