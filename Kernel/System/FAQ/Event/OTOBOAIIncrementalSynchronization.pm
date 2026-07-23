@@ -72,7 +72,7 @@ sub Run {
     $ImportObject->PurgeFAQs(
         FAQID => $Param{Data}{ItemID}
     );
-    $ImportObject->MigrateFAQs(
+    $ImportObject->MigrateFAQsAsync(
         FAQID => $Param{Data}{ItemID}
     );
 

@@ -73,7 +73,7 @@ sub Run {
         $ImportObject->PurgeTickets(
             TicketID => $Param{Data}{TicketID}
         );
-        $ImportObject->MigrateTickets(
+        $ImportObject->MigrateTicketsAsync(
             TicketID => $Param{Data}{TicketID}
         );
 
@@ -92,7 +92,7 @@ sub Run {
         $ImportObject->PurgeTickets(
             TicketID => $Param{Data}{MergeTicketID}
         );
-        $ImportObject->MigrateTickets(
+        $ImportObject->MigrateTicketsAsync(
             TicketID => $Param{Data}{MergeTicketID}
         );
 
@@ -100,7 +100,7 @@ sub Run {
         $ImportObject->PurgeTickets(
             TicketID => $Param{Data}{MainTicketID}
         );
-        $ImportObject->MigrateTickets(
+        $ImportObject->MigrateTicketsAsync(
             TicketID => $Param{Data}{MainTicketID}
         );
 

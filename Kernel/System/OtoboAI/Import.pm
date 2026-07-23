@@ -125,15 +125,17 @@ Synchronize the OTOBO-AI vector DB with the updated states of one or more Ticket
 returns 1 if successful or undef otherwise
 
     my $Success = $Object->MigrateTickets(
-        TicketID => 123,                     # optional, consider only this ticket for migration
-        UseCases => [                        # optional, consider only these use-cases for migration
+        TicketID => 123,                        # optional, consider only this ticket for migration
+        UseCases => [                           # optional, consider only these use-cases for migration
             'default',
             'sales',
         ],
-        Sample    => '/home/sample.json',    # optional, file path or directory to write a sample.json containing TicketIDs to sample
-        SampleNth => 10,                     # optional, sample size (default: 10)
-        Reference => '/home/sample.json',    # optional, path to an existing sample.json containing TicketIDs to reference
-        Console   => $ConsoleObject,         # optional, give realtime status updates on the migration process (assumes print to STDOUT)
+        Sample       => '/home/sample.json',    # optional, file path or directory to write a sample.json containing TicketIDs to sample
+        SampleNth    => 10,                     # optional, sample size (default: 10)
+        Reference    => '/home/sample.json',    # optional, path to an existing sample.json containing TicketIDs to reference
+        Asynchronous => 0,                      # optional, do not manually set this, unless you are explicitly
+                                                # running the Requester in an asynchronous context (default: 0)
+        Console      => $ConsoleObject,         # optional, give realtime status updates on the migration process (assumes print to STDOUT)
     );
 
 =cut
@@ -143,11 +145,12 @@ sub MigrateTickets {
 
     $Self->InitImport();
 
-    my $UseCases  = $Param{UseCases};
-    my $Sample    = $Param{Sample};
-    my $SampleNth = $Param{SampleNth} || 10;
-    my $Reference = $Param{Reference};
-    my $Console   = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
+    my $UseCases     = $Param{UseCases};
+    my $Sample       = $Param{Sample};
+    my $SampleNth    = $Param{SampleNth} || 10;
+    my $Reference    = $Param{Reference};
+    my $Asynchronous = $Param{Asynchronous};
+    my $Console      = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
 
     my $BatchSize = 100;
 
@@ -449,7 +452,7 @@ sub MigrateTickets {
                 $Result = $RequesterObject->Run(
                     WebserviceID => $Self->{WebserviceID},
                     Invoker      => 'IngestMany',
-                    Asynchronous => 1,
+                    Asynchronous => $Asynchronous,
                     Data         => {
                         Type    => 'ticket_pairs',      # currently supported: faq, documentation, ticket_pairs, ticket_chunks
                         Content => \@ImportTicketsQA,
@@ -476,7 +479,7 @@ sub MigrateTickets {
                 $Result = $RequesterObject->Run(
                     WebserviceID => $Self->{WebserviceID},
                     Invoker      => 'IngestMany',
-                    Asynchronous => 1,
+                    Asynchronous => $Asynchronous,
                     Data         => {
                         Type    => 'ticket_chunks',
                         Content => \@ImportTicketsAgentArticles,
@@ -524,6 +527,37 @@ sub MigrateTickets {
     return 1;
 }
 
+sub MigrateTicketsAsync {
+    my ( $Self, %Param ) = @_;
+
+    # let the requester know it is run in an asynchronous context
+    $Param{Asynchronous} = 1;
+
+    $Kernel::OM->Get('Kernel::System::Log')->Log(
+        Priority => 'debug',
+        Message  => "OtoboAI::Import::MigrateTicketsAsync call initiated.",
+    );
+
+    my $Success = $Self->AsyncCall(
+        ObjectName               => 'Kernel::System::OtoboAI::Import',
+        FunctionName             => 'MigrateTickets',
+        FunctionParams           => \%Param,
+        Attempts                 => 1,
+        MaximumParallelInstances => 0,
+    );
+
+    if ( !$Success ) {
+
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "Initialize async call failed!",
+        );
+        return;
+    }
+
+    return 1;
+}
+
 =head2 MigrateFAQs()
 
 Synchronize the OTOBO-AI vector DB with the updated states of one or more FAQ items for one or more use-cases.
@@ -531,12 +565,14 @@ Synchronize the OTOBO-AI vector DB with the updated states of one or more FAQ it
 returns 1 if successful or undef otherwise
 
     my $Success = $Object->MigrateFAQs(
-        FAQID    => 123,              # optional, consider only this FAQ item for migration
-        UseCases => [                 # optional, consider only these use-cases for migration
+        FAQID    => 123,                   # optional, consider only this FAQ item for migration
+        UseCases => [                      # optional, consider only these use-cases for migration
             'default',
             'sales',
         ],
-        Console => $ConsoleObject,    # optional, give realtime status updates on the migration process (assumes print to STDOUT)
+        Asynchronous => 0,                 # optional, do not manually set this, unless you are explicitly
+                                           # running the Requester in an asynchronous context (default: 0)
+        Console      => $ConsoleObject,    # optional, give realtime status updates on the migration process (assumes print to STDOUT)
     );
 
 =cut
@@ -546,8 +582,9 @@ sub MigrateFAQs {
 
     $Self->InitImport();
 
-    my $UseCases = $Param{UseCases};
-    my $Console  = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
+    my $UseCases     = $Param{UseCases};
+    my $Asynchronous = $Param{Asynchronous};
+    my $Console      = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
 
     # check whether FAQ package is installed
     my $PackageObject = $Kernel::OM->Get('Kernel::System::Package');
@@ -667,7 +704,7 @@ sub MigrateFAQs {
                 my $Result = $RequesterObject->Run(
                     WebserviceID => $Self->{WebserviceID},
                     Invoker      => 'IngestMany',
-                    Asynchronous => 1,
+                    Asynchronous => $Asynchronous,
                     Data         => {
                         Type    => 'faqs',
                         Content => \@FAQData,
@@ -713,7 +750,7 @@ sub MigrateFAQs {
             my $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
                 Invoker      => 'IngestMany',
-                Asynchronous => 1,
+                Asynchronous => $Asynchronous,
                 Data         => {
                     Type    => 'faqs',
                     Content => \@FAQData,
@@ -753,6 +790,37 @@ sub MigrateFAQs {
     return 1;
 }
 
+sub MigrateFAQsAsync {
+    my ( $Self, %Param ) = @_;
+
+    # let the requester know it is run in an asynchronous context
+    $Param{Asynchronous} = 1;
+
+    $Kernel::OM->Get('Kernel::System::Log')->Log(
+        Priority => 'debug',
+        Message  => "OtoboAI::Import::MigrateFAQsAsync call initiated.",
+    );
+
+    my $Success = $Self->AsyncCall(
+        ObjectName               => 'Kernel::System::OtoboAI::Import',
+        FunctionName             => 'MigrateFAQs',
+        FunctionParams           => \%Param,
+        Attempts                 => 1,
+        MaximumParallelInstances => 0,
+    );
+
+    if ( !$Success ) {
+
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "Initialize async call failed!",
+        );
+        return;
+    }
+
+    return 1;
+}
+
 =head2 MigrateDocs()
 
 Synchronize the OTOBO-AI vector DB with one or more documents for one or more use-cases.
@@ -760,11 +828,13 @@ Synchronize the OTOBO-AI vector DB with one or more documents for one or more us
 returns 1 if successful or undef otherwise
 
     my $Success = $Object->MigrateDocs(
-        UseCases => [                 # optional, consider only these use-cases for migration
+        UseCases => [                      # optional, consider only these use-cases for migration
             'default',
             'sales',
         ],
-        Console => $ConsoleObject,    # optional, give realtime status updates on the migration process (assumes print to STDOUT)
+        Asynchronous => 0,                 # optional, do not manually set this, unless you are explicitly
+                                           # running the Requester in an asynchronous context (default: 0)
+        Console      => $ConsoleObject,    # optional, give realtime status updates on the migration process (assumes print to STDOUT)
     );
 
 =cut
@@ -774,8 +844,9 @@ sub MigrateDocs {
 
     $Self->InitImport();
 
-    my $UseCases = $Param{UseCases};
-    my $Console  = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
+    my $UseCases     = $Param{UseCases};
+    my $Asynchronous = $Param{Asynchronous};
+    my $Console      = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
 
     if ($Console) {
         $Console->Print("<green>Ingesting Documents ...</green>\n");
@@ -849,7 +920,7 @@ sub MigrateDocs {
                 my $Result = $RequesterObject->Run(
                     WebserviceID => $Self->{WebserviceID},
                     Invoker      => 'IngestMany',
-                    Asynchronous => 0,
+                    Asynchronous => $Asynchronous,
                     Data         => {
                         Type    => 'docs',
                         Content => \@Content,
@@ -879,7 +950,7 @@ sub MigrateDocs {
             my $Result = $RequesterObject->Run(
                 WebserviceID => $Self->{WebserviceID},
                 Invoker      => 'IngestMany',
-                Asynchronous => 0,
+                Asynchronous => $Asynchronous,
                 Data         => {
                     Type    => 'docs',
                     Content => \@Content,
@@ -916,6 +987,37 @@ sub MigrateDocs {
             }
         }
     }
+    return 1;
+}
+
+sub MigrateDocsAsync {
+    my ( $Self, %Param ) = @_;
+
+    # let the requester know it is run in an asynchronous context
+    $Param{Asynchronous} = 1;
+
+    $Kernel::OM->Get('Kernel::System::Log')->Log(
+        Priority => 'debug',
+        Message  => "OtoboAI::Import::MigrateDocsAsync call initiated.",
+    );
+
+    my $Success = $Self->AsyncCall(
+        ObjectName               => 'Kernel::System::OtoboAI::Import',
+        FunctionName             => 'MigrateDocs',
+        FunctionParams           => \%Param,
+        Attempts                 => 1,
+        MaximumParallelInstances => 0,
+    );
+
+    if ( !$Success ) {
+
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "Initialize async call failed!",
+        );
+        return;
+    }
+
     return 1;
 }
 
