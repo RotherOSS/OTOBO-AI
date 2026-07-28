@@ -209,7 +209,7 @@ sub CodeInstall {
                 Transport => {
                     Config => {
                         DefaultCommand           => 'POST',
-                        Host                     => 'http://otobo-ai:8000',
+                        Host                     => 'http://rag:8000',
                         InvokerControllerMapping => $Self->{InvokerControllerMapping},
                         Timeout                  => '300',
                     },
