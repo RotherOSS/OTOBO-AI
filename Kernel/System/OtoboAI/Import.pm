@@ -1038,19 +1038,16 @@ sub PurgeTickets {
 
     $Self->InitImport();
 
-    my $Result;
-    if ( $Param{TicketID} ) {
-        $Kernel::OM->Get('Kernel::System::Log')->Log(
-            Priority => 'error',
-            Message  => "Dispatch delete-by-source-id call for TicketID: " . $Param{TicketID},
-        );
-    }
-    else {
-        $Result = $Self->_Purge( Collection => 'ticket_pairs' ) &&
-            $Self->_Purge( Collection => 'ticket_chunks' );
-    }
-
-    return $Result;
+    return (
+        $Self->_Purge(
+            Collection => 'ticket_pairs',
+            SourceID   => $Param{TicketID}
+        )
+        && $Self->_Purge(
+            Collection => 'ticket_chunks',
+            SourceID   => $Param{TicketID}
+        )
+    );
 }
 
 =head2 PurgeFAQs()
@@ -1070,18 +1067,10 @@ sub PurgeFAQs {
 
     $Self->InitImport();
 
-    my $Result;
-    if ( $Param{FAQID} ) {
-        $Kernel::OM->Get('Kernel::System::Log')->Log(
-            Priority => 'error',
-            Message  => "Dispatch delete-by-source-id call for FAQID: " . $Param{FAQID},
-        );
-    }
-    else {
-        $Result = $Self->_Purge( Collection => 'faqs' );
-    }
-
-    return $Result;
+    return $Self->_Purge(
+        Collection => 'faqs',
+        SourceID   => $Param{FAQID},
+    );
 }
 
 =head2 PurgeDocs()
@@ -1107,14 +1096,31 @@ sub _Purge {
 
     my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
 
-    my $Result = $RequesterObject->Run(
-        WebserviceID => $Self->{WebserviceID},
-        Invoker      => 'Purge',
-        Asynchronous => 0,
-        Data         => {
-            Collection => $Param{Collection}
-        },
-    );
+    my $Result;
+
+    if ( $Param{SourceID} ) {
+
+        $Result = $RequesterObject->Run(
+            WebserviceID => $Self->{WebserviceID},
+            Invoker      => 'DeleteByID',
+            Asynchronous => 0,
+            Data         => {
+                type       => $Param{Collection},
+                source_ids => [ $Param{SourceID} ],
+            }
+        );
+    }
+    else {
+
+        $Result = $RequesterObject->Run(
+            WebserviceID => $Self->{WebserviceID},
+            Invoker      => 'Purge',
+            Asynchronous => 0,
+            Data         => {
+                Collection => $Param{Collection}
+            }
+        );
+    }
 
     return IsHashRefWithData($Result)        &&
         $Result->{Success}                   &&
