@@ -444,17 +444,12 @@
         </Value>
     </Setting>
     <Setting Name="Ticket::EventModulePost###8300-OTOBOAIIncrementalSynchronization" Required="0" Valid="0">
-        <Description Translatable="1">Event module registration. Whenever a Ticket is updated, e.g. by receiving new articles or changing state, it should be reimported into the vector DB.</Description>
+        <Description Translatable="1">Event module registration. Whenever a Ticket is created or updated, e.g. by receiving new articles or changing state, it should be reimported into the vector DB. Therefore, this setting describes which internal OTOBO events should trigger a re-check of the SearchRestrictions. For a list of standard, Ticket-related OTOBO events, please consult the Developer Manual.</Description>
         <Navigation>Core::Event::Ticket</Navigation>
         <Value>
             <Hash>
                 <Item Key="Module">Kernel::System::Ticket::Event::OTOBOAIIncrementalSynchronization</Item>
-                <Item Key="Event">ArticleCreate|Ticket.*Update</Item>
-                <Item Key="Transaction">1</Item>
-                <Item Key="Queues">
-                    <Array>
-                    </Array>
-                </Item>
+                <Item Key="Event">TicketCreate|Ticket.*Update|TicketMerge|TicketDelete|ArticleCreate|ArticleUpdate|ArticleEdit</Item>
             </Hash>
         </Value>
     </Setting>
