@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -60,7 +60,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -119,7 +119,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -178,7 +178,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -212,7 +212,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -246,7 +246,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -280,7 +280,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here.</Description>
+        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -295,7 +295,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here.</Description>
+        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -310,7 +310,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here.</Description>
+        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
