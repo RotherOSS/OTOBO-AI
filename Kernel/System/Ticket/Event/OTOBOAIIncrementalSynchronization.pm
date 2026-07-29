@@ -21,6 +21,7 @@ use warnings;
 
 our @ObjectDependencies = (
     'Kernel::System::Log',
+    'Kernel::System::Ticket',
     'Kernel::System::OtoboAI::Import'
 );
 
@@ -57,9 +58,16 @@ sub Run {
         return;
     }
 
+    # only execute this handler once for each web request, as multiple events may be
+    # fired per one user action, for example ArticleCreate and TicketCustomerUpdate
+    my $CacheKey = '_OTOBOAIIncrementalSynchronization::AlreadyProcessed';
+
+    my $TicketObject = $Kernel::OM->Get('Kernel::System::Ticket');
     my $ImportObject = $Kernel::OM->Get('Kernel::System::OtoboAI::Import');
 
     if ( $Param{Data}{TicketID} ) {
+
+        return if ( $TicketObject->{$CacheKey}->{ $Param{Data}{TicketID} } );
 
         # reimport ticket
         $ImportObject->PurgeTickets(
@@ -68,8 +76,17 @@ sub Run {
         $ImportObject->MigrateTickets(
             TicketID => $Param{Data}{TicketID}
         );
+
+        # store information that ticket was processed on ticketobject
+        $TicketObject->{$CacheKey}->{ $Param{Data}{TicketID} } = 1;
     }
     else {
+
+        return
+            if (
+                $TicketObject->{$CacheKey}->{ $Param{Data}{MergeTicketID} }
+                && $TicketObject->{$CacheKey}->{ $Param{Data}{MainTicketID} }
+            );
 
         # reimport merge ticket
         $ImportObject->PurgeTickets(
@@ -86,6 +103,10 @@ sub Run {
         $ImportObject->MigrateTickets(
             TicketID => $Param{Data}{MainTicketID}
         );
+
+        # store information that tickets were processed on ticketobject
+        $TicketObject->{$CacheKey}->{ $Param{Data}{MergeTicketID} } = 1;
+        $TicketObject->{$CacheKey}->{ $Param{Data}{MainTicketID} }  = 1;
     }
 
     return 1;

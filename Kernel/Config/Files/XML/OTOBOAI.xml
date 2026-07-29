@@ -450,6 +450,7 @@
             <Hash>
                 <Item Key="Module">Kernel::System::Ticket::Event::OTOBOAIIncrementalSynchronization</Item>
                 <Item Key="Event">TicketCreate|Ticket.*Update|TicketMerge|TicketDelete|ArticleCreate|ArticleUpdate|ArticleEdit</Item>
+                <Item Key="Transaction">1</Item>
             </Hash>
         </Value>
     </Setting>
@@ -460,6 +461,7 @@
             <Hash>
                 <Item Key="Module">Kernel::System::FAQ::Event::OTOBOAIIncrementalSynchronization</Item>
                 <Item Key="Event">FAQCreate|FAQUpdate|FAQDelete</Item>
+                <Item Key="Transaction">1</Item>
             </Hash>
         </Value>
     </Setting>

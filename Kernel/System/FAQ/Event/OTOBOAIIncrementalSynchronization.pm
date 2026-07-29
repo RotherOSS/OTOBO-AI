@@ -21,6 +21,7 @@ use warnings;
 
 our @ObjectDependencies = (
     'Kernel::System::Log',
+    'Kernel::System::FAQ',
     'Kernel::System::OtoboAI::Import'
 );
 
@@ -59,7 +60,14 @@ sub Run {
         }
     }
 
+    # only execute this handler once for each web request, implementing the same transaction
+    # functionality as for tickets, even though there are currently no optional event types for faqs
+    my $CacheKey = '_OTOBOAIIncrementalSynchronization::AlreadyProcessed';
+
+    my $FAQObject    = $Kernel::OM->Get('Kernel::System::FAQ');
     my $ImportObject = $Kernel::OM->Get('Kernel::System::OtoboAI::Import');
+
+    return if ( $FAQObject->{$CacheKey}->{ $Param{Data}{ItemID} } );
 
     $ImportObject->PurgeFAQs(
         FAQID => $Param{Data}{ItemID}
@@ -67,6 +75,9 @@ sub Run {
     $ImportObject->MigrateFAQs(
         FAQID => $Param{Data}{ItemID}
     );
+
+    # store information that faq item was processed on faqobject
+    $FAQObject->{$CacheKey}->{ $Param{Data}{ItemID} } = 1;
 
     return 1;
 }
