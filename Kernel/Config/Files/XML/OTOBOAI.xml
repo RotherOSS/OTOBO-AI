@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <otobo_config version="2.0" init="Application">
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the RAG pipeline. The pipeline in determined by the label provided. Please note that any changes to this setting may desynchronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -60,7 +60,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the RAG pipeline. The pipeline in determined by the label provided. Please note that any changes to this setting may desynchronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -119,7 +119,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Ticket::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the RAG pipeline. The pipeline in determined by the label provided. Please note that any changes to this setting may desynchronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -178,7 +178,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select tickets for import in the RAG pipeline. The pipeline in determined by the label provided. Please note that any changes to this setting may desynchronize the underlying vector DB. Thus, a full reimport of the ticket knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -212,7 +212,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import into the RAG pipeline. The pipeline is determined by the label given. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -246,7 +246,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::FAQ::SearchRestrictions###0300-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import in the otobo ai vector database. The data imported will carry the label provided here. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
+        <Description Translatable="1">Add search restrictions or parameters, to select FAQ articles for import into the RAG pipeline. The pipeline is determined by the label given. Please note that any changes to this setting may desyncronize the underlying vector DB. Thus, a full reimport of the FAQ knowledge base via console command is required to guarantee a valid database state.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -280,7 +280,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0100-Default" Required="0" Valid="1">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
+        <Description Translatable="1">Location for documents to include for the RAG pipeline. The pipeline is determined by the label given. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -295,7 +295,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom1" Required="0" Valid="0">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
+        <Description Translatable="1">Location for documents to include for the RAG pipeline. The pipeline is determined by the label given. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -310,7 +310,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Document::SearchRestrictions###0200-Custom2" Required="0" Valid="0">
-        <Description Translatable="1">Location for documents to include for AI search ingestion. Imported documents carry the label provided here. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
+        <Description Translatable="1">Location for documents to include for the RAG pipeline. The pipeline is determined by the label given. Changes to this setting do not automatically update the underlying vector DB. Please appropriately import/purge/reimport via console command for these changes to take effect.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Hash>
@@ -513,7 +513,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::Placeholder" Required="0" Valid="1">
-        <Description Translatable="1">Define a string which is used as a placeholder while waiting for the AI answer. Only visible is AI answer generation is asynchronous.</Description>
+        <Description Translatable="1">Define a string which is used as a placeholder while waiting for the AI answer. Only visible if AI answer generation is asynchronous.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String"><![CDATA[<|        AI answer generation in progress. Please reopen window to check again...     |>]]></Item>
@@ -534,7 +534,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::StripSignatureRegex" Required="0" Valid="0">
-    <Description Translatable="1">Cut off this and subsequent lines from ticket articles during ingestion. The value is a Regular Expression. This is useful to strip reoccurring suffixes like signatures from articles.</Description>
+        <Description Translatable="1">Cut off this and subsequent lines from ticket articles during ingestion into the RAG. The value is a Regular Expression. This is useful to strip reoccurring suffixes like signatures from articles.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">^--\s*$</Item>
@@ -561,7 +561,7 @@
     </Setting>
 
     <Setting Name="OTOBOAI::QueueToRAGMapping" Required="0" Valid="0">
-        <Description Translatable="1">Determine the use-case specific RAG to invoke depending on queue name. If no RAG is configured here, the default RAG is used. Subqueues have to be listed using ::-notation.</Description>
+        <Description Translatable="1">Determine the use-case specific RAG pipeline to invoke depending on queue name. If no RAG pipeline is configured here, the default RAG is used. Subqueues have to be listed using ::-notation.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
                 <Hash>
@@ -572,7 +572,7 @@
     </Setting>
 
     <Setting Name="OTOBOAI::DefaultRAG" Required="0" Valid="1">
-        <Description Translatable="1">Set the default RAG used as a fallback and in the dashboard widget.</Description>
+        <Description Translatable="1">Set the default RAG pipeline used as a fallback and in the dashboard widget.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">default</Item>
@@ -632,7 +632,7 @@
 -->
 
     <Setting Name="OTOBOAI::MCP::Host" Required="0" Valid="1">
-        <Description Translatable="1">The hostname of MCP, eg 'mcp' when running in Docker.</Description>
+        <Description Translatable="1">The hostname of the MCP server, e.g., 'mcp' when running in Docker.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">mcp</Item>
@@ -640,7 +640,7 @@
     </Setting>
 
     <Setting Name="OTOBOAI::Chat::Endpoint" Required="0" Valid="1">
-        <Description Translatable="1">The endpoint url of the OpenWebUI Chat.</Description>
+        <Description Translatable="1">The endpoint url of the AI chat interface. It may include the following placeholder {{OTOBO_SID}}, {{TICKET_ID}}, and {{ARTICLE_ID}} to pass the context to the chat.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">https://{{FQDN}}:9000/?model=beta-generate-2&amp;q=Hallo%2C%20merke%20dir%20diese%20Daten%3A%20{{OTOBO_SID}}{{TICKET_ID}}{{ARTICLE_ID}}</Item>
