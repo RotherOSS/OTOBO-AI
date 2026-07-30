@@ -67,9 +67,4 @@
         In order for FAQ items to by dynamically synchronized with the Otobo-AI vector DB, please make sure to<br/>
 install the optional <b>Elasticsearch-FAQ</b> package to provide the necessary FAQ event handling.<br/><br/>
     ]]></IntroInstall>
-    <IntroInstall Type="post" Lang="de" Title="Inkrementelle Aufnahme von FAQ Artikeln"><![CDATA[
-        <br/>
-        Damit FAQ Artikel dynamisch mit der Otobo-AI Vector DB synchronisiert werden können, installieren Sie bitte<br/>
-das optionale <b>Elasticsearch-FAQ</b> Paket, um das notwendige FAQ Event Handling bereitzustellen.<br/><br/>
-    ]]></IntroInstall>
 </otobo_package>
