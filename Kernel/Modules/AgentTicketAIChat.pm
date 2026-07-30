@@ -77,7 +77,7 @@ sub Run {
 
     # assemble redirect URL
     $SessionID = uri_escape_utf8($SessionID);
-    $ChatURL =~ s/\{\{FQDN\}\}/https:\/\/$FQDN/;
+    $ChatURL =~ s/\{\{FQDN\}\}/$FQDN/;
     $ChatURL =~ s/\{\{OTOBO_SID\}\}/otobo_sid\%3D$SessionID/;
 
     if ($TicketID) {
@@ -98,7 +98,6 @@ sub Run {
     $LayoutObject->Redirect(
         ExtURL => $ChatURL,
     );
-
     return;
 }
 
