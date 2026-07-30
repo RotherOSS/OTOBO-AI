@@ -579,7 +579,7 @@
         </Value>
     </Setting>
 
-    <Setting Name="Ticket::Frontend::MenuModule###452-AIChat" Required="0" Valid="0">
+    <Setting Name="Ticket::Frontend::MenuModule###452-AIChat" Required="0" Valid="1">
         <Description Translatable="1">Open the OTOBO AI Chat.</Description>
         <Navigation>Frontend::Agent::View::TicketZoom::MenuModule</Navigation>
         <Value>
@@ -643,7 +643,7 @@
         <Description Translatable="1">The endpoint url of the OpenWebUI Chat.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
-            <Item ValueType="String">https://arnold.myotobo.com:9000/?model=beta-generate-2&amp;q=Hallo%2C%20merke%20dir%20diese%20Daten%3A%20otobo_sid%3D{{OTOBO_SID}}+und+ticket_id%3D{{TICKET_ID}}</Item>
+            <Item ValueType="String">https://{{FQDN}}:9000/?model=beta-generate-2&amp;q=Hallo%2C%20merke%20dir%20diese%20Daten%3A%20{{OTOBO_SID}}{{TICKET_ID}}{{ARTICLE_ID}}</Item>
         </Value>
     </Setting>
 
