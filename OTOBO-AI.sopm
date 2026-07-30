@@ -62,9 +62,4 @@
 
         $Kernel::OM->Get($CodeModule)->CodeUninstall();
     ]]></CodeUninstall>
-    <IntroInstall Type="post" Lang="en" Title="Incremental ingestion of FAQ items"><![CDATA[
-        <br/>
-        In order for FAQ items to by dynamically synchronized with the Otobo-AI vector DB, please make sure to<br/>
-install the optional <b>Elasticsearch-FAQ</b> package to provide the necessary FAQ event handling.<br/><br/>
-    ]]></IntroInstall>
 </otobo_package>
