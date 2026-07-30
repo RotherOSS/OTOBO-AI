@@ -209,7 +209,7 @@ sub CodeInstall {
                 Transport => {
                     Config => {
                         DefaultCommand           => 'POST',
-                        Host                     => 'http://otobo-ai:8000',
+                        Host                     => 'http://rag:8000',
                         InvokerControllerMapping => $Self->{InvokerControllerMapping},
                         Timeout                  => '300',
                     },
@@ -261,43 +261,45 @@ sub CodeUpgrade {
         return;
     }
 
-    # upgrade webservice
+    # upgrade webservice as necessary
     $Webservice->{Config} = {
 
         # Webservice Config
         Debugger => {
-            DebugThreshold => 'error',
+            DebugThreshold => $Webservice->{Config}->{Debugger}->{DebugThreshold} // 'error',
             TestMode       => '0',
         },
-        Description => '',
+        Description => $Webservice->{Config}->{Description} // 'error',
         Provider    => {
             Operation => $Self->{Operation},
             Transport => {
                 Config => {
-                    AdditionalHeaders     => undef,
-                    KeepAlive             => '',
-                    MaxLength             => '100000',
-                    OutboundHeaders       => {},
+                    AdditionalHeaders     => $Webservice->{Config}->{Provider}->{Transport}->{Config}->{AdditionalHeaders},
+                    KeepAlive             => $Webservice->{Config}->{Provider}->{Transport}->{Config}->{KeepAlive},
+                    MaxLength             => $Webservice->{Config}->{Provider}->{Transport}->{Config}->{MaxLength},
+                    OutboundHeaders       => $Webservice->{Config}->{Provider}->{Transport}->{Config}->{OutboundHeaders},
                     RouteOperationMapping => $Self->{RouteOperationMapping},
                 },
                 Type => 'HTTP::REST',
             },
         },
-        RemoteSystem => '',
+        RemoteSystem => $Webservice->{Config}->{RemoteSystem},
         Requester    => {
             Invoker   => $Self->{Invoker},
             Transport => {
                 Config => {
-                    DefaultCommand           => 'POST',
-                    Host                     => 'http://otobo-ai:8000',
+                    DefaultCommand => 'POST',
+                    Host           => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{Host} == 'http://otobo-ai:8000'
+                    ?
+                        'http://rag:8000'
+                    : $Webservice->{Config}->{Requester}->{Transport}->{Config}->{Host},
                     InvokerControllerMapping => $Self->{InvokerControllerMapping},
-                    Timeout                  => '300',
+                    Timeout                  => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{Timeout},
+                    OutboundHeaders          => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{OutboundHeaders},
                 },
                 Type => 'HTTP::REST',
             },
         }
-
-        # EO Webservice Config
     };
 
     my $Success = $WebserviceObject->WebserviceUpdate(
@@ -498,7 +500,7 @@ sub _CreateAIAnswerTemplate {
     {
         my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
             Name         => 'OTOBOAI Answer Template',
-            Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
+            Template     => '<OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
             ContentType  => 'text/plain; charset=utf-8',
             TemplateType => 'Answer',
             ValidID      => 1,

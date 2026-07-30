@@ -25,10 +25,13 @@
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/DynamicField/Agent/TextAreaAI.tt" />
         <File Permission="660" Location="Kernel/Output/HTML/Templates/Standard/OtoboAIDashboard.tt" />
         <File Permission="660" Location="Kernel/System/OtoboAI.pm" />
+        <File Permission="660" Location="Kernel/System/OtoboAI/Import.pm" />
         <File Permission="660" Location="Kernel/System/DynamicField/Driver/TextAreaAI.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Import.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/Scoring.pm" />
         <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/GetAnswer.pm" />
+        <File Permission="660" Location="Kernel/System/Ticket/Event/OTOBOAIIncrementalSynchronization.pm"/>
+        <File Permission="660" Location="Kernel/System/FAQ/Event/OTOBOAIIncrementalSynchronization.pm"/>
         <File Permission="660" Location="Kernel/System/Ticket/Event/PopulateOTOBOAIDynamicField.pm" />
         <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/GetAnswer.pm" />
         <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/IngestMany.pm" />
@@ -52,7 +55,6 @@
 
         $Kernel::OM->Get($CodeModule)->CodeUpgrade();
     ]]></CodeUpgrade>
-
     <CodeUninstall Type="pre"><![CDATA[
 
         # create the package name
@@ -60,4 +62,14 @@
 
         $Kernel::OM->Get($CodeModule)->CodeUninstall();
     ]]></CodeUninstall>
+    <IntroInstall Type="post" Lang="en" Title="Incremental ingestion of FAQ items"><![CDATA[
+        <br/>
+        In order for FAQ items to by dynamically synchronized with the Otobo-AI vector DB, please make sure to<br/>
+install the optional <b>Elasticsearch-FAQ</b> package to provide the necessary FAQ event handling.<br/><br/>
+    ]]></IntroInstall>
+    <IntroInstall Type="post" Lang="de" Title="Inkrementelle Aufnahme von FAQ Artikeln"><![CDATA[
+        <br/>
+        Damit FAQ Artikel dynamisch mit der Otobo-AI Vector DB synchronisiert werden können, installieren Sie bitte<br/>
+das optionale <b>Elasticsearch-FAQ</b> Paket, um das notwendige FAQ Event Handling bereitzustellen.<br/><br/>
+    ]]></IntroInstall>
 </otobo_package>

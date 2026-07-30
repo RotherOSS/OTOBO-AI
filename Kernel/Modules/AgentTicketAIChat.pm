@@ -47,9 +47,10 @@ sub Run {
     my $MCPHost   = $ConfigObject->Get('OTOBOAI::MCP::Host');
     my $ChatURL   = $ConfigObject->Get('OTOBOAI::Chat::Endpoint');
     my $CheckIP   = $ConfigObject->Get('SessionCheckRemoteIP');
-    my $TicketID  = $ParamObject->GetParam( Param => 'TicketID' )  || '';
-    my $ArticleID = $ParamObject->GetParam( Param => 'ArticleID' ) || '';
+    my $TicketID  = $ParamObject->GetParam( Param => 'TicketID' );
+    my $ArticleID = $ParamObject->GetParam( Param => 'ArticleID' );
     my %UserData  = $UserObject->GetUserData( UserID => $Self->{UserID} );
+    my $FQDN      = $ConfigObject->Get('FQDN');
 
     # determine remote IP of mcp server to bind session to
     my $RemoteIP = 'none';
@@ -76,9 +77,22 @@ sub Run {
 
     # assemble redirect URL
     $SessionID = uri_escape_utf8($SessionID);
-    $ChatURL =~ s/\{\{OTOBO_SID\}\}/$SessionID/;
-    $ChatURL =~ s/\{\{TICKET_ID\}\}/$TicketID/;
-    $ChatURL =~ s/\{\{ARTICLE_ID\}\}/$ArticleID/;
+    $ChatURL =~ s/\{\{FQDN\}\}/https:\/\/$FQDN/;
+    $ChatURL =~ s/\{\{OTOBO_SID\}\}/otobo_sid\%3D$SessionID/;
+
+    if ($TicketID) {
+        $ChatURL =~ s/\{\{TICKET_ID\}\}/+ticket_id\%3D$TicketID/;
+    }
+    else {
+        $ChatURL =~ s/\{\{TICKET_ID\}\}//;
+    }
+
+    if ($ArticleID) {
+        $ChatURL =~ s/\{\{ARTICLE_ID\}\}/+article_id\%3D$ArticleID/;
+    }
+    else {
+        $ChatURL =~ s/\{\{ARTICLE_ID\}\}//;
+    }
 
     # redirect to chat
     $LayoutObject->Redirect(
