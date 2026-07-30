@@ -1031,11 +1031,11 @@ sub PurgeTickets {
         $Self->_Purge(
             Collection => 'ticket_pairs',
             SourceID   => $Param{TicketID}
-        )
-        && $Self->_Purge(
-            Collection => 'ticket_chunks',
-            SourceID   => $Param{TicketID}
-        )
+            )
+            && $Self->_Purge(
+                Collection => 'ticket_chunks',
+                SourceID   => $Param{TicketID}
+            )
     );
 }
 
