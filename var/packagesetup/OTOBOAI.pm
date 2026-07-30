@@ -295,7 +295,7 @@ sub CodeUpgrade {
                     : $Webservice->{Config}->{Requester}->{Transport}->{Config}->{Host},
                     InvokerControllerMapping => $Self->{InvokerControllerMapping},
                     Timeout                  => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{Timeout},
-                    AdditionalHeaders        => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{AdditionalHeaders},
+                    OutboundHeaders          => $Webservice->{Config}->{Requester}->{Transport}->{Config}->{OutboundHeaders},
                 },
                 Type => 'HTTP::REST',
             },
