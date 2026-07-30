@@ -499,7 +499,7 @@ sub _CreateAIAnswerTemplate {
     {
         my $TemplateID = $Kernel::OM->Get('Kernel::System::StandardTemplate')->StandardTemplateAdd(
             Name         => 'OTOBOAI Answer Template',
-            Template     => 'The suggested AI answer is: <OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
+            Template     => '<OTOBO_AIAnswer_' . $Self->{DynamicFieldName} . '>',
             ContentType  => 'text/plain; charset=utf-8',
             TemplateType => 'Answer',
             ValidID      => 1,
