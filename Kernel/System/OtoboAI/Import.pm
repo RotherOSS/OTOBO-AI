@@ -187,7 +187,6 @@ sub MigrateTickets {
 
     my $OnlyVisibleForCustomer    = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::OnlyVisibleForCustomer') // 1;
     my $AllowedArticleSenderTypes = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::AllowedArticleSenderTypes');
-    my $EnableUseCases            = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')             // 0;
     my $SearchRestrictionsHash    = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Ticket::SearchRestrictions') // {};
 
     if ($Console) {
@@ -414,9 +413,7 @@ sub MigrateTickets {
                     ]
                 };
 
-                if ($EnableUseCases) {
-                    $ImportQATicket->{labels} = \@UseCaseLabels;
-                }
+                $ImportQATicket->{labels} = \@UseCaseLabels;
 
                 push @ImportTicketsQA, $ImportQATicket;
 
@@ -438,9 +435,7 @@ sub MigrateTickets {
                     "content_items" => \@ContentItems,
                 };
 
-                if ($EnableUseCases) {
-                    $ImportAgentArticles->{labels} = \@UseCaseLabels;
-                }
+                $ImportAgentArticles->{labels} = \@UseCaseLabels;
 
                 push @ImportTicketsAgentArticles, $ImportAgentArticles;
             }
@@ -607,7 +602,6 @@ sub MigrateFAQs {
     my $FAQObject       = $Kernel::OM->Get('Kernel::System::FAQ');
     my $RequesterObject = $Kernel::OM->Get('Kernel::GenericInterface::Requester');
     my $HTMLUtilsObject = $Kernel::OM->Get('Kernel::System::HTMLUtils');
-    my $EnableUseCases  = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases') // 0;
 
     # determine search restrictions for FAQSearch
     my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::FAQ::SearchRestrictions') // {};
@@ -691,9 +685,7 @@ sub MigrateFAQs {
                 ]
             };
 
-            if ($EnableUseCases) {
-                $Data->{labels} = \@UseCaseLabels;
-            }
+            $Data->{labels} = \@UseCaseLabels;
 
             push @FAQData, $Data;
 
@@ -857,7 +849,6 @@ sub MigrateDocs {
 
     # determine search restrictions for document search
     my $SearchRestrictionsHash = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::Document::SearchRestrictions') // {};
-    my $EnableUseCases         = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases')               // 0;
 
     SEARCHRESTRICTION:
     for my $SearchRestrictionsKey ( keys $SearchRestrictionsHash->%* )
@@ -907,9 +898,7 @@ sub MigrateDocs {
                 ]
             };
 
-            if ($EnableUseCases) {
-                $Data->{labels} = \@UseCaseLabels;
-            }
+            $Data->{labels} = \@UseCaseLabels;
 
             push @Content, $Data;
 

@@ -560,14 +560,6 @@
         </Value>
     </Setting>
 
-    <Setting Name="OTOBOAI::EnableUseCases" Required="0" Valid="1">
-        <Description Translatable="1">Deprecated: Enable using of multiple RAGs and dedicated, separated use cases.</Description>
-        <Navigation>Core::OTOBOAI</Navigation>
-        <Value>
-                <Item ValueType="Checkbox">1</Item>
-        </Value>
-    </Setting>
-
     <Setting Name="OTOBOAI::QueueToRAGMapping" Required="0" Valid="0">
         <Description Translatable="1">Determine the use-case specific RAG to invoke depending on queue name. If no RAG is configured here, the default RAG is used. Subqueues have to be listed using ::-notation.</Description>
         <Navigation>Core::OTOBOAI</Navigation>

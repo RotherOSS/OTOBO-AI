@@ -102,8 +102,6 @@ sub PrepareRequest {
         }
     }
 
-    my $EnableUseCases = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::EnableUseCases') // 0;
-
     my $JSONObject = $Kernel::OM->Get('Kernel::System::JSON');
 
     my %TypeSettings = (
@@ -139,7 +137,7 @@ sub PrepareRequest {
     return {
         Success => 1,
         Data    => {
-            has_labels => $EnableUseCases ? $JSONObject->True() : $JSONObject->False(),
+            has_labels => $JSONObject->True(),
             type       => $Param{Data}{Type},
             content    => $Param{Data}{Content},
             $TypeSettings{ $Param{Data}{Type} }->%*,
