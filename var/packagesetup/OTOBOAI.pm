@@ -136,12 +136,60 @@ sub new {
             Description       => 'Retrieve a Ticket',
             IncludeTicketData => '0',
             Type              => 'Ticket::TicketGet',
+
+            # TODO: remove filtering from MCP and enable this:
+            # MappingOutbound   => {
+            #     Type   => 'XSLT',
+            #     Config => {
+            #         DataInclude => [],
+            #         Template    => $Self->_TicketGetXSLT(),
+            #     }
+            # }
         },
         TicketUpdate => {
             Description       => 'Update a Ticket',
             IncludeTicketData => '0',
             Type              => 'Ticket::TicketUpdate',
-        }
+        },
+        TicketLink => {
+            Description       => 'Link a ticket to a target object.',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::Link',
+        },
+        TicketUnlink => {
+            Description       => 'Unlink a ticket to a target object.',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::UnLink',
+        },
+        FAQSearch => {
+            Description       => 'Search FAQs with ES',
+            IncludeTicketData => '0',
+            Type              => 'ElasticSearch::FAQSearch',
+            MappingOutbound   => {
+                Type   => 'XSLT',
+                Config => {
+                    DataInclude => [],
+                    Template    => $Self->_FAQSearchXSLT(),
+                }
+            }
+        },
+        TicketSearch => {
+            Description       => 'Search Tickets with ES',
+            IncludeTicketData => '0',
+            Type              => 'ElasticSearch::TicketSearch',
+            MappingOutbound   => {
+                Type   => 'XSLT',
+                Config => {
+                    DataInclude => [],
+                    Template    => $Self->_TicketSearchXSLT(),
+                }
+            }
+        },
+        QueryEmbeddings => {
+            Description       => 'Find similar items in vector db',
+            IncludeTicketData => '0',
+            Type              => 'Ticket::QueryEmbeddings',
+        },
     };
 
     $Self->{RouteOperationMapping} = {
@@ -156,6 +204,26 @@ sub new {
         TicketUpdate => {
             RequestMethod => ['PUT'],
             Route         => '/Ticket/:TicketID',
+        },
+        FAQSearch => {
+            RequestMethod => ['GET'],
+            Route         => '/FAQ',
+        },
+        FAQSearch => {
+            RequestMethod => ['GET'],
+            Route         => '/Ticket',
+        },
+        QueryEmbeddings => {
+            RequestMethod => ['GET'],
+            Route         => '/Ticket/:TicketID/Article/:ArticleID/Embeddings/:Collection',
+        },
+        TicketLink => {
+            RequestMethod => ['PUT'],
+            Route         => '/Ticket/:TicketID/Link/:TargetType/:LinkType/:TargetID',
+        },
+        TicketUnlink => {
+            RequestMethod => ['DELETE'],
+            Route         => '/Ticket/:TicketID/Link/:TargetType/:LinkType/:TargetID',
         },
     };
 
@@ -663,6 +731,233 @@ sub _CleanupArticleActions {
     }
 
     return;
+}
+
+sub _FAQSearchXSLT {
+
+    my ( $Self, %Param ) = @_;
+
+    my $XSLT = <<'XSLT';
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+   <xsl:output method="xml" indent="yes"/>
+
+   <!-- no-op fallback template to drop unwanted content -->
+   <xsl:template match="*"></xsl:template>
+
+   <!-- always copy full Error info -->
+   <xsl:template match="Error">
+       <Error><xsl:copy-of select="." /></Error>
+   </xsl:template>
+
+   <!-- FAQ mapping -->
+   <xsl:template match="anon">
+       <faq>
+           <faq_id><xsl:value-of select="ItemID"/></faq_id>
+           <title><xsl:value-of select="Title"/></title>
+           <sympthom><xsl:value-of select="Field1" /></sympthom>
+           <problem><xsl:value-of select="Field1" /></problem>
+           <solution><xsl:value-of select="Field1" /></solution>
+       </faq>
+    </xsl:template>
+
+   <!-- main template -->
+   <xsl:template match="/RootElement">
+     <RootElement>
+      <xsl:apply-templates/>
+     </RootElement>
+    </xsl:template>
+
+</xsl:stylesheet>
+XSLT
+
+    return $XSLT;
+}
+
+sub _TicketGetXSLT {
+
+    my ( $Self, %Param ) = @_;
+
+    my $XSLT = <<'XSLT';
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+   <xsl:output method="xml" indent="yes"/>
+
+   <!-- no-op fallback template to drop unwanted content -->
+   <xsl:template match="*"></xsl:template>
+
+   <!-- always copy full Error info -->
+   <xsl:template match="Error">
+       <Error><xsl:copy-of select="." /></Error>
+   </xsl:template>
+
+   <!-- special handling for dynamic fields
+        by default only the OTOBOAI field is kept
+   -->
+   <xsl:template match="DynamicField">
+       <xsl:variable name="dfname"><xsl:value-of select="./Name" /></xsl:variable>
+       <xsl:choose>
+           <xsl:when test="starts-with($dfname,'OTOBOAI')">
+               <generated_answer><xsl:value-of select="./Value" /></generated_answer>
+           </xsl:when>
+           <xsl:otherwise></xsl:otherwise>
+       </xsl:choose>
+   </xsl:template>
+
+   <xsl:template match="Links[TargetType='Ticket']">
+       <linked>
+           <ticket>
+            <ticket_id><xsl:value-of select="TargetID" /></ticket_id>
+            <type><xsl:value-of select="LinkType" /></type>
+            <xsl:for-each select="Data">
+               <ticket_id><xsl:value-of select="TicketID"/></ticket_id>
+               <ticket_number><xsl:value-of select="TicketNumber"/></ticket_number>
+               <title><xsl:value-of select="Title"/></title>
+               <state><xsl:value-of select="State"/></state>
+               <priority><xsl:value-of select="Priority"/></priority>
+               <queue><xsl:value-of select="Queue"/></queue>
+               <customer><xsl:value-of select="CustomerUserID"/></customer>
+               <xsl:apply-templates />
+            </xsl:for-each>
+        </ticket>
+       </linked>
+   </xsl:template>
+
+   <xsl:template match="Links[TargetType='FAQ']">
+       <linked>
+           <faq>
+            <faq_id><xsl:value-of select="TargetID" /></faq_id>
+            <type><xsl:value-of select="LinkType" /></type>
+            <title><xsl:value-of select="Data/Title" /></title>
+            <sypthom><xsl:value-of select="Data/Field1" /></sypthom>
+            <problem><xsl:value-of select="Data/Field2" /></problem>
+            <solution><xsl:value-of select="Data/Field3" /></solution>
+        </faq>
+       </linked>
+   </xsl:template>
+
+    <!-- Article mapping -->
+   <xsl:template match="Article">
+       <article>
+           <article_id><xsl:value-of select="ArticleID"/></article_id>
+           <from><xsl:value-of select="From"/></from>
+           <to><xsl:value-of select="To"/></to>
+           <subject><xsl:value-of select="Subject"/></subject>
+           <body><xsl:value-of select="Body"/></body>
+           <xsl:variable name="Created"><xsl:value-of select="CreateTime" /></xsl:variable>
+           <xsl:choose>
+               <xsl:when test="not($Created = '')">
+                   <created><xsl:value-of select='$Created' /></created>
+               </xsl:when>
+               <xsl:otherwise>
+                   <created><xsl:value-of select="Created" /></created>
+               </xsl:otherwise>
+           </xsl:choose>
+           <xsl:variable name="Channel"><xsl:value-of select="CommunicationChannelID" /></xsl:variable>
+           <channel>
+            <xsl:choose>
+               <xsl:when test="$Channel = '1'">Email</xsl:when>
+               <xsl:when test="$Channel = '2'">Phone</xsl:when>
+               <xsl:when test="$Channel = '3'">Internal</xsl:when>
+               <xsl:otherwise>Other</xsl:otherwise>
+            </xsl:choose>
+           </channel>
+           <xsl:variable name="SenderType"><xsl:value-of select="SenderTypeID" /></xsl:variable>
+           <sender_type>
+            <xsl:choose>
+               <xsl:when test="$SenderType = '1'">agent</xsl:when>
+               <xsl:when test="$SenderType = '2'">system</xsl:when>
+               <xsl:when test="$SenderType = '3'">customer</xsl:when>
+               <xsl:otherwise>Other</xsl:otherwise>
+            </xsl:choose>
+           </sender_type>
+           <xsl:apply-templates />
+       </article>
+   </xsl:template>
+
+   <!-- Ticket mapping -->
+   <xsl:template name="Ticket" match="Ticket">
+       <ticket>
+           <ticket_id><xsl:value-of select="TicketID"/></ticket_id>
+           <ticket_number><xsl:value-of select="TicketNumber"/></ticket_number>
+           <title><xsl:value-of select="Title"/></title>
+           <state><xsl:value-of select="State"/></state>
+           <priority><xsl:value-of select="Priority"/></priority>
+           <queue><xsl:value-of select="Queue"/></queue>
+           <customer><xsl:value-of select="CustomerUserID"/></customer>
+           <owner><xsl:value-of select="Owner"/></owner>
+           <created><xsl:value-of select="Created"/></created>
+           <changed><xsl:value-of select="Changed"/></changed>
+           <xsl:apply-templates />
+       </ticket>
+    </xsl:template>
+
+   <!-- main template -->
+   <xsl:template match="/RootElement">
+     <RootElement>
+      <xsl:apply-templates/>
+     </RootElement>
+    </xsl:template>
+
+</xsl:stylesheet>
+XSLT
+
+    return $XSLT;
+}
+
+sub _TicketSearchXSLT {
+
+    my ( $Self, %Param ) = @_;
+
+    my $XSLT = <<'XSLT';
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+   <xsl:output method="xml" indent="yes"/>
+
+   <!-- no-op fallback template to drop unwanted content -->
+   <xsl:template match="*"></xsl:template>
+
+   <!-- always copy full Error info -->
+   <xsl:template match="Error">
+       <Error><xsl:copy-of select="." /></Error>
+   </xsl:template>
+
+   <xsl:template match="To">
+       <to><xsl:value-of select="."/></to>
+   </xsl:template>
+
+   <xsl:template match="ArticlesExternal">
+       <article>
+           <subject><xsl:value-of select="Subject"/></subject>
+           <from><xsl:value-of select="From"/></from>
+           <body><xsl:value-of select="Subject"/></body>
+           <xsl:apply-templates/>
+       </article>
+   </xsl:template>
+   <!-- FAQ mapping -->
+   <xsl:template match="anon">
+       <ticket>
+           <ticket_id><xsl:value-of select="TicketID"/></ticket_id>
+           <title><xsl:value-of select="Title"/></title>
+           <ticket_number><xsl:value-of select="TicketNumber" /></ticket_number>
+           <customer><xsl:value-of select="CustomerID" /></customer>
+           <customer_user><xsl:value-of select="CustomerUserID" /></customer_user>
+           <solution><xsl:value-of select="Field1" /></solution>
+           <xsl:apply-templates/>
+       </ticket>
+    </xsl:template>
+
+   <!-- main template -->
+   <xsl:template match="/RootElement">
+     <RootElement>
+      <xsl:apply-templates/>
+     </RootElement>
+    </xsl:template>
+
+</xsl:stylesheet>
+XSLT
+
+    return $XSLT;
 }
 
 1;

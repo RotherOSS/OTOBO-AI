@@ -208,12 +208,22 @@ sub Run {
     }
 
     # check basic needed permissions
-    my $Access = $Self->CheckAccessPermissions(
-        TicketID => $TicketID,
-        UserID   => $UserID,
-        UserType => $UserType,
-    );
+    my $Access;
+    if ( $UserType eq 'User' ) {
 
+        $Access = $TicketObject->TicketPermission(
+            Type     => 'rw',
+            TicketID => $TicketID,
+            UserID   => $UserID,
+        );
+    }
+    else {
+        $Access = $TicketObject->TicketCustomerPermission(
+            Type     => 'rw',
+            TicketID => $TicketID,
+            UserID   => $UserID,
+        );
+    }
     if ( !$Access ) {
         return $Self->ReturnError(
             ErrorCode    => 'ArticleDFUpdate.AccessDenied',

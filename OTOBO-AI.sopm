@@ -9,12 +9,20 @@
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
     <Description Lang="en">Otobo AI Interface package to connect to Otobo AI Services.</Description>
     <Filelist>
+        <File Permission="660" Location="Custom/Kernel/GenericInterface/Operation/Ticket/TicketGet.pm" />
         <File Permission="660" Location="Custom/Kernel/System/TemplateGenerator.pm" />
         <File Permission="660" Location="Custom/Kernel/System/AuthSession/FS.pm" />
         <File Permission="660" Location="Custom/Kernel/System/AuthSession/DB.pm" />
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAIDashboard.xml" />
         <File Permission="660" Location="Kernel/Config/Files/XML/OTOBOAI.xml" />
         <File Permission="660" Location="Kernel/GenericInterface/Operation/Ticket/ArticleDFUpdate.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Operation/ElasticSearch/FAQSearch.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Operation/ElasticSearch/TicketSearch.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Operation/Ticket/Link.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Operation/Ticket/UnLink.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Operation/Ticket/QueryEmbeddings.pm" />
+        <File Permission="660" Location="Kernel/GenericInterface/Invoker/OTOBOAI/QueryEmbeddings.pm" />
+        <File Permission="660" Location="Kernel/System/Console/Command/Maint/AI/QueryEmbeddings.pm" />
         <File Permission="660" Location="Kernel/Language/de_OTOBOAI.pm" />
         <File Permission="660" Location="Kernel/Modules/AdminDynamicFieldTextAreaAI.pm" />
         <File Permission="660" Location="Kernel/Modules/OtoboAIDashboard.pm" />
