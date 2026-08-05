@@ -212,7 +212,7 @@ sub Run {
 
     # check basic needed permissions
     my $Access;
-    if ( $UserType eq 'Agent' ) {
+    if ( $UserType eq 'User' ) {
 
         $Access = $TicketObject->TicketPermission(
             Type     => 'rw',
