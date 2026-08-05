@@ -400,7 +400,7 @@ sub MigrateTickets {
                 $AnswerBody   = $Self->StripSignature( Body => $AnswerBody );
 
                 my $ImportQATicket = {
-                    "source_id"     => $TicketID,
+                    "source_id"     => "$TicketID",
                     "content_items" => [
                         {
                             type => 'question',
@@ -431,7 +431,7 @@ sub MigrateTickets {
                 }
 
                 my $ImportAgentArticles = {
-                    "source_id"     => $TicketID,
+                    "source_id"     => "$TicketID",
                     "content_items" => \@ContentItems,
                 };
 
@@ -889,7 +889,7 @@ sub MigrateDocs {
             my $FileContent = file($DocumentPath)->slurp( iomode => '<:encoding(UTF-8)' ) // '';
 
             my $Data = {
-                "source_id"     => $DocumentPath,
+                "source_id"     => "$DocumentPath",
                 "content_items" => [
                     {
                         type => 'text',
