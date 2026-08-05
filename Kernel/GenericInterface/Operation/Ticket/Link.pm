@@ -249,10 +249,10 @@ sub Run {
     }
 
     $Result = $LinkObject->LinkAdd(
-        SourceObject => 'Ticket',
-        SourceKey    => $TicketID,
-        TargetObject => $Param{Data}->{TargetType},
-        TargetKey    => $Param{Data}->{TargetID},
+        TargetObject => 'Ticket',
+        TargetKey    => $TicketID,
+        SourceObject => $Param{Data}->{TargetType},
+        SourceKey    => $Param{Data}->{TargetID},
         Type         => $LinkType,
         State        => 'Valid',
         UserID       => $UserID,

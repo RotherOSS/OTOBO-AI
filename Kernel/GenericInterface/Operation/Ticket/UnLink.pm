@@ -249,10 +249,10 @@ sub Run {
     }
 
     $Result = $LinkObject->LinkDelete(
-        Object1 => 'Ticket',
-        Key1    => $TicketID,
-        Object2 => $Param{Data}->{TargetType},
-        Key2    => $Param{Data}->{TargetID},
+        Object2 => 'Ticket',
+        Key2    => $TicketID,
+        Object1 => $Param{Data}->{TargetType},
+        Key1    => $Param{Data}->{TargetID},
         Type    => $LinkType,
         UserID  => $UserID,
     );
