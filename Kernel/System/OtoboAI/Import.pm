@@ -1095,7 +1095,7 @@ sub _Purge {
             Asynchronous => 0,
             Data         => {
                 type       => $Param{Collection},
-                source_ids => [ $Param{SourceID} ],
+                source_ids => ["$Param{SourceID}"],
             }
         );
     }
