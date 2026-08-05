@@ -119,6 +119,18 @@ components:
                 - Ticket
                 - FAQ
                 - ConfigItem                
+            LinkType:
+              description: Target Link Type
+              type: string
+              enum:
+                - Normal
+                - ParentChild
+                - LocationOf
+                - Includes
+                - AlternativeTo
+                - ConnectedTo
+                - DependsOn
+                - RelevantTo                
             TargetID:
               description: Target Object ID
               type: string
@@ -146,6 +158,18 @@ components:
                 - Ticket
                 - FAQ
                 - ConfigItem                
+            LinkType:
+              description: Target Link Type
+              type: string
+              enum:
+                - Normal
+                - ParentChild
+                - LocationOf
+                - Includes
+                - AlternativeTo
+                - ConnectedTo
+                - DependsOn
+                - RelevantTo                      
             TargetID:
               description: Target Object ID
               type: string
