@@ -1014,7 +1014,7 @@ sub MigrateDocsAsync {
 
 Purges the OTOBO-AI vector DB of one or more Tickets.
 
-returns 1 if successful or undef otherwise
+returns 1 if at least one entry has been purged
 
     my $Success = $Object->PurgeTickets(
         TicketID => 123,    # optional, purge only this ticket
@@ -1032,7 +1032,7 @@ sub PurgeTickets {
             Collection => 'ticket_pairs',
             SourceID   => $Param{TicketID}
             )
-            && $Self->_Purge(
+            || $Self->_Purge(
                 Collection => 'ticket_chunks',
                 SourceID   => $Param{TicketID}
             )
@@ -1043,7 +1043,7 @@ sub PurgeTickets {
 
 Purges the OTOBO-AI vector DB of one or more FAQ items.
 
-returns 1 if successful or undef otherwise
+returns 1 if at least one entry has been purged
 
     my $Success = $Object->PurgeFAQs(
         FAQID => 123,    # optional, purge only this FAQ item
@@ -1066,7 +1066,7 @@ sub PurgeFAQs {
 
 Purges the OTOBO-AI vector DB of all Document items.
 
-returns 1 if successful or undef otherwise
+returns 1 if at least one entry has been purged
 
     my $Success = $Object->PurgeDocs();
 
