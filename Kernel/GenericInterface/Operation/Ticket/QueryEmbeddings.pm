@@ -143,7 +143,7 @@ sub Run {
         );
     }
 
-    if ( !$Param{Data}->{Collection} || !$Param{Data}->{ArticleID} ) {
+    if ( !$Param{Data}->{Collection} ) {
         return $Self->ReturnError(
             ErrorCode    => 'QueryEmbeddings.MissingParameter',
             ErrorMessage => "QueryEmbeddings: Collection is required!",

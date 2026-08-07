@@ -113,7 +113,12 @@ sub Init {
 Perform FAQSearch Operation. This will return Ticket items from ES.
 
     my $Result = $OperationObject->Run(
-        Fulltext => 'searchterm'
+
+        Data => {
+            Fulltext => 'searchterm'
+            Limit    => 10,                    # optional, default is 10
+        }
+    );
 
     $Result = {
         Success      => 1,                                # 0 or 1
@@ -164,6 +169,7 @@ sub Run {
         Fulltext => $Param{Data}->{Fulltext},
         Result   => 'FULL',
         UserID   => $UserID,
+        Limit    => $Param{Data}->{Limit} // 10,
     );
 
     my @Return;

@@ -215,7 +215,7 @@ sub new {
         },
         QueryEmbeddings => {
             RequestMethod => ['GET'],
-            Route         => '/Ticket/:TicketID/Article/:ArticleID/Embeddings/:Collection',
+            Route         => '/Ticket/:TicketID/Embeddings/:Collection',
         },
         TicketLink => {
             RequestMethod => ['PUT'],
@@ -930,11 +930,11 @@ sub _TicketSearchXSLT {
        <article>
            <subject><xsl:value-of select="Subject"/></subject>
            <from><xsl:value-of select="From"/></from>
-           <body><xsl:value-of select="Subject"/></body>
+           <body><xsl:value-of select="Body"/></body>
            <xsl:apply-templates/>
        </article>
    </xsl:template>
-   <!-- FAQ mapping -->
+   <!-- ticket mapping -->
    <xsl:template match="anon">
        <ticket>
            <ticket_id><xsl:value-of select="TicketID"/></ticket_id>
@@ -942,7 +942,6 @@ sub _TicketSearchXSLT {
            <ticket_number><xsl:value-of select="TicketNumber" /></ticket_number>
            <customer><xsl:value-of select="CustomerID" /></customer>
            <customer_user><xsl:value-of select="CustomerUserID" /></customer_user>
-           <solution><xsl:value-of select="Field1" /></solution>
            <xsl:apply-templates/>
        </ticket>
     </xsl:template>

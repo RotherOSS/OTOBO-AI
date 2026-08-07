@@ -35,14 +35,17 @@ components:
         - $ref: '#/components/schemas/Credentials'
         - type: object
           properties:
-            Query:
+            Fulltext:
               description: The fulltext search term
               type: string
+            Limit:
+              description: Maximum number of search results
+              type: integer
           required:
             - Query
 
 
-    ESSearchResponse:
+    ESFAQSearchResponse:
       allOf:
         - $ref: '#/components/schemas/ApiError'
         - type: object
@@ -54,14 +57,48 @@ components:
                 properties:
                   ItemID:
                     type: integer
-                  title:
+                  Title:
                     type: string
-                  sypthom:
+                  Field1:
                     type: string
-                  problem:
+                  Field2:
                     type: string
-                  solution:
+                  Field3:
                     type: string
+
+    ESTicketSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            ticket:
+              type: array
+              items:
+                type: object
+                properties:
+                  CustomerID:
+                    type: string
+                  CustomerUserID:
+                    type: string
+                  TicketID:
+                    type: string
+                  TicketNumber:
+                    type: string
+                  Title:
+                    type: string
+                  Article:
+                    type: object
+                    properties:
+                      Subject:
+                        type: string
+                      Body: 
+                        type: string
+                      From: 
+                        type: string
+                      To:
+                        type: array
+                        items:
+                          type: string
 
     QueryEmbeddingsRequest:
       allOf:
@@ -189,6 +226,22 @@ Ticket::ArticleDFUpdate:
     - $ref: '#/components/parameters/UserLogin'
     - $ref: '#/components/parameters/Password'
     - $ref: '#/components/parameters/SessionID'  
+    - description: ArticleID
+      in: query
+      name: ArticleID
+      required: false
+      schema:
+        type: string    
+    PUT:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'  
+    - description: ArticleID
+      in: query
+      name: ArticleID
+      required: false
+      schema:
+        type: string    
   RequestBody:
     content:
       application/json:
@@ -235,7 +288,12 @@ ElasticSearch::FAQSearch:
       required: true
       schema:
         type: string
-
+    - description: Maximum number of search results
+      in: query
+      name: Limit
+      required: false
+      schema:
+        type: integer
   RequestBody:
     content:
       application/json:
@@ -260,7 +318,7 @@ ElasticSearch::FAQSearch:
                   solution: "The solution"
                   title: "some title"
           schema:
-            $ref : '#/components/schemas/ESSearchResponse'
+            $ref : '#/components/schemas/ESFAQSearchResponse'
       description: 200 response
 
 ElasticSearch::TicketSearch:
@@ -275,7 +333,12 @@ ElasticSearch::TicketSearch:
       required: true
       schema:
         type: string
-
+    - description: Maximum number of search results
+      in: query
+      name: Limit
+      required: false
+      schema:
+        type: integer
   RequestBody:
     content:
       application/json:
@@ -295,7 +358,7 @@ ElasticSearch::TicketSearch:
               value:
                 - ticket 
           schema:
-            $ref : '#/components/schemas/ESSearchResponse'
+            $ref : '#/components/schemas/ESTicketSearchResponse'
       description: 200 response
 
 Ticket::QueryEmbeddings:
@@ -313,7 +376,7 @@ Ticket::QueryEmbeddings:
     - description: ArticleID
       in: query
       name: ArticleID
-      required: true
+      required: false
       schema:
         type: string
     - description: Collection name
