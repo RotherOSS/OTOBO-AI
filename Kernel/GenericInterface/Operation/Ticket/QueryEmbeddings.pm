@@ -236,6 +236,24 @@ sub Run {
 
     my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 
+    if ( !$Param{Data}->{ArticleID} ) {
+
+        my @Articles = $ArticleObject->ArticleList(
+            TicketID   => $TicketID,
+            SenderType => 'customer',
+            OnlyLast   => 1,
+        );
+        if (@Articles) {
+            $Param{Data}->{ArticleID} = $Articles[0]{ArticleID};
+        }
+        else {
+            return $Self->ReturnError(
+                ErrorCode    => 'QueryEmbeddings.AccessDenied',
+                ErrorMessage => "QueryEmbeddings: need ArticleID!",
+            );
+        }
+    }
+
     my $ArticleBackendObject = $ArticleObject->BackendForArticle(
         TicketID  => $TicketID,
         ArticleID => $Param{Data}->{ArticleID},
@@ -253,7 +271,7 @@ sub Run {
         ArticleID => $Param{Data}->{ArticleID},
     );
 
-    my $Query = $Param{Data}->{Query} // $Article{Subject} // '' . '\n' . $Article{Body} // '';
+    my $Query = $Param{Data}->{Query} // ( ($Article{Subject} // '') . '\n' . ($Article{Body} // '') );
 
     my $ConfigObject      = $Kernel::OM->Get('Kernel::Config');
     my $QueueToRAGMapping = $ConfigObject->Get('OTOBOAI::QueueToRAGMapping') // {};
