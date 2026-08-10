@@ -747,7 +747,7 @@ sub _FAQSearchXSLT {
 
    <!-- always copy full Error info -->
    <xsl:template match="Error">
-       <Error><xsl:copy-of select="." /></Error>
+       <xsl:copy-of select="." />
    </xsl:template>
 
    <!-- FAQ mapping -->
@@ -788,7 +788,7 @@ sub _TicketGetXSLT {
 
    <!-- always copy full Error info -->
    <xsl:template match="Error">
-       <Error><xsl:copy-of select="." /></Error>
+       <xsl:copy-of select="." />
    </xsl:template>
 
    <!-- special handling for dynamic fields
@@ -919,7 +919,7 @@ sub _TicketSearchXSLT {
 
    <!-- always copy full Error info -->
    <xsl:template match="Error">
-       <Error><xsl:copy-of select="." /></Error>
+       <xsl:copy-of select="." />
    </xsl:template>
 
    <xsl:template match="To">
