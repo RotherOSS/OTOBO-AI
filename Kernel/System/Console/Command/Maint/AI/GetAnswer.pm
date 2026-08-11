@@ -89,19 +89,8 @@ sub PreRun {
     $Self->{WebserviceID} = $AIWebservice->{ID};
 
     if ( $AIWebservice->{ValidID} != 1 ) {
-        $Self->Print(
-            "<yellow>OTOBO-AI webservice is now activated. If you don't want to keep it enabled, please disable it manually in the admin interface, after the import is complete.</yellow>\n"
-        );
-        my $Success = $WebserviceObject->WebserviceUpdate(
-            %{$AIWebservice},
-            ValidID => 1,
-            UserID  => 1,
-        );
-
-        if ( !$Success ) {
-            $Self->Print("<red>OTOBO-AI webservice could not be activated! Unable to continue.</red>\n");
-            die;
-        }
+        $Self->Print("<red>OTOBO-AI webservice is not activated! Unable to continue.</red>\n");
+        die;
     }
 
     return;

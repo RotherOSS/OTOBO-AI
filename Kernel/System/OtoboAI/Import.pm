@@ -85,26 +85,15 @@ sub InitImport() {
             Priority => 'error',
             Message  => "OTOBO-AI webservice not found!",
         );
-        die;
+        return 0;
     }
 
     # Set the webservice id
     $Self->{WebserviceID} = $AIWebservice->{ID};
 
     if ( $AIWebservice->{ValidID} != 1 ) {
-        my $Success = $WebserviceObject->WebserviceUpdate(
-            %{$AIWebservice},
-            ValidID => 1,
-            UserID  => 1,
-        );
 
-        if ( !$Success ) {
-            $Kernel::OM->Get('Kernel::System::Log')->Log(
-                Priority => 'error',
-                Message  => "OTOBO-AI webservice could not be activated!",
-            );
-            die;
-        }
+        return 0;
     }
 
     # fetch config
@@ -115,7 +104,7 @@ sub InitImport() {
         $Self->{StripSignatureRegEx} = $Regex;
     }
 
-    return;
+    return 1;
 }
 
 =head2 MigrateTickets()
@@ -143,7 +132,7 @@ returns 1 if successful or undef otherwise
 sub MigrateTickets {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     my $UseCases     = $Param{UseCases};
     my $Sample       = $Param{Sample};
@@ -575,7 +564,7 @@ returns 1 if successful or undef otherwise
 sub MigrateFAQs {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     my $UseCases     = $Param{UseCases};
     my $Asynchronous = $Param{Asynchronous};
@@ -834,7 +823,7 @@ returns 1 if successful or undef otherwise
 sub MigrateDocs {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     my $UseCases     = $Param{UseCases};
     my $Asynchronous = $Param{Asynchronous};
