@@ -35,6 +35,7 @@ our @ObjectDependencies = (
     'Kernel::System::OtoboAI',
     'Kernel::System::Ticket',
     'Kernel::System::Ticket::Article',
+    'Kernel::System::GenericInterface::Webservice',
 );
 
 sub new {
@@ -72,8 +73,26 @@ sub Run {
         }
     }
 
+    my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
+
+    my $AIWebservice = $WebserviceObject->WebserviceGet(
+        Name => 'OTOBO-AI',
+    );
+
+    if ( !$AIWebservice ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "OTOBO-AI webservice not found!",
+        );
+        return;
+    }
+
+    if ( $AIWebservice->{ValidID} != 1 ) {
+
+        return;
+    }
+
     if ( $Param{Event} eq 'TicketQueueUpdate' ) {
-        print STDERR "PURGE\n";
         $Self->_PurgeAIDynamicFields( TicketID => $Param{Data}{TicketID} );
     }
 
