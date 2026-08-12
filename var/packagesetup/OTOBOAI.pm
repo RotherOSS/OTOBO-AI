@@ -285,7 +285,7 @@ sub CodeInstall {
 
             # EO Webservice Config
         },
-        ValidID => 1,
+        ValidID => 0,
         UserID  => 1,
     );
 
