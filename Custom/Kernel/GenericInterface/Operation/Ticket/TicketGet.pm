@@ -430,7 +430,7 @@ sub Run {
 
         if ( !$AllArticles ) {
 # Rother OSS / otobo-ai
-            $Self->_AddLinks(
+            $TicketBundle->{Links} = $Self->_AddLinks(
                 Data => $Param{Data},
                 TicketBundle => $TicketBundle
             );
@@ -576,7 +576,7 @@ sub Run {
         }
 
 # Rother OSS / otobo-ai
-        $Self->_AddLinks(
+        $TicketBundle->{Links} = $Self->_AddLinks(
             Data => $Param{Data},
             TicketBundle => $TicketBundle
         );
@@ -623,7 +623,7 @@ sub _AddLinks {
             Key       => $TicketID,
             State     => 'Valid',
             UserID    => 1,
-            Direction => 'Source',
+            Direction => 'Both',
         );
 
         my @Links2Return;
@@ -646,15 +646,16 @@ sub _AddLinks {
                             TargetType => $TargetType,
                             TargetID   => $Link,
                             Data       => $Data,
+                            Direction  => $Direction,
                         };
                     }
                 }
             }
         }
-        $TicketBundle->{Links} = \@Links2Return;
+        return \@Links2Return;
     }
 
-    return;
+    return [];
 }
 
 # EO otobo-ai

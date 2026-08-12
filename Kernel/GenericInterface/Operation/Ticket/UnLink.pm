@@ -90,7 +90,7 @@ perform unlink Operation removing a link from a ticket to some target.
             TargetObject => 'FAQ',           # Ticket, ConfigItem
 
             TargetID     => '5',             # Id of target
-            Type         => 'ParentChild',   # defailts to Normal
+            Type         => 'ParentChild',   # defaults to Normal
        },
     );
 

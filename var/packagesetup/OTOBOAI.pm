@@ -809,8 +809,8 @@ sub _TicketGetXSLT {
            <ticket>
             <ticket_id><xsl:value-of select="TargetID" /></ticket_id>
             <type><xsl:value-of select="LinkType" /></type>
+            <direction><xsl:value-of select="Direction"/></direction>
             <xsl:for-each select="Data">
-               <ticket_id><xsl:value-of select="TicketID"/></ticket_id>
                <ticket_number><xsl:value-of select="TicketNumber"/></ticket_number>
                <title><xsl:value-of select="Title"/></title>
                <state><xsl:value-of select="State"/></state>
@@ -829,10 +829,11 @@ sub _TicketGetXSLT {
             <faq_id><xsl:value-of select="TargetID" /></faq_id>
             <type><xsl:value-of select="LinkType" /></type>
             <title><xsl:value-of select="Data/Title" /></title>
-            <sypthom><xsl:value-of select="Data/Field1" /></sypthom>
+            <sypthom><xsl:value-of select="Data/Field1" /></sypthom>xsl:value-of select="CustomerUserID"/>
             <problem><xsl:value-of select="Data/Field2" /></problem>
             <solution><xsl:value-of select="Data/Field3" /></solution>
-        </faq>
+            <direction><xsl:value-of select="Direction"/></direction>
+           </faq>
        </linked>
    </xsl:template>
 

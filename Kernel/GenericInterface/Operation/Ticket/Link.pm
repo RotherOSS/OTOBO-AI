@@ -90,7 +90,7 @@ perform a link ticket to target Operation.
             TargetObject => 'FAQ',           # Ticket, ConfigItem
 
             TargetID     => '5',             # Id of target
-            Type         => 'ParentChild',   # defailts to Normal
+            Type         => 'ParentChild',   # defaults to Normal
        },
     );
 
