@@ -52,33 +52,37 @@ sub Run {
     my %UserData  = $UserObject->GetUserData( UserID => $Self->{UserID} );
     my $FQDN      = $ConfigObject->Get('FQDN');
 
-    # determine remote IP of mcp server to bind session to
-    my $RemoteIP = 'none';
+    # only generate an OTOBO session id if asked for
+    if ( $ChatURL =~ /\{\{OTOBO_SID\}\}/ ) {
 
-    if ($CheckIP) {
+        # determine remote IP of mcp server to bind session to
+        my $RemoteIP = 'none';
 
-        $RemoteIP = $Self->GetMCPRemoteAddr( MCP => $MCPHost );
-        if ( !$RemoteIP ) {
-            return $LayoutObject->FatalError( Message => "Cannot resolve IP address of MCP. Unable to create a chat session." );
+        if ($CheckIP) {
+
+            $RemoteIP = $Self->GetMCPRemoteAddr( MCP => $MCPHost );
+            if ( !$RemoteIP ) {
+                return $LayoutObject->FatalError( Message => "Cannot resolve IP address of MCP. Unable to create a chat session." );
+            }
         }
+
+        # create mcp bound webservice session
+        my $SessionID = $AuthSessionObject->CreateSessionID(
+            %UserData,
+            UserLastRequest => $Kernel::OM->Create('Kernel::System::DateTime')->ToEpoch(),
+            UserType        => 'User',
+            SessionSource   => 'GenericInterface',
+            RemoteAddr      => $RemoteIP,
+        );
+        if ( !$SessionID ) {
+            return $LayoutObject->FatalError( Message => "Cannot create new chat session." );
+        }
+
+        $SessionID = uri_escape_utf8($SessionID);
+        $ChatURL =~ s/\{\{OTOBO_SID\}\}/otobo_sid\%3D$SessionID/;
     }
 
-    # create mcp bound webservice session
-    my $SessionID = $AuthSessionObject->CreateSessionID(
-        %UserData,
-        UserLastRequest => $Kernel::OM->Create('Kernel::System::DateTime')->ToEpoch(),
-        UserType        => 'User',
-        SessionSource   => 'GenericInterface',
-        RemoteAddr      => $RemoteIP,
-    );
-    if ( !$SessionID ) {
-        return $LayoutObject->FatalError( Message => "Cannot create new chat session." );
-    }
-
-    # assemble redirect URL
-    $SessionID = uri_escape_utf8($SessionID);
     $ChatURL =~ s/\{\{FQDN\}\}/$FQDN/;
-    $ChatURL =~ s/\{\{OTOBO_SID\}\}/otobo_sid\%3D$SessionID/;
 
     if ($TicketID) {
         $ChatURL =~ s/\{\{TICKET_ID\}\}/+ticket_id\%3D$TicketID/;
