@@ -30,9 +30,218 @@ components:
             Success:
               type: string
 
+    ESSearchRequest:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+        - type: object
+          properties:
+            Fulltext:
+              description: The fulltext search term
+              type: string
+            Limit:
+              description: Maximum number of search results
+              type: integer
+          required:
+            - Query
+
+
+    ESFAQSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            faq:
+              type: array
+              items:
+                type: object
+                properties:
+                  ItemID:
+                    type: integer
+                  Title:
+                    type: string
+                  Field1:
+                    type: string
+                  Field2:
+                    type: string
+                  Field3:
+                    type: string
+
+    ESTicketSearchResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            ticket:
+              type: array
+              items:
+                type: object
+                properties:
+                  CustomerID:
+                    type: string
+                  CustomerUserID:
+                    type: string
+                  TicketID:
+                    type: string
+                  TicketNumber:
+                    type: string
+                  Title:
+                    type: string
+                  Article:
+                    type: object
+                    properties:
+                      Subject:
+                        type: string
+                      Body: 
+                        type: string
+                      From: 
+                        type: string
+                      To:
+                        type: array
+                        items:
+                          type: string
+
+    QueryEmbeddingsRequest:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+        - type: object
+          properties:
+            TicketID:
+              description: TicketID
+              type: string
+            ArticleID:
+              description: ArticleID
+              type: string
+            Collection:
+              description: Collection
+              type: string
+              enum:
+                - faqs
+                - ticket_pairs
+                - ticket_chunks
+                - docs
+
+    QueryEmbeddingsResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: array
+          items:            
+              properties:
+                page_content:
+                  type: string
+                id:
+                  type: string
+                metadata:
+                  type: object
+                  properties:
+                    fulltext:
+                      type: string
+                    source_id:
+                      type: string
+                    label:
+                      type: string
+
+
+    TicketLinkRequest:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+        - type: object
+          properties:
+            TicketID:
+              description: TicketID
+              type: string
+            TargetType:
+              description: Target Object Type
+              type: string
+              enum:
+                - Ticket
+                - FAQ
+                - ConfigItem                
+            LinkType:
+              description: Target Link Type
+              type: string
+              enum:
+                - Normal
+                - ParentChild
+                - LocationOf
+                - Includes
+                - AlternativeTo
+                - ConnectedTo
+                - DependsOn
+                - RelevantTo                
+            TargetID:
+              description: Target Object ID
+              type: string
+
+    TicketLinkResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            Success:
+              type: string
+
+    TicketUnlinkRequest:
+      allOf:
+        - $ref: '#/components/schemas/Credentials'
+        - type: object
+          properties:
+            TicketID:
+              description: TicketID
+              type: string
+            TargetType:
+              description: Target Object Type
+              type: string
+              enum:
+                - Ticket
+                - FAQ
+                - ConfigItem                
+            LinkType:
+              description: Target Link Type
+              type: string
+              enum:
+                - Normal
+                - ParentChild
+                - LocationOf
+                - Includes
+                - AlternativeTo
+                - ConnectedTo
+                - DependsOn
+                - RelevantTo                      
+            TargetID:
+              description: Target Object ID
+              type: string
+
+    TicketUnlinkResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiError'
+        - type: object
+          properties:
+            Success:
+              type: string
+
 
 Ticket::ArticleDFUpdate: 
-  QueryParams: {}
+  QueryParams:
+    GET:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'  
+    - description: ArticleID
+      in: query
+      name: ArticleID
+      required: false
+      schema:
+        type: string    
+    PUT:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'  
+    - description: ArticleID
+      in: query
+      name: ArticleID
+      required: false
+      schema:
+        type: string    
   RequestBody:
     content:
       application/json:
@@ -66,3 +275,227 @@ Ticket::ArticleDFUpdate:
           schema:
             $ref : '#/components/schemas/ArticleDFUpdateResponse'
       description: 200 response
+
+ElasticSearch::FAQSearch:
+  QueryParams: 
+    GET:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'
+    - description: Fulltext query term
+      in: query
+      name: Fulltext
+      required: true
+      schema:
+        type: string
+    - description: Maximum number of search results
+      in: query
+      name: Limit
+      required: false
+      schema:
+        type: integer
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              Query: 'Who let the dogs out?'
+        schema:
+          $ref : '#/components/schemas/ESSearchRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            faqs:
+              value:
+                - faq:
+                  faq_id: 2
+                  sympthom : "A sympthom"
+                  problem: "A problem"
+                  solution: "The solution"
+                  title: "some title"
+          schema:
+            $ref : '#/components/schemas/ESFAQSearchResponse'
+      description: 200 response
+
+ElasticSearch::TicketSearch:
+  QueryParams: 
+    GET:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'
+    - description: Fulltext query term
+      in: query
+      name: Fulltext
+      required: true
+      schema:
+        type: string
+    - description: Maximum number of search results
+      in: query
+      name: Limit
+      required: false
+      schema:
+        type: integer
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              Query: 'Who let the dogs out?'
+        schema:
+          $ref : '#/components/schemas/ESSearchRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            faqs:
+              value:
+                - ticket 
+          schema:
+            $ref : '#/components/schemas/ESTicketSearchResponse'
+      description: 200 response
+
+Ticket::QueryEmbeddings:
+  QueryParams: 
+    GET:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'
+    - description: TicketID
+      in: query
+      name: TicketID
+      required: true
+      schema:
+        type: string
+    - description: ArticleID
+      in: query
+      name: ArticleID
+      required: false
+      schema:
+        type: string
+    - description: Collection name
+      in: query
+      name: Collection
+      required: true
+      schema:
+        type: string
+        enum:
+          - faqs
+          - ticket_pairs
+          - ticket_chunks
+          - docs
+    - description: Query for similar item search. if omitted, subject + body of the referenced article is used
+      in: query
+      name: Query
+      required: false
+      schema:
+        type: string
+
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              TicketID: 1,
+              ArticleID: 1,
+              Collections: faqs,
+        schema:
+          $ref : '#/components/schemas/QueryEmbeddingsRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            faqs:
+              value:
+                - id: <uuid>
+                  page_content: 'embedded text'
+                  type: Document
+                  metadata:
+                    label: default
+                    source_id: 1
+          schema:
+            $ref : '#/components/schemas/QueryEmbeddingsResponse'
+      description: 200 response
+
+
+Ticket::Link:
+  QueryParams:
+    PUT:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'    
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              TicketID: 1,
+              TargetType: Ticket
+              LinkType: Normal
+              TargetID: 2,
+          ParentChild:
+            value:
+              TicketID: 1,
+              TargetType: Ticket
+              LinkType: ParentChild
+              TargetID: 2,
+        schema:
+          $ref : '#/components/schemas/TicketLinkRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            Success : 1
+          schema:
+            $ref : '#/components/schemas/TicketLinkResponse'
+      description: 200 response
+
+
+Ticket::UnLink:
+  QueryParams:
+    DELETE:
+    - $ref: '#/components/parameters/UserLogin'
+    - $ref: '#/components/parameters/Password'
+    - $ref: '#/components/parameters/SessionID'    
+  RequestBody:
+    content:
+      application/json:
+        examples:
+          Simple:
+            value:
+              TicketID: 1,
+              TargetType: Ticket
+              LinkType: Normal
+              TargetID: 2,
+          ParentChild:
+            value:
+              TicketID: 1,
+              TargetType: Ticket
+              LinkType: ParentChild
+              TargetID: 2,
+        schema:
+          $ref : '#/components/schemas/TicketUnlinkRequest'
+    required: true
+  Responses:
+    200:
+      content:
+        application/json:
+          examples:
+            Success : 1
+          schema:
+            $ref : '#/components/schemas/TicketUnlinkResponse'
+      description: 200 response
+
+
