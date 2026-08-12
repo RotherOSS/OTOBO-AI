@@ -291,13 +291,18 @@ sub GetAnswer {
             return;
         }
 
-        $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
-            DynamicFieldConfig => $OTOBOAIDFConfig,
-            ObjectID           => $ObjectID,
-            Value              => $Answer,
-            DoWrite            => 1,
-            UserID             => 1,
-        );
+        # check if LLM output is a token indicating an empty answer as specified in this setting
+        my $EmptyAnswerToken = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI::EmptyAnswerToken');
+
+        if ( !$EmptyAnswerToken || $Answer ne $EmptyAnswerToken ) {
+            $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueSet(
+                DynamicFieldConfig => $OTOBOAIDFConfig,
+                ObjectID           => $ObjectID,
+                Value              => $Answer,
+                DoWrite            => 1,
+                UserID             => 1,
+            );
+        }
     }
     elsif ( $UserID && $Persist ) {
         my $CacheObject      = $Kernel::OM->Get('Kernel::System::Cache');
