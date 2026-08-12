@@ -136,15 +136,13 @@ sub new {
             Description       => 'Retrieve a Ticket',
             IncludeTicketData => '0',
             Type              => 'Ticket::TicketGet',
-
-            # TODO: remove filtering from MCP and enable this:
-            # MappingOutbound   => {
-            #     Type   => 'XSLT',
-            #     Config => {
-            #         DataInclude => [],
-            #         Template    => $Self->_TicketGetXSLT(),
-            #     }
-            # }
+            MappingOutbound   => {
+                Type   => 'XSLT',
+                Config => {
+                    DataInclude => [],
+                    Template    => $Self->_TicketGetXSLT(),
+                }
+            }
         },
         TicketUpdate => {
             Description       => 'Update a Ticket',
