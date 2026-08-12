@@ -271,7 +271,7 @@ sub Run {
         ArticleID => $Param{Data}->{ArticleID},
     );
 
-    my $Query = $Param{Data}->{Query} // ( ($Article{Subject} // '') . '\n' . ($Article{Body} // '') );
+    my $Query = $Param{Data}->{Query} // ( ( $Article{Subject} // '' ) . '\n' . ( $Article{Body} // '' ) );
 
     my $ConfigObject      = $Kernel::OM->Get('Kernel::Config');
     my $QueueToRAGMapping = $ConfigObject->Get('OTOBOAI::QueueToRAGMapping') // {};

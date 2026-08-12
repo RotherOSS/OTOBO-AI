@@ -81,7 +81,7 @@ sub Run {
         $SessionID = uri_escape_utf8($SessionID);
         $ChatURL =~ s/\{\{OTOBO_SID\}\}/otobo_sid\%3D$SessionID/;
     }
-    
+
     $ChatURL =~ s/\{\{FQDN\}\}/$FQDN/;
 
     if ($TicketID) {
