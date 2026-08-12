@@ -84,6 +84,14 @@ sub Configure {
         ValueRegex => qr/.*/smx,
         Multiple   => 1,
     );
+    $Self->AddOption(
+        Name        => 'batch-size',
+        Description =>
+            "The batch size for importing documents. Defaults to 5.",
+        Required   => 0,
+        HasValue   => 1,
+        ValueRegex => qr/[0-9]+/smx,
+    );
 
     return;
 }
@@ -94,10 +102,10 @@ sub Run {
     my $Sample    = $Self->GetOption('sample');
     my $Reference = $Self->GetOption('reference');
     my $SampleNth = $Self->GetOption('sample-nth') || 10;
-
-    my $ReImport = $Self->GetOption('reimport');
-    my $Purge    = $Self->GetOption('purge');
-    my $UseCases = $Self->GetOption('use-case');
+    my $ReImport  = $Self->GetOption('reimport');
+    my $Purge     = $Self->GetOption('purge');
+    my $UseCases  = $Self->GetOption('use-case');
+    my $BatchSize = $Self->GetOption('batch-size') || 5;
 
     my $Targets = $Self->GetOption('target') || "tdf";
 
@@ -142,8 +150,9 @@ sub Run {
 
         if ( !$Purge ) {
             $ImportObject->MigrateDocs(
-                UseCases => $UseCases,
-                Console  => $Self,
+                UseCases  => $UseCases,
+                Console   => $Self,
+                BatchSize => $BatchSize,
             );
         }
     }

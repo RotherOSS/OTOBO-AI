@@ -838,6 +838,7 @@ sub MigrateDocs {
 
     my $UseCases     = $Param{UseCases};
     my $Asynchronous = $Param{Asynchronous};
+    my $BatchSize    = $Param{BatchSize};
     my $Console      = $Param{Console} && $Param{Console}->can('Print') ? $Param{Console} : undef;
 
     if ($Console) {
@@ -879,6 +880,7 @@ sub MigrateDocs {
         my @Content;
         my $Count  = 0;
         my $Errors = 0;
+        my $Batch  = 1;
 
         DOCUMENT:
         for my $DocumentPath (@$DocumentPaths) {
@@ -903,7 +905,9 @@ sub MigrateDocs {
             push @Content, $Data;
 
             # ingest in batches of 10
-            if ( $Count % 10 == 0 ) {
+            if ( $Count >= ( $BatchSize * $Batch ) ) {
+
+                $Batch = $Batch + 1;
 
                 # ingest
                 my $Result = $RequesterObject->Run(
