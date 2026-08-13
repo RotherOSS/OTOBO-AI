@@ -538,7 +538,7 @@
         </Value>
     </Setting>
     <Setting Name="OTOBOAI::DynamicFieldOTOBOAI::EmptyAnswerToken" Required="0" Valid="1">
-        <Description Translatable="1">An LLM may not be capable of outputting an empty string. Adjust the prompt to output this token as substitute for an empty string instead. If the dynamic field receives this token, it will be left empty.</Description>
+        <Description Translatable="1">An LLM may not be capable of outputting an empty string. Adjust the prompt to output this token as substitute for an empty string instead. If the dynamic field receives this token, the resulting OTOBOAI answer template will hold no answer string.</Description>
         <Navigation>Core::OTOBOAI</Navigation>
         <Value>
             <Item ValueType="String">NO_OUTPUT</Item>
