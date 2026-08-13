@@ -143,7 +143,7 @@ Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this will 
         DoScoring => 0|1,                  # ask LLM to do the extra evaluation step, used by Maint::AI::Scoring
                                            # console command
         RAG       => 'Custom1',            # (optional), default: $ConfigObject->Get('OTOBOAI::DefaultRAG'), the RAG
-                                           # that should be used to generate the answer
+                                           # that should be used to generate the answer, only works for question calls
     );
 
     # on success
