@@ -579,6 +579,12 @@ sub Template {
                 }
             }
 
+            # check if LLM output is a token indicating an empty answer as specified in this setting
+            my $EmptyAnswerToken = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI::EmptyAnswerToken');
+            if ( $EmptyAnswerToken && $OTOBOAIValue eq $EmptyAnswerToken ) {
+                $OTOBOAIValue = '';
+            }
+
             my $HTMLValue = $Kernel::OM->Get('Kernel::System::HTMLUtils')->ToHTML(
                 String => $OTOBOAIValue || '',
             );
