@@ -193,6 +193,10 @@ sub Run {
         UserID             => $Param{UserID},
     );
 
+    # restrict population to RAG mapping setting
+    my $QueueToRAGMapping = $ConfigObject->Get('OTOBOAI::QueueToRAGMapping');
+    return if ( $QueueToRAGMapping && !$QueueToRAGMapping->{ $TicketNew{Queue} } );
+
     # trigger asynchronously fetching AI answer
     $Kernel::OM->Get('Kernel::System::OtoboAI')->GetAnswerAsync(
         ObjectID => $ArticleID,

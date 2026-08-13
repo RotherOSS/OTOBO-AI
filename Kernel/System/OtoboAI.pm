@@ -134,14 +134,16 @@ sub GetAnswerAsync {
 Get an OtoboAI Answer synchronously. If called from GetAnswerAsync(), this will happen on a Daemon thread.
 
     my $Result = $OtoboAIObject->GetAnswer(
-        Question => '<some ai question>',  # the question to ask the LLM
-        ObjectID => $ArticleID,            # if given, construct question from Article Subject+Body
+        Question  => '<some ai question>', # the question to ask the LLM
+        ObjectID  => $ArticleID,           # if given, construct question from Article Subject+Body
                                            # results will be stored in this Articles AIResult DynamicField
-        UserID   => $UserID,               # if specified, and this was a question, populate user specfic cache key
-        Persist  => 1|0,                   # optional, default is 1. Whether to persist Result in DF (with ObjectID) or
+        UserID    => $UserID,              # if specified, and this was a question, populate user specfic cache key
+        Persist   => 1|0,                  # optional, default is 1. Whether to persist Result in DF (with ObjectID) or
                                            # poplate the use specific cache key
         DoScoring => 0|1,                  # ask LLM to do the extra evaluation step, used by Maint::AI::Scoring
                                            # console command
+        RAG       => 'Custom1',            # (optional), default: $ConfigObject->Get('OTOBOAI::DefaultRAG'), the RAG
+                                           # that should be used to generate the answer, only works for question calls
     );
 
     # on success
