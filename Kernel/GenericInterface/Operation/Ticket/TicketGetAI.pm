@@ -4,8 +4,6 @@
 # Copyright (C) 2001-2020 OTRS AG, https://otrs.com/
 # Copyright (C) 2019-2026 Rother OSS GmbH, https://otobo.io/
 # --
-# $origin: otobo - 6efdc7bf2a3325277cd79a60f0f2407f8ad59e87 - Kernel/GenericInterface/Operation/Ticket/TicketGet.pm
-# --
 # This program is free software: you can redistribute it and/or modify it under
 # the terms of the GNU General Public License as published by the Free Software
 # Foundation, either version 3 of the License, or (at your option) any later version.
@@ -16,7 +14,7 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 # --
 
-package Kernel::GenericInterface::Operation::Ticket::TicketGet;
+package Kernel::GenericInterface::Operation::Ticket::TicketGetAI;
 
 use strict;
 use warnings;
@@ -44,7 +42,7 @@ OSS ai
 
 =head1 NAME
 
-Kernel::GenericInterface::Operation::Ticket::TicketGet - GenericInterface Ticket Get Operation backend
+Kernel::GenericInterface::Operation::Ticket::TicketGetAI - GenericInterface Ticket Get Operation backend
 
 =head1 PUBLIC INTERFACE
 
@@ -431,7 +429,7 @@ sub Run {
         if ( !$AllArticles ) {
 # Rother OSS / otobo-ai
             $TicketBundle->{Links} = $Self->_AddLinks(
-                Data => $Param{Data},
+                Data         => $Param{Data},
                 TicketBundle => $TicketBundle
             );
 # EO otobo-ai
@@ -577,7 +575,7 @@ sub Run {
 
 # Rother OSS / otobo-ai
         $TicketBundle->{Links} = $Self->_AddLinks(
-            Data => $Param{Data},
+            Data         => $Param{Data},
             TicketBundle => $TicketBundle
         );
 # EO otobo-ai
@@ -611,14 +609,14 @@ sub _AddLinks {
     my $TicketID     = $TicketBundle->{TicketID};
 
     # get links
-    my  $GetLinks = $Param{Data}->{Links};
+    my $GetLinks = $Param{Data}->{Links};
     if ($GetLinks) {
 
-        if( ref $GetLinks ne 'ARRAY' ) {
-            $GetLinks = [ $GetLinks ];
+        if ( ref $GetLinks ne 'ARRAY' ) {
+            $GetLinks = [$GetLinks];
         }
         my $LinkObject = $Kernel::OM->Get('Kernel::System::LinkObject');
-        my $Links = $LinkObject->LinkListWithData(
+        my $Links      = $LinkObject->LinkListWithData(
             Object    => 'Ticket',
             Key       => $TicketID,
             State     => 'Valid',
@@ -631,13 +629,13 @@ sub _AddLinks {
         OBJECTTYPE:
         for my $TargetType ( $GetLinks->@* ) {
 
-            next OBJECTTYPE if ! exists $Links->{$TargetType};
+            next OBJECTTYPE if !exists $Links->{$TargetType};
 
             for my $LinkKind ( keys $Links->{$TargetType}->%* ) {
 
                 for my $Direction ( keys $Links->{$TargetType}->{$LinkKind}->%* ) {
 
-                    for my $Link (keys $Links->{$TargetType}->{$LinkKind}->{$Direction}->%*) {
+                    for my $Link ( keys $Links->{$TargetType}->{$LinkKind}->{$Direction}->%* ) {
 
                         my $Data = $Links->{$TargetType}->{$LinkKind}->{$Direction}->{$Link};
 
