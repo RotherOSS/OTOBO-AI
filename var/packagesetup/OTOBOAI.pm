@@ -135,7 +135,7 @@ sub new {
         TicketGet => {
             Description       => 'Retrieve a Ticket',
             IncludeTicketData => '0',
-            Type              => 'Ticket::TicketGet',
+            Type              => 'Ticket::TicketGetAI',
             MappingOutbound   => {
                 Type   => 'XSLT',
                 Config => {
