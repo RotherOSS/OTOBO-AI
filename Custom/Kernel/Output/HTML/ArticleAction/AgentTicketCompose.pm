@@ -37,6 +37,10 @@ our @ObjectDependencies = (
     'Kernel::System::SystemAddress',
     'Kernel::System::Ticket',
     'Kernel::System::EmailAddress',
+# Rother OSS / OTOBO-AI
+    'Kernel::System::DynamicField',
+    'Kernel::System::DynamicField::Backend',
+# EO OTOBO-AI
 );
 
 sub new {
