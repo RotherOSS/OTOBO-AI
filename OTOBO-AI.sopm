@@ -9,6 +9,7 @@
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
     <Description Lang="en">Otobo AI Interface package to connect to Otobo AI Services.</Description>
     <Filelist>
+        <File Permission="660" Location="Custom/Kernel/Output/HTML/ArticleAction/AgentTicketCompose.pm" />
         <File Permission="660" Location="Custom/Kernel/System/TemplateGenerator.pm" />
         <File Permission="660" Location="Custom/Kernel/System/AuthSession/FS.pm" />
         <File Permission="660" Location="Custom/Kernel/System/AuthSession/DB.pm" />
