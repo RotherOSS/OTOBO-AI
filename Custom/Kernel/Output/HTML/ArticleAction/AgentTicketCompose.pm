@@ -133,7 +133,7 @@ sub GetConfig {
     my $OTOBOAIValue = $Kernel::OM->Get('Kernel::System::DynamicField::Backend')->ValueGet(
         DynamicFieldConfig => $OTOBOAIDFConfig,
         ObjectID           => $Param{Article}->{ArticleID},
-    );
+    ) || '';
 
     # remove OTOBOAI answer template if the dynamic field holds the empty answer token
     my $EmptyAnswerToken = $Kernel::OM->Get('Kernel::Config')->Get('OTOBOAI::DynamicFieldOTOBOAI::EmptyAnswerToken');
