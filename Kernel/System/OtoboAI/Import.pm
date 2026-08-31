@@ -1020,16 +1020,16 @@ sub PurgeTickets {
 
     $Self->InitImport();
 
-    return (
-        $Self->_Purge(
-            Collection => 'ticket_pairs',
-            SourceID   => $Param{TicketID}
-            )
-            || $Self->_Purge(
-                Collection => 'ticket_chunks',
-                SourceID   => $Param{TicketID}
-            )
+    my $ResultPairs = $Self->_Purge(
+        Collection => 'ticket_pairs',
+        SourceID   => $Param{TicketID}
     );
+    my $ResultChunks = $Self->_Purge(
+        Collection => 'ticket_chunks',
+        SourceID   => $Param{TicketID}
+    );
+
+    return $ResultPairs || $ResultChunks;
 }
 
 =head2 PurgeFAQs()
