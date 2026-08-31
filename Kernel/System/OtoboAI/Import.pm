@@ -446,13 +446,15 @@ sub MigrateTickets {
                 if ( !$Result->{Success} ) {
                     $Errors++;
 
+                    my $SourceIDs = join( ',', map { $_->{source_id} } @ImportTicketsQA );
+
                     $Kernel::OM->Get('Kernel::System::Log')->Log(
                         Priority => 'error',
-                        Message  => "Failed to ingest Q/A article pairs: " . $Result->{ErrorMessage},
+                        Message  => "Failed to ingest Q/A article pairs of TicketID(s) $SourceIDs: " . $Result->{ErrorMessage},
                     );
 
                     if ($Console) {
-                        $Console->Print( "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n" );
+                        $Console->Print( "<red>Error importing TicketID(s) $SourceIDs: " . $Result->{ErrorMessage} . "</red>\n" );
                     }
                 }
             }
@@ -473,13 +475,15 @@ sub MigrateTickets {
                 if ( !$Result->{Success} ) {
                     $Errors++;
 
+                    my $SourceIDs = join( ',', map { $_->{source_id} } @ImportTicketsQA );
+
                     $Kernel::OM->Get('Kernel::System::Log')->Log(
                         Priority => 'error',
-                        Message  => "Failed to ingest agent articles: " . $Result->{ErrorMessage},
+                        Message  => "Failed to ingest agent articles of TicketID(s) $SourceIDs: " . $Result->{ErrorMessage},
                     );
 
                     if ($Console) {
-                        $Console->Print( "<red>Error importing Tickets: " . $Result->{ErrorMessage} . "</red>\n" );
+                        $Console->Print( "<red>Error importing TicketID(s) $SourceIDs: " . $Result->{ErrorMessage} . "</red>\n" );
                     }
                 }
             }
