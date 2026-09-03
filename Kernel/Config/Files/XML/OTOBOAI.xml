@@ -24,7 +24,7 @@
                         <Item>Unclassified</Item>
                     </Array>
                 </Item>
-                <Item Key="StateTypes">
+                <Item Key="StateType">
                     <Array>
                         <Item>closed</Item>
                         <Item>closed successful</Item>
@@ -83,7 +83,7 @@
                         <Item>Unclassified</Item>
                     </Array>
                 </Item>
-                <Item Key="StateTypes">
+                <Item Key="StateType">
                     <Array>
                         <Item>closed</Item>
                         <Item>closed successful</Item>
@@ -142,7 +142,7 @@
                         <Item>Unclassified</Item>
                     </Array>
                 </Item>
-                <Item Key="StateTypes">
+                <Item Key="StateType">
                     <Array>
                         <Item>closed</Item>
                         <Item>closed successful</Item>
