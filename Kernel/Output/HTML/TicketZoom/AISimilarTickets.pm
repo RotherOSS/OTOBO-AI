@@ -79,7 +79,7 @@ sub Run {
 
     # similar search query via otobo-ai-rag Invoker
     my $QueueToRAGMapping = $ConfigObject->Get('OTOBOAI::QueueToRAGMapping') // {};
-    my $RAG               = $QueueToRAGMapping->{ $Ticket{Queue} }       // $ConfigObject->Get('OTOBOAI::DefaultRAG');
+    my $RAG               = $QueueToRAGMapping->{ $Ticket{Queue} }           // $ConfigObject->Get('OTOBOAI::DefaultRAG');
 
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
     my $AIWebservice     = $WebserviceObject->WebserviceGet(
@@ -125,7 +125,7 @@ sub Run {
 
         my $ItemTicketID = $Item->{metadata}->{source_id};
 
-        if( $ItemTicketID ne $TicketID ) {
+        if ( $ItemTicketID ne $TicketID ) {
 
             $Tickets{$ItemTicketID} = $Item;
         }
@@ -135,7 +135,7 @@ sub Run {
 
         my $ItemTicketID = $Item->{metadata}->{source_id};
 
-        if( $ItemTicketID ne $TicketID ) {
+        if ( $ItemTicketID ne $TicketID ) {
             $Tickets{$ItemTicketID} = $Item;
         }
     }
