@@ -786,5 +786,15 @@
             </Hash>
         </Value>
     </Setting>
->>>>>>> rel-11_0
+    <Setting Name="Ticket::Frontend::AgentTicketZoom###Widgets###0450-AISimilarTickets" Required="0" Valid="0">
+        <Description Translatable="1">AgentTicketZoom widget that displays similar ticket data in the side bar. The RAG container must be available.</Description>
+        <Navigation>Frontend::Agent::View::TicketZoom</Navigation>
+        <Value>
+            <Hash>
+                <Item Key="Module">Kernel::Output::HTML::TicketZoom::AISimilarTickets</Item>
+                <Item Key="Location">Sidebar</Item>
+                <Item Key="Async">1</Item>
+            </Hash>
+        </Value>
+    </Setting>
 </otobo_config>
