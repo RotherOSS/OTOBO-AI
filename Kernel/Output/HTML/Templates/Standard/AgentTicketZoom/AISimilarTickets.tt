@@ -24,8 +24,9 @@
                 <div class="Content">
 [% RenderBlockStart("SimilarTickets") %]
 [% FOREACH Ticket IN Data %]
-                        <a title="[% Ticket.page_content | html %]" style="display:inline-block;max-width:280px;overflow:hidden;white-space: nowrap;" target="_blank" href="/otobo/index.pl?Action=AgentTicketZoom;TicketID=[% Ticket.metadata.source_id | url %]">[% Ticket.page_content | html %]</a>
-                    <div class="Clear"></div>
+                    <a title="[% Ticket.page_content | html %]" style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space: nowrap;" target="_blank" href="/otobo/index.pl?Action=AgentTicketZoom;TicketID=[% Ticket.metadata.source_id | url %]">
+                    [% Ticket.page_content | html %]
+                    </a>
 [% END %]
 [% RenderBlockEnd("SimilarTickets") %]
                 </div>
