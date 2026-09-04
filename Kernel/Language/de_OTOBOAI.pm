@@ -29,6 +29,7 @@ sub Data {
     $Self->{Translation}->{'Your request has failed'} = 'Die Anfrage ist fehlgeschlagen';
     $Self->{Translation}->{'Your request has timed out'} = 'Ihre Anfrage ist abgelaufen';
     $Self->{Translation}->{'Send request'} = 'Anfrage übermitteln';
+    $Self->{Translation}->{'Similar Tickets'} = 'Ähnliche Tickets';
 
     push @{ $Self->{JavaScriptStrings} // [] }, (
         'Your request was canceled',
