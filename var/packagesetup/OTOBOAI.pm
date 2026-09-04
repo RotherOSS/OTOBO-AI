@@ -104,6 +104,12 @@ sub new {
             ],
             Type => 'OTOBOAI::Purge',
         },
+        QueryEmbeddings => {
+            Description => 'Execute Similarity Search using the otobo-ai vector store.',
+            Events      => [
+            ],
+            Type => 'OTOBOAI::QueryEmbeddings',
+        },
     };
 
     $Self->{InvokerControllerMapping} = {
@@ -122,6 +128,10 @@ sub new {
         DeleteByID => {
             Command    => 'POST',
             Controller => '/otobo-ai/embedding/delete',
+        },
+        QueryEmbeddings => {
+            Command    => 'POST',
+            Controller => '/otobo-ai/embedding/query',
         },
     };
 
