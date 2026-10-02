@@ -217,7 +217,7 @@ sub new {
             RequestMethod => ['GET'],
             Route         => '/FAQ',
         },
-        FAQSearch => {
+        TicketSearch => {
             RequestMethod => ['GET'],
             Route         => '/Ticket',
         },
