@@ -309,6 +309,7 @@ sub CodeInstall {
 
     $Self->_UpdateArticleActions( Channel => 'Email' );
     $Self->_UpdateArticleActions( Channel => 'Phone' );
+    $Self->_UpdateArticleActions( Channel => 'Internal' );
 
     return 1;
 }
@@ -393,6 +394,7 @@ sub CodeUpgrade {
 
     $Self->_UpdateArticleActions( Channel => 'Email' );
     $Self->_UpdateArticleActions( Channel => 'Phone' );
+    $Self->_UpdateArticleActions( Channel => 'Internal' );
 
     return 1;
 }
@@ -410,6 +412,7 @@ sub CodeUninstall {
 
     $Self->_CleanupArticleActions( Channel => 'Phone' );
     $Self->_CleanupArticleActions( Channel => 'Email' );
+    $Self->_CleanupArticleActions( Channel => 'Internal' );
 
     my $WebserviceObject = $Kernel::OM->Get('Kernel::System::GenericInterface::Webservice');
 
