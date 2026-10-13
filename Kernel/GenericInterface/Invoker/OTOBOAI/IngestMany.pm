@@ -185,7 +185,7 @@ sub HandleResponse {
 
             return {
                 Success      => 0,
-                ErrorMessage => $Param{ResponseErrorMessage},
+                ErrorMessage => $Param{Data}{error},
             };
         }
     }
