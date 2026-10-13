@@ -82,8 +82,8 @@ sub InitImport() {
 
     if ( !$AIWebservice ) {
         $Kernel::OM->Get('Kernel::System::Log')->Log(
-            Priority => 'error',
-            Message  => "OTOBO-AI webservice not found!",
+            Priority => 'notice',
+            Message  => "OTOBO-AI webservice not found! Please consider deactivating the OTOBOAIIncrementalSynchronization event modules to prevent this notice.",
         );
         return 0;
     }
