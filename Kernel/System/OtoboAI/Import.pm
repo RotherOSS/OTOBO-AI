@@ -518,6 +518,8 @@ sub MigrateTickets {
 sub MigrateTicketsAsync {
     my ( $Self, %Param ) = @_;
 
+    return if $Self->InitImport() == 0;
+
     # let the requester know it is run in an asynchronous context
     $Param{Asynchronous} = 1;
 
@@ -778,6 +780,8 @@ sub MigrateFAQs {
 sub MigrateFAQsAsync {
     my ( $Self, %Param ) = @_;
 
+    return if $Self->InitImport() == 0;
+
     # let the requester know it is run in an asynchronous context
     $Param{Asynchronous} = 1;
 
@@ -979,6 +983,8 @@ sub MigrateDocs {
 sub MigrateDocsAsync {
     my ( $Self, %Param ) = @_;
 
+    return if $Self->InitImport() == 0;
+
     # let the requester know it is run in an asynchronous context
     $Param{Asynchronous} = 1;
 
@@ -1022,7 +1028,7 @@ returns 1 if at least one entry has been purged
 sub PurgeTickets {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     my $ResultPairs = $Self->_Purge(
         Collection => 'ticket_pairs',
@@ -1051,7 +1057,7 @@ returns 1 if at least one entry has been purged
 sub PurgeFAQs {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     return $Self->_Purge(
         Collection => 'faqs',
@@ -1072,7 +1078,7 @@ returns 1 if at least one entry has been purged
 sub PurgeDocs {
     my ( $Self, %Param ) = @_;
 
-    $Self->InitImport();
+    return if $Self->InitImport() == 0;
 
     return $Self->_Purge( Collection => 'docs' );
 }
