@@ -475,7 +475,7 @@ sub MigrateTickets {
                 if ( !$Result->{Success} ) {
                     $Errors++;
 
-                    my $SourceIDs = join( ',', map { $_->{source_id} } @ImportTicketsQA );
+                    my $SourceIDs = join( ',', map { $_->{source_id} } @ImportTicketsAgentArticles );
 
                     $Kernel::OM->Get('Kernel::System::Log')->Log(
                         Priority => 'error',
