@@ -211,6 +211,7 @@ sub GetAnswer {
     my $UserID   = $Param{UserID};
     my $Persist  = $Param{Persist} // 1;
     my $Question;
+    my $TicketID;
     my $RAG = $Param{RAG} // $ConfigObject->Get('OTOBOAI::DefaultRAG');
 
     if ($ObjectID) {
@@ -219,7 +220,7 @@ sub GetAnswer {
         my $ArticleObject = $Kernel::OM->Get('Kernel::System::Ticket::Article');
 
         my $ArticleID = $ObjectID;
-        my $TicketID  = $ArticleObject->TicketIDLookup(
+        $TicketID = $ArticleObject->TicketIDLookup(
             ArticleID => $ArticleID,
         );
 
@@ -274,6 +275,19 @@ sub GetAnswer {
         Priority => 'debug',
         Message  => "OtoboAI GetAnswer Result: $Dump",
     );
+
+    if ( $ObjectID && !$Result->{Success} ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "OtoboAI GetAnswer failed for TicketID $TicketID, ArticleID $ObjectID.",
+        );
+    }
+    elsif ( $UserID && !$Result->{Success} ) {
+        $Kernel::OM->Get('Kernel::System::Log')->Log(
+            Priority => 'error',
+            Message  => "OtoboAI GetAnswer failed for a question from UserID $UserID.",
+        );
+    }
 
     my $Answer = $Result->{Data}{Answer} || "";
 
