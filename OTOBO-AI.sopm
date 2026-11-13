@@ -7,7 +7,8 @@
     <Vendor>Rother OSS GmbH</Vendor>
     <URL>https://otobo.io/</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007</License>
-    <Description Lang="en">Otobo AI Interface package to connect to Otobo AI Services.</Description>
+    <Description Lang="en">OTOBO AI interface package to connect to OTOBO AI services.</Description>
+    <Description Lang="hu">OTOBO MI-csatolócsomag az OTOBO MI-szolgáltatásokhoz való kapcsolódáshoz.</Description>
     <Filelist>
         <File Permission="660" Location="Custom/Kernel/Output/HTML/ArticleAction/AgentTicketCompose.pm" />
         <File Permission="660" Location="Custom/Kernel/System/TemplateGenerator.pm" />
@@ -75,12 +76,24 @@
     ]]></CodeUninstall>
     <IntroInstall Type="post" Lang="en" Title="Incremental ingestion of FAQ items"><![CDATA[
         <br/>
-        In order for FAQ items to by dynamically synchronized with the Otobo-AI vector DB, please make sure to<br/>
-install the optional <b>Elasticsearch-FAQ</b> package to provide the necessary FAQ event handling.<br/><br/>
+        In order for FAQ items to by dynamically synchronized with the OTOBO-AI vector DB, please make sure to
+        install the optional <b>Elasticsearch-FAQ</b> package to provide the necessary FAQ event handling.
+        <br/>
+        <br/>
     ]]></IntroInstall>
     <IntroInstall Type="post" Lang="de" Title="Inkrementelle Aufnahme von FAQ Artikeln"><![CDATA[
         <br/>
-        Damit FAQ Artikel dynamisch mit der Otobo-AI Vector DB synchronisiert werden können, installieren Sie bitte<br/>
-das optionale <b>Elasticsearch-FAQ</b> Paket, um das notwendige FAQ Event Handling bereitzustellen.<br/><br/>
+        Damit FAQ Artikel dynamisch mit der OTOBO-AI Vector DB synchronisiert werden können, installieren Sie bitte
+        das optionale <b>Elasticsearch-FAQ</b> Paket, um das notwendige FAQ Event Handling bereitzustellen.
+        <br/>
+        <br/>
+    ]]></IntroInstall>
+    <IntroInstall Type="post" Lang="hu" Title="GyIK-elemek fokozatos bevitele"><![CDATA[
+        <br/>
+        Ahhoz, hogy a GyIK-elemek dinamikusan szinkronizálódjanak az OTOBO-AI vektoradatbázissal, győződjön meg arról,
+        hogy telepítette-e a választható <b>Elasticsearch-FAQ</b> csomagot a szükséges GyIK-események kezelésének
+        biztosításához.
+        <br/>
+        <br/>
     ]]></IntroInstall>
 </otobo_package>
